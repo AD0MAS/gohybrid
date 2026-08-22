@@ -6,7 +6,7 @@ import { updateSession } from "@/utils/supabase/middleware";
  * on every matched request so auth cookies stay in sync between the
  * browser and the server. Carries no route-protection logic.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
