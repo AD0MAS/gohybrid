@@ -7,8 +7,11 @@ const PUBLIC_PATHS = ["/login", "/register"];
  * Refreshes the Supabase auth session for an incoming request, mirrors any
  * updated cookies onto both the request (so this response cycle sees them)
  * and the response (so the browser stores them), and redirects
- * unauthenticated requests to /login for every route except /login and
- * /register. Intended to be called from the root middleware/proxy on every
+ * unauthenticated requests to /login for every route except /login,
+ * /register, and API routes. API routes are exempt from the redirect
+ * because a caller there expects a JSON 401 from the Route Handler, not an
+ * HTML redirect — each Route Handler is responsible for its own auth
+ * check. Intended to be called from the root middleware/proxy on every
  * matched request.
  */
 export async function updateSession(request: NextRequest) {
@@ -45,8 +48,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isPublicPath = PUBLIC_PATHS.includes(request.nextUrl.pathname);
+  const isApiPath = request.nextUrl.pathname.startsWith("/api/");
 
-  if (!user && !isPublicPath) {
+  if (!user && !isPublicPath && !isApiPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
