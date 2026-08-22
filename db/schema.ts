@@ -161,3 +161,27 @@ export const workoutItems = pgTable(
     ),
   ]
 );
+
+export const workoutSessions = pgTable(
+  "workout_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    workoutId: uuid("workout_id").references(() => workouts.id, {
+      onDelete: "set null",
+    }),
+    workoutTitle: text("workout_title").notNull(),
+    workoutPrimaryType: workoutPrimaryTypeEnum("workout_primary_type").notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("workout_sessions_user_id_completed_at_idx").on(
+      table.userId,
+      table.completedAt
+    ),
+  ]
+);
