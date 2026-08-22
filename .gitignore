@@ -6,3 +6,27 @@ docs/ROADMAP.md
 .next/
 CLAUDE.md
 .claude/
+AGENTS.md
+
+# next.js
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
