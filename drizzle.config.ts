@@ -7,6 +7,9 @@ export default defineConfig({
   schema: "./db/schema.ts",
   out: "./db/migrations",
   schemaFilter: ["public"],
+  entities: {
+    roles: false,
+  },
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },
