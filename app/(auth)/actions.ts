@@ -51,3 +51,15 @@ export async function signUp(formData: FormData) {
   revalidatePath("/", "layout");
   redirect("/");
 }
+
+/**
+ * Signs out the current user via Supabase Auth, revalidates the root
+ * layout, and redirects to /login.
+ */
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  revalidatePath("/", "layout");
+  redirect("/login");
+}

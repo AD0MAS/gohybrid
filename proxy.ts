@@ -2,9 +2,10 @@ import { type NextRequest } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
 /**
- * Root Next.js middleware. Delegates to the Supabase session-refresh helper
- * on every matched request so auth cookies stay in sync between the
- * browser and the server. Carries no route-protection logic.
+ * Root Next.js proxy (middleware). Delegates to the Supabase session helper
+ * on every matched request, which refreshes auth cookies and redirects
+ * unauthenticated requests to /login for every route except /login and
+ * /register.
  */
 export async function proxy(request: NextRequest) {
   return await updateSession(request);
