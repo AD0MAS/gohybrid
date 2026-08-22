@@ -7,6 +7,7 @@ import {
   timestamp,
   integer,
   boolean,
+  numeric,
   index,
 } from "drizzle-orm/pg-core";
 
@@ -36,6 +37,37 @@ export const workoutDifficultyEnum = pgEnum("workout_difficulty", [
   "low",
   "medium",
   "high",
+]);
+
+export const blockTypeEnum = pgEnum("block_type", [
+  "for_time",
+  "on_off",
+  "amrap",
+  "emom",
+  "general",
+]);
+
+export const volumeTypeEnum = pgEnum("volume_type", [
+  "duration",
+  "distance",
+  "reps",
+  "calories",
+]);
+
+export const targetTypeEnum = pgEnum("target_type", [
+  "pace_500m",
+  "cal_per_hour",
+  "watts",
+  "rpe",
+]);
+
+export const targetPresetEnum = pgEnum("target_preset", [
+  "threshold",
+  "race_pace",
+  "zone2",
+  "easy",
+  "tempo",
+  "recovery",
 ]);
 
 export const exercises = pgTable("exercises", {
@@ -72,6 +104,60 @@ export const workouts = pgTable(
     index("workouts_user_id_primary_type_idx").on(
       table.userId,
       table.primaryType
+    ),
+  ]
+);
+
+export const workoutBlocks = pgTable(
+  "workout_blocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workoutId: uuid("workout_id")
+      .notNull()
+      .references(() => workouts.id, { onDelete: "cascade" }),
+    title: text("title"),
+    sortOrder: integer("sort_order").notNull(),
+    blockType: blockTypeEnum("block_type").notNull(),
+    durationSeconds: integer("duration_seconds"),
+    rounds: integer("rounds"),
+    workSeconds: integer("work_seconds"),
+    restSeconds: integer("rest_seconds"),
+    intervalSeconds: integer("interval_seconds"),
+  },
+  (table) => [
+    index("workout_blocks_workout_id_sort_order_idx").on(
+      table.workoutId,
+      table.sortOrder
+    ),
+  ]
+);
+
+export const workoutItems = pgTable(
+  "workout_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    blockId: uuid("block_id")
+      .notNull()
+      .references(() => workoutBlocks.id, { onDelete: "cascade" }),
+    sortOrder: integer("sort_order").notNull(),
+    exerciseId: uuid("exercise_id").references(() => exercises.id, {
+      onDelete: "set null",
+    }),
+    customName: text("custom_name"),
+    notes: text("notes"),
+    sets: integer("sets").notNull().default(1),
+    volumeType: volumeTypeEnum("volume_type"),
+    volumeValue: numeric("volume_value", { precision: 6, scale: 2 }),
+    targetType: targetTypeEnum("target_type"),
+    targetValue: numeric("target_value", { precision: 6, scale: 2 }),
+    targetPreset: targetPresetEnum("target_preset"),
+    weightKg: numeric("weight_kg", { precision: 6, scale: 2 }),
+    restSeconds: integer("rest_seconds"),
+  },
+  (table) => [
+    index("workout_items_block_id_sort_order_idx").on(
+      table.blockId,
+      table.sortOrder
     ),
   ]
 );
