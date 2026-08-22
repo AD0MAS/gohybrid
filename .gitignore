@@ -1,0 +1,8 @@
+node_modules/
+.env*
+docs/GOHYBRID_PLAN.md
+docs/PROJECT_CONTEXT.md
+docs/ROADMAP.md
+.next/
+CLAUDE.md
+.claude/
