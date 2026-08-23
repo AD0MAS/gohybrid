@@ -6,14 +6,22 @@ import {
   builderReducer,
   createInitialBuilderState,
   type BlockType,
+  type CatalogExercise,
   type Difficulty,
   type PrimaryType,
+  type TargetPreset,
+  type TargetType,
+  type VolumeType,
 } from "./reducer";
 
 type WorkoutBuilderProps = {
   primaryTypeOptions: readonly PrimaryType[];
   difficultyOptions: readonly Difficulty[];
   blockTypeOptions: readonly BlockType[];
+  volumeTypeOptions: readonly VolumeType[];
+  targetTypeOptions: readonly TargetType[];
+  targetPresetOptions: readonly TargetPreset[];
+  exerciseCatalog: readonly CatalogExercise[];
 };
 
 /**
@@ -30,6 +38,10 @@ export default function WorkoutBuilder({
   primaryTypeOptions,
   difficultyOptions,
   blockTypeOptions,
+  volumeTypeOptions,
+  targetTypeOptions,
+  targetPresetOptions,
+  exerciseCatalog,
 }: WorkoutBuilderProps) {
   const [state, dispatch] = useReducer(
     builderReducer,
@@ -155,6 +167,10 @@ export default function WorkoutBuilder({
               block={block}
               index={index}
               blockTypeOptions={blockTypeOptions}
+              catalog={exerciseCatalog}
+              volumeTypeOptions={volumeTypeOptions}
+              targetTypeOptions={targetTypeOptions}
+              targetPresetOptions={targetPresetOptions}
               dispatch={dispatch}
             />
           ))

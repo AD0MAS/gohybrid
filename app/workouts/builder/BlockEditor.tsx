@@ -1,10 +1,23 @@
 import type { Dispatch } from "react";
-import type { BlockType, BuilderAction, BuilderBlock } from "./reducer";
+import ItemEditor from "./ItemEditor";
+import type {
+  BlockType,
+  BuilderAction,
+  BuilderBlock,
+  CatalogExercise,
+  TargetPreset,
+  TargetType,
+  VolumeType,
+} from "./reducer";
 
 type BlockEditorProps = {
   block: BuilderBlock;
   index: number;
   blockTypeOptions: readonly BlockType[];
+  catalog: readonly CatalogExercise[];
+  volumeTypeOptions: readonly VolumeType[];
+  targetTypeOptions: readonly TargetType[];
+  targetPresetOptions: readonly TargetPreset[];
   dispatch: Dispatch<BuilderAction>;
 };
 
@@ -27,6 +40,10 @@ export default function BlockEditor({
   block,
   index,
   blockTypeOptions,
+  catalog,
+  volumeTypeOptions,
+  targetTypeOptions,
+  targetPresetOptions,
   dispatch,
 }: BlockEditorProps) {
   const durationMinutes =
@@ -189,6 +206,38 @@ export default function BlockEditor({
           />
         </label>
       )}
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium">Items</p>
+
+        {block.items.length === 0 ? (
+          <p className="text-sm text-gray-600">No items yet.</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {block.items.map((item, itemIndex) => (
+              <ItemEditor
+                key={item.id}
+                blockId={block.id}
+                item={item}
+                index={itemIndex}
+                catalog={catalog}
+                volumeTypeOptions={volumeTypeOptions}
+                targetTypeOptions={targetTypeOptions}
+                targetPresetOptions={targetPresetOptions}
+                dispatch={dispatch}
+              />
+            ))}
+          </ul>
+        )}
+
+        <button
+          type="button"
+          onClick={() => dispatch({ type: "ADD_ITEM", blockId: block.id })}
+          className="self-start rounded border border-gray-300 px-3 py-2 text-sm"
+        >
+          Add item
+        </button>
+      </div>
 
       <button
         type="button"
