@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { workouts } from "@/db/schema";
 import type { ValidatedWorkoutInput } from "./workouts-validation";
@@ -70,4 +70,33 @@ export async function createWorkoutForUser(
     .returning();
 
   return created;
+}
+
+/**
+ * Updates a workout owned by `userId` from already-validated input (same
+ * shape as createWorkoutForUser) and returns the updated row, or null if
+ * nothing matched. The ownership check is part of the UPDATE's WHERE
+ * clause itself — not a separate read followed by a write — so there is
+ * no window in which a check and the mutation could apply to different
+ * rows. Returns null both when the id doesn't exist and when it belongs
+ * to a different user.
+ */
+export async function updateWorkoutForUser(
+  id: string,
+  userId: string,
+  input: ValidatedWorkoutInput
+) {
+  const [updated] = await db
+    .update(workouts)
+    .set({
+      title: input.title,
+      description: input.description,
+      primaryType: input.primaryType,
+      difficulty: input.difficulty,
+      estimatedDurationMinutes: input.estimatedDurationMinutes,
+    })
+    .where(and(eq(workouts.id, id), eq(workouts.userId, userId)))
+    .returning();
+
+  return updated ?? null;
 }

@@ -35,9 +35,14 @@ export default async function WorkoutDetailPage(
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <Link href="/workouts" className="text-sm underline">
-        Back to workouts
-      </Link>
+      <div className="flex gap-4">
+        <Link href="/workouts" className="text-sm underline">
+          Back to workouts
+        </Link>
+        <Link href={`/workouts/${workout.id}/edit`} className="text-sm underline">
+          Edit
+        </Link>
+      </div>
 
       <div>
         <h1 className="text-xl font-semibold">{workout.title}</h1>

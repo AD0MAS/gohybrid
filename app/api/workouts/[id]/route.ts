@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getWorkoutForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { getWorkoutForUser, updateWorkoutForUser } from "@/lib/workouts";
+import { isValidUuid, validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
  * GET /api/workouts/[id]
@@ -34,4 +34,50 @@ export async function GET(
   }
 
   return NextResponse.json(workout);
+}
+
+/**
+ * PATCH /api/workouts/[id]
+ * Updates one of the authenticated user's workouts. Responds 401 if there
+ * is no authenticated user, 400 with a validation message on invalid
+ * input, and 404 both when the id doesn't exist and when it belongs to a
+ * different user — same indistinguishable-404 rule as GET. Returns the
+ * updated workout as JSON on success.
+ */
+export async function PATCH(
+  request: Request,
+  context: RouteContext<"/api/workouts/[id]">
+) {
+  const { id } = await context.params;
+
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isValidUuid(id)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return NextResponse.json(
+      { error: "Request body must be JSON." },
+      { status: 400 }
+    );
+  }
+
+  const result = validateWorkoutInput(body);
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+
+  const updated = await updateWorkoutForUser(id, user.id, result.data);
+
+  if (!updated) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(updated);
 }
