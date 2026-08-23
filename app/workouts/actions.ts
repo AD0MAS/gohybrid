@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import {
   createWorkoutForUser,
   deleteWorkoutForUser,
+  toggleFavoriteForUser,
   updateWorkoutForUser,
 } from "@/lib/workouts";
 import { validateWorkoutInput } from "@/lib/workouts-validation";
@@ -95,4 +96,27 @@ export async function deleteWorkout(id: string) {
 
   revalidatePath("/workouts");
   redirect("/workouts");
+}
+
+/**
+ * Flips is_favorite for one of the authenticated user's workouts, bound
+ * with the workout id via .bind(null, id) on the page. Ownership is
+ * enforced by toggleFavoriteForUser's WHERE clause. Throws if nothing
+ * matched (the workout was deleted or isn't owned by the current user
+ * between page load and this call), so FavoriteToggle's optimistic state
+ * can catch the failure and revert. Revalidates /workouts and the
+ * workout's detail page on success — no redirect, since this is used
+ * inline on both pages.
+ */
+export async function toggleFavorite(id: string) {
+  const user = await requireUser();
+
+  const isFavorite = await toggleFavoriteForUser(id, user.id);
+
+  if (isFavorite === null) {
+    throw new Error("Workout not found.");
+  }
+
+  revalidatePath("/workouts");
+  revalidatePath(`/workouts/${id}`);
 }

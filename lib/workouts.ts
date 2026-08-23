@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { workouts } from "@/db/schema";
 import type { ValidatedWorkoutInput } from "./workouts-validation";
@@ -118,4 +118,22 @@ export async function deleteWorkoutForUser(id: string, userId: string) {
     .returning({ id: workouts.id });
 
   return deleted.length > 0;
+}
+
+/**
+ * Flips is_favorite for a workout owned by `userId` in a single UPDATE —
+ * the new value is computed in SQL (`NOT is_favorite`) rather than read
+ * first and written back, so two concurrent toggles can't race each
+ * other into landing on the same value. Returns the new value, or null
+ * if nothing matched (the id doesn't exist or belongs to a different
+ * user).
+ */
+export async function toggleFavoriteForUser(id: string, userId: string) {
+  const [updated] = await db
+    .update(workouts)
+    .set({ isFavorite: sql`not ${workouts.isFavorite}` })
+    .where(and(eq(workouts.id, id), eq(workouts.userId, userId)))
+    .returning({ isFavorite: workouts.isFavorite });
+
+  return updated?.isFavorite ?? null;
 }

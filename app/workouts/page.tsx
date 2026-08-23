@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getWorkoutsForUser } from "@/lib/workouts";
+import { toggleFavorite } from "./actions";
+import FavoriteToggle from "./FavoriteToggle";
 
 /**
  * Lists the authenticated user's workouts: title, primary type, difficulty.
@@ -32,9 +34,15 @@ export default async function WorkoutsPage() {
               key={workout.id}
               className="rounded border border-gray-300 p-3"
             >
-              <Link href={`/workouts/${workout.id}`} className="underline">
-                {workout.title}
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href={`/workouts/${workout.id}`} className="underline">
+                  {workout.title}
+                </Link>
+                <FavoriteToggle
+                  isFavorite={workout.isFavorite}
+                  toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
+                />
+              </div>
               <p className="text-sm text-gray-600">
                 {workout.primaryType} · {workout.difficulty}
               </p>

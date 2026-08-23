@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
-import { deleteWorkout } from "../actions";
+import { deleteWorkout, toggleFavorite } from "../actions";
 import DeleteWorkoutModal from "./DeleteWorkoutModal";
+import FavoriteToggle from "../FavoriteToggle";
 
 /**
  * Workout detail page: the workout's own fields, then each block (title,
@@ -50,7 +51,13 @@ export default async function WorkoutDetailPage(
       </div>
 
       <div>
-        <h1 className="text-xl font-semibold">{workout.title}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold">{workout.title}</h1>
+          <FavoriteToggle
+            isFavorite={workout.isFavorite}
+            toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
+          />
+        </div>
         {workout.description && (
           <p className="text-sm text-gray-600">{workout.description}</p>
         )}
