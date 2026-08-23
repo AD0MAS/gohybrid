@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { workouts } from "@/db/schema";
@@ -35,6 +36,10 @@ export default async function WorkoutsPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
       <h1 className="text-xl font-semibold">Workouts</h1>
+
+      <Link href="/workouts/new" className="text-sm underline">
+        New workout
+      </Link>
 
       {userWorkouts.length === 0 ? (
         <p className="text-sm text-gray-600">No workouts yet.</p>
