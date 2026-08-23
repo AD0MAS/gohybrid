@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { getWorkoutForUser, updateWorkoutForUser } from "@/lib/workouts";
+import {
+  deleteWorkoutForUser,
+  getWorkoutForUser,
+  updateWorkoutForUser,
+} from "@/lib/workouts";
 import { isValidUuid, validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
@@ -80,4 +84,35 @@ export async function PATCH(
   }
 
   return NextResponse.json(updated);
+}
+
+/**
+ * DELETE /api/workouts/[id]
+ * Deletes one of the authenticated user's workouts. Responds 401 if there
+ * is no authenticated user, 404 both when the id doesn't exist and when
+ * it belongs to a different user, and 204 No Content on success.
+ */
+export async function DELETE(
+  _request: Request,
+  context: RouteContext<"/api/workouts/[id]">
+) {
+  const { id } = await context.params;
+
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!isValidUuid(id)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const deleted = await deleteWorkoutForUser(id, user.id);
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return new NextResponse(null, { status: 204 });
 }

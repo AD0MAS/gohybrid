@@ -100,3 +100,22 @@ export async function updateWorkoutForUser(
 
   return updated ?? null;
 }
+
+/**
+ * Deletes a workout owned by `userId`, returning true if a row was
+ * deleted and false otherwise — whether because the id doesn't exist or
+ * because it belongs to a different user. The ownership check is part of
+ * the DELETE's WHERE clause itself, not a separate read followed by a
+ * write. Blocks and items cascade with the workout (ON DELETE CASCADE on
+ * their FKs); any workout_sessions referencing it have workout_id set to
+ * null (ON DELETE SET NULL) and keep their own snapshot fields, so
+ * training history survives the delete.
+ */
+export async function deleteWorkoutForUser(id: string, userId: string) {
+  const deleted = await db
+    .delete(workouts)
+    .where(and(eq(workouts.id, id), eq(workouts.userId, userId)))
+    .returning({ id: workouts.id });
+
+  return deleted.length > 0;
+}

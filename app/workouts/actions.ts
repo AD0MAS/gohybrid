@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { createWorkoutForUser, updateWorkoutForUser } from "@/lib/workouts";
+import {
+  createWorkoutForUser,
+  deleteWorkoutForUser,
+  updateWorkoutForUser,
+} from "@/lib/workouts";
 import { validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
@@ -74,4 +78,21 @@ export async function updateWorkout(id: string, formData: FormData) {
   revalidatePath("/workouts");
   revalidatePath(`/workouts/${id}`);
   redirect(`/workouts/${id}`);
+}
+
+/**
+ * Deletes one of the authenticated user's workouts, bound with the
+ * workout id via .bind(null, id) from the delete-confirmation modal.
+ * Ownership is enforced by deleteWorkoutForUser's WHERE clause, not by
+ * trusting that the caller only reaches this action through the detail
+ * page — a forged request naming another user's workout id deletes
+ * nothing. On success, revalidates /workouts and redirects there.
+ */
+export async function deleteWorkout(id: string) {
+  const user = await requireUser();
+
+  await deleteWorkoutForUser(id, user.id);
+
+  revalidatePath("/workouts");
+  redirect("/workouts");
 }

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
+import { deleteWorkout } from "../actions";
+import DeleteWorkoutModal from "./DeleteWorkoutModal";
 
 /**
  * Workout detail page: the workout's own fields, then each block (title,
@@ -33,15 +35,18 @@ export default async function WorkoutDetailPage(
     notFound();
   }
 
+  const deleteWorkoutWithId = deleteWorkout.bind(null, workout.id);
+
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <div className="flex gap-4">
+      <div className="flex items-center gap-4">
         <Link href="/workouts" className="text-sm underline">
           Back to workouts
         </Link>
         <Link href={`/workouts/${workout.id}/edit`} className="text-sm underline">
           Edit
         </Link>
+        <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
       </div>
 
       <div>
