@@ -1,6 +1,7 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { workouts } from "@/db/schema";
+import { workoutBlocks, workoutItems, workouts } from "@/db/schema";
+import type { ValidatedBuilderPayload } from "./workout-builder-validation";
 import type { ValidatedWorkoutInput } from "./workouts-validation";
 
 /**
@@ -118,6 +119,80 @@ export async function deleteWorkoutForUser(id: string, userId: string) {
     .returning({ id: workouts.id });
 
   return deleted.length > 0;
+}
+
+/**
+ * Creates a full workout — the workout row, its blocks, and each
+ * block's items — from an already-validated builder payload (see
+ * validateBuilderPayload in lib/workouts-validation.ts). sort_order for
+ * both blocks and items is assigned here from array position; the
+ * client never sends a sort_order, and client-side ids
+ * (crypto.randomUUID()) are never sent to the database, which generates
+ * its own. Everything runs inside a single db.transaction() so a
+ * failure partway through (e.g. a foreign-key violation on one item)
+ * rolls back the whole tree instead of leaving a partial workout
+ * behind. Returns the created workout row.
+ */
+export async function createFullWorkoutForUser(
+  userId: string,
+  payload: ValidatedBuilderPayload
+) {
+  return db.transaction(async (tx) => {
+    const [createdWorkout] = await tx
+      .insert(workouts)
+      .values({
+        userId,
+        title: payload.title,
+        description: payload.description,
+        primaryType: payload.primaryType,
+        difficulty: payload.difficulty,
+        estimatedDurationMinutes: payload.estimatedDurationMinutes,
+      })
+      .returning();
+
+    for (const [blockIndex, block] of payload.blocks.entries()) {
+      const [createdBlock] = await tx
+        .insert(workoutBlocks)
+        .values({
+          workoutId: createdWorkout.id,
+          title: block.title,
+          sortOrder: blockIndex,
+          blockType: block.blockType,
+          durationSeconds: block.durationSeconds,
+          rounds: block.rounds,
+          workSeconds: block.workSeconds,
+          restSeconds: block.restSeconds,
+          intervalSeconds: block.intervalSeconds,
+        })
+        .returning({ id: workoutBlocks.id });
+
+      if (block.items.length === 0) {
+        continue;
+      }
+
+      await tx.insert(workoutItems).values(
+        block.items.map((item, itemIndex) => ({
+          blockId: createdBlock.id,
+          sortOrder: itemIndex,
+          exerciseId: item.exerciseId,
+          customName: item.customName,
+          sets: item.sets,
+          volumeType: item.volumeType,
+          volumeValue:
+            item.volumeValue != null ? String(item.volumeValue) : null,
+          targetType: item.targetType,
+          targetValue:
+            item.targetValue != null ? String(item.targetValue) : null,
+          targetPreset: item.targetPreset,
+          weightKg: item.weightKg != null ? String(item.weightKg) : null,
+          restSeconds: item.restSeconds,
+          notes: item.notes,
+        }))
+      );
+    }
+
+    return createdWorkout;
+  });
 }
 
 /**
