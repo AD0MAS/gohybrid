@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   pgSchema,
   pgTable,
@@ -161,6 +162,38 @@ export const workoutItems = pgTable(
     ),
   ]
 );
+
+// Relations enable nested db.query reads (e.g. a workout with its blocks
+// and each block's items); they don't affect the generated SQL migrations.
+export const exercisesRelations = relations(exercises, ({ many }) => ({
+  items: many(workoutItems),
+}));
+
+export const workoutsRelations = relations(workouts, ({ many }) => ({
+  blocks: many(workoutBlocks),
+}));
+
+export const workoutBlocksRelations = relations(
+  workoutBlocks,
+  ({ one, many }) => ({
+    workout: one(workouts, {
+      fields: [workoutBlocks.workoutId],
+      references: [workouts.id],
+    }),
+    items: many(workoutItems),
+  })
+);
+
+export const workoutItemsRelations = relations(workoutItems, ({ one }) => ({
+  block: one(workoutBlocks, {
+    fields: [workoutItems.blockId],
+    references: [workoutBlocks.id],
+  }),
+  exercise: one(exercises, {
+    fields: [workoutItems.exerciseId],
+    references: [exercises.id],
+  }),
+}));
 
 export const workoutSessions = pgTable(
   "workout_sessions",

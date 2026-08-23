@@ -50,7 +50,9 @@ export default async function WorkoutsPage() {
               key={workout.id}
               className="rounded border border-gray-300 p-3"
             >
-              <p className="font-medium">{workout.title}</p>
+              <Link href={`/workouts/${workout.id}`} className="underline">
+                {workout.title}
+              </Link>
               <p className="text-sm text-gray-600">
                 {workout.primaryType} · {workout.difficulty}
               </p>
