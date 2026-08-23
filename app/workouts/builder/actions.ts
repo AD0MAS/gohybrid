@@ -11,7 +11,10 @@ import {
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
-import { createFullWorkoutForUser } from "@/lib/workouts";
+import {
+  createFullWorkoutForUser,
+  updateFullWorkoutForUser,
+} from "@/lib/workouts";
 import {
   validateBuilderPayload,
   type RawBuilderPayload,
@@ -48,4 +51,34 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
 
   revalidatePath("/workouts");
   redirect(`/workouts/${workout.id}`);
+}
+
+/**
+ * Persists edits made in the builder to an existing workout — replacing
+ * its blocks and items entirely (see updateFullWorkoutForUser) — for the
+ * authenticated user. Re-validates the payload with the same
+ * validateBuilderPayload used for immediate feedback and by
+ * createFullWorkout. Returns an error object on failure (including
+ * "not found", which covers both a missing workout and one owned by
+ * another user) so the Save button can display it. On success,
+ * revalidates /workouts and the workout's detail page, then redirects to
+ * the detail page.
+ */
+export async function updateFullWorkout(id: string, payload: RawBuilderPayload) {
+  const user = await requireUser();
+
+  const result = validateBuilderPayload(payload, ENUM_OPTIONS);
+  if (!result.success) {
+    return { error: result.error };
+  }
+
+  const workout = await updateFullWorkoutForUser(id, user.id, result.data);
+
+  if (!workout) {
+    return { error: "Workout not found." };
+  }
+
+  revalidatePath("/workouts");
+  revalidatePath(`/workouts/${id}`);
+  redirect(`/workouts/${id}`);
 }

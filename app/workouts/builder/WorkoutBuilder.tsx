@@ -2,7 +2,7 @@
 
 import { useReducer, useState } from "react";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
-import { createFullWorkout } from "./actions";
+import { createFullWorkout, updateFullWorkout } from "./actions";
 import BlockEditor from "./BlockEditor";
 import {
   builderReducer,
@@ -11,6 +11,7 @@ import {
   type BuilderState,
   type CatalogExercise,
   type Difficulty,
+  type LoadableWorkout,
   type PrimaryType,
   type TargetPreset,
   type TargetType,
@@ -43,19 +44,28 @@ type WorkoutBuilderProps = {
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
   exerciseCatalog: readonly CatalogExercise[];
+  /** When present, the builder starts pre-loaded from this workout (via
+   * the LOAD_WORKOUT reducer action) and Save edits it in place instead
+   * of creating a new one. */
+  initialWorkout?: LoadableWorkout;
+  /** The workout being edited. Required together with `initialWorkout` —
+   * both present means edit mode, both absent means create mode. */
+  workoutId?: string;
 };
 
 /**
  * Client-side workout builder: workout meta fields, then a list of
  * blocks with add/remove controls. The whole tree lives in useReducer
- * state until Save. Save runs validateBuilderPayload locally first, for
- * immediate feedback, then calls the createFullWorkout Server Action —
- * which re-validates server-side, since the client check is only a UX
- * convenience. Enum option lists are passed in as props from the
- * (Server Component) page rather than imported here, so this file never
- * bundles drizzle-orm into the client. This is the single "use client"
- * boundary for the builder; BlockEditor is a plain function component
- * rendered from here, not its own client boundary.
+ * state until Save. In create mode (no `initialWorkout`/`workoutId`),
+ * Save calls the createFullWorkout Server Action; in edit mode, it calls
+ * updateFullWorkout instead, which replaces the existing workout's whole
+ * tree. Either way, Save runs validateBuilderPayload locally first, for
+ * immediate feedback, then re-validates server-side, since the client
+ * check is only a UX convenience. Enum option lists are passed in as
+ * props from the (Server Component) page rather than imported here, so
+ * this file never bundles drizzle-orm into the client. This is the
+ * single "use client" boundary for the builder; BlockEditor is a plain
+ * function component rendered from here, not its own client boundary.
  */
 export default function WorkoutBuilder({
   primaryTypeOptions,
@@ -65,11 +75,19 @@ export default function WorkoutBuilder({
   targetTypeOptions,
   targetPresetOptions,
   exerciseCatalog,
+  initialWorkout,
+  workoutId,
 }: WorkoutBuilderProps) {
   const [state, dispatch] = useReducer(
     builderReducer,
-    undefined,
-    createInitialBuilderState
+    initialWorkout,
+    (workout) =>
+      workout
+        ? builderReducer(createInitialBuilderState(), {
+            type: "LOAD_WORKOUT",
+            workout,
+          })
+        : createInitialBuilderState()
   );
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -90,7 +108,9 @@ export default function WorkoutBuilder({
     }
 
     setSaveError(null);
-    const response = await createFullWorkout(payload);
+    const response = workoutId
+      ? await updateFullWorkout(workoutId, payload)
+      : await createFullWorkout(payload);
     if (response?.error) {
       setSaveError(response.error);
     }

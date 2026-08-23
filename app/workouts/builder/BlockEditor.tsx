@@ -46,8 +46,16 @@ export default function BlockEditor({
   targetPresetOptions,
   dispatch,
 }: BlockEditorProps) {
+  // Rounded rather than divided outright: a loaded workout's
+  // durationSeconds isn't guaranteed to be a multiple of 60 (e.g. seeded
+  // or API-written data), and this input is whole minutes only. Rounding
+  // only affects display — the underlying durationSeconds is left as-is
+  // in state unless this field is actually edited, which re-derives it
+  // as value * 60.
   const durationMinutes =
-    block.durationSeconds != null ? block.durationSeconds / 60 : "";
+    block.durationSeconds != null
+      ? Math.round(block.durationSeconds / 60)
+      : "";
 
   return (
     <fieldset className="flex flex-col gap-3 rounded border border-gray-300 p-3">

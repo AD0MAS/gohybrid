@@ -77,6 +77,54 @@ export type BuilderState = {
   blocks: BuilderBlock[];
 };
 
+/**
+ * Shape of one item as returned by getWorkoutForUser, restricted to the
+ * fields LOAD_WORKOUT reads. `volumeValue`/`targetValue`/`weightKg` are
+ * Drizzle `numeric` columns, which come back as strings (or null) rather
+ * than numbers.
+ */
+export type LoadableWorkoutItem = {
+  exerciseId: string | null;
+  customName: string | null;
+  notes: string | null;
+  sets: number;
+  volumeType: VolumeType | null;
+  volumeValue: string | null;
+  targetType: TargetType | null;
+  targetValue: string | null;
+  targetPreset: TargetPreset | null;
+  weightKg: string | null;
+  restSeconds: number | null;
+};
+
+/** Shape of one block as returned by getWorkoutForUser, with its items. */
+export type LoadableWorkoutBlock = {
+  title: string | null;
+  blockType: BlockType;
+  durationSeconds: number | null;
+  rounds: number | null;
+  workSeconds: number | null;
+  restSeconds: number | null;
+  intervalSeconds: number | null;
+  items: LoadableWorkoutItem[];
+};
+
+/**
+ * Shape of a workout-with-blocks-and-items as returned by
+ * getWorkoutForUser — the input LOAD_WORKOUT converts into BuilderState.
+ * Structurally compatible with (but not imported from) that function's
+ * return type, so this file keeps its zero-runtime-drizzle-import
+ * constraint.
+ */
+export type LoadableWorkout = {
+  title: string;
+  description: string | null;
+  primaryType: PrimaryType;
+  difficulty: Difficulty;
+  estimatedDurationMinutes: number | null;
+  blocks: LoadableWorkoutBlock[];
+};
+
 type BlockTimingField =
   | "durationSeconds"
   | "rounds"
@@ -204,6 +252,15 @@ type UpdateItemFieldAction =
       value: TargetPreset | "";
     };
 
+/**
+ * Replaces the entire builder state with one derived from an existing
+ * workout, for the edit builder's initial load. Every block and item gets
+ * a fresh crypto.randomUUID() client id — the database ids in `workout`
+ * are never carried into builder state (see reducer.ts module docs on
+ * block/item identity).
+ */
+type LoadWorkoutAction = { type: "LOAD_WORKOUT"; workout: LoadableWorkout };
+
 export type BuilderAction =
   | UpdateMetaFieldAction
   | AddBlockAction
@@ -211,7 +268,8 @@ export type BuilderAction =
   | UpdateBlockFieldAction
   | AddItemAction
   | RemoveItemAction
-  | UpdateItemFieldAction;
+  | UpdateItemFieldAction
+  | LoadWorkoutAction;
 
 /** Empty builder state for a brand-new workout. */
 export function createInitialBuilderState(): BuilderState {
@@ -239,6 +297,16 @@ function createBlock(): BuilderBlock {
     intervalSeconds: null,
     items: [],
   };
+}
+
+/** Converts a Drizzle `numeric` column's string (or null) to a number
+ * (or null), for loading a stored item into builder state. */
+function numericStringToNumberOrNull(value: string | null): number | null {
+  if (value === null) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 function createItem(): BuilderItem {
@@ -382,6 +450,41 @@ export function builderReducer(
             }),
           };
         }),
+      };
+
+    case "LOAD_WORKOUT":
+      return {
+        meta: {
+          title: action.workout.title,
+          description: action.workout.description ?? "",
+          primaryType: action.workout.primaryType,
+          difficulty: action.workout.difficulty,
+          estimatedDurationMinutes: action.workout.estimatedDurationMinutes,
+        },
+        blocks: action.workout.blocks.map((block) => ({
+          id: crypto.randomUUID(),
+          title: block.title ?? "",
+          blockType: block.blockType,
+          durationSeconds: block.durationSeconds,
+          rounds: block.rounds,
+          workSeconds: block.workSeconds,
+          restSeconds: block.restSeconds,
+          intervalSeconds: block.intervalSeconds,
+          items: block.items.map((item) => ({
+            id: crypto.randomUUID(),
+            exerciseId: item.exerciseId,
+            customName: item.customName,
+            sets: item.sets,
+            volumeType: item.volumeType ?? "",
+            volumeValue: numericStringToNumberOrNull(item.volumeValue),
+            targetType: item.targetType ?? "",
+            targetValue: numericStringToNumberOrNull(item.targetValue),
+            targetPreset: item.targetPreset ?? "",
+            weightKg: numericStringToNumberOrNull(item.weightKg),
+            restSeconds: item.restSeconds,
+            notes: item.notes ?? "",
+          })),
+        })),
       };
 
     default:
