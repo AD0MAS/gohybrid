@@ -1,33 +1,21 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { workouts } from "@/db/schema";
-import { createClient } from "@/utils/supabase/server";
-import { validateWorkoutInput } from "@/app/workouts/validation";
+import { getAuthenticatedUser } from "@/lib/auth";
+import { createWorkoutForUser, getWorkoutsForUser } from "@/lib/workouts";
+import { validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
  * GET /api/workouts
  * Returns the authenticated user's workouts, most recently created first.
- * Responds 401 if there is no authenticated user. Since RLS is disabled on
- * this database, the explicit `eq(workouts.userId, user.id)` filter below
- * is the only thing preventing one user from reading another user's
- * workouts — it must never be dropped from this query.
+ * Responds 401 if there is no authenticated user.
  */
 export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const userWorkouts = await db
-    .select()
-    .from(workouts)
-    .where(eq(workouts.userId, user.id))
-    .orderBy(desc(workouts.createdAt));
+  const userWorkouts = await getWorkoutsForUser(user.id);
 
   return NextResponse.json(userWorkouts);
 }
@@ -41,10 +29,7 @@ export async function GET() {
  * client cannot create a workout on another user's behalf.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -63,17 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  const [created] = await db
-    .insert(workouts)
-    .values({
-      userId: user.id,
-      title: result.data.title,
-      description: result.data.description,
-      primaryType: result.data.primaryType,
-      difficulty: result.data.difficulty,
-      estimatedDurationMinutes: result.data.estimatedDurationMinutes,
-    })
-    .returning();
+  const created = await createWorkoutForUser(user.id, result.data);
 
   return NextResponse.json(created, { status: 201 });
 }

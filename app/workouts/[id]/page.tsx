@@ -1,58 +1,33 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { db } from "@/db";
-import { createClient } from "@/utils/supabase/server";
-import { isValidUuid } from "@/app/workouts/validation";
+import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { getWorkoutForUser } from "@/lib/workouts";
+import { isValidUuid } from "@/lib/workouts-validation";
 
 /**
  * Workout detail page: the workout's own fields, then each block (title,
  * block_type, and whichever timing fields are set) with its items
- * underneath. Queries the database directly with Drizzle rather than
+ * underneath. Queries the database directly via lib/workouts rather than
  * fetching /api/workouts/[id] — same reasoning as the /workouts list: a
  * Server Component runs in the same process as the database layer, so a
  * self-fetch would only add a network round trip and a duplicate auth
  * check.
  *
- * Since RLS is disabled, the userId filter in the query is the only thing
- * preventing one user from viewing another user's workout. A missing id,
- * a malformed id, and an id belonging to another user all render the same
- * not-found page, so this page never confirms whether a given id exists.
+ * A missing id, a malformed id, and an id belonging to another user all
+ * render the same not-found page, so this page never confirms whether a
+ * given id exists.
  */
 export default async function WorkoutDetailPage(
   props: PageProps<"/workouts/[id]">
 ) {
   const { id } = await props.params;
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   if (!isValidUuid(id)) {
     notFound();
   }
 
-  const workout = await db.query.workouts.findFirst({
-    where: (workouts, { and, eq }) =>
-      and(eq(workouts.id, id), eq(workouts.userId, user.id)),
-    with: {
-      blocks: {
-        orderBy: (blocks, { asc }) => [asc(blocks.sortOrder)],
-        with: {
-          items: {
-            orderBy: (items, { asc }) => [asc(items.sortOrder)],
-            with: {
-              exercise: true,
-            },
-          },
-        },
-      },
-    },
-  });
+  const workout = await getWorkoutForUser(id, user.id);
 
   if (!workout) {
     notFound();

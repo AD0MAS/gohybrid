@@ -2,10 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
-import { workouts } from "@/db/schema";
-import { createClient } from "@/utils/supabase/server";
-import { validateWorkoutInput } from "./validation";
+import { requireUser } from "@/lib/auth";
+import { createWorkoutForUser } from "@/lib/workouts";
+import { validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
  * Creates a workout for the authenticated user from a /workouts/new form
@@ -15,14 +14,7 @@ import { validateWorkoutInput } from "./validation";
  * message attached as a query parameter so the page can display it.
  */
 export async function createWorkout(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   const result = validateWorkoutInput({
     title: formData.get("title"),
@@ -36,14 +28,7 @@ export async function createWorkout(formData: FormData) {
     redirect(`/workouts/new?error=${encodeURIComponent(result.error)}`);
   }
 
-  await db.insert(workouts).values({
-    userId: user.id,
-    title: result.data.title,
-    description: result.data.description,
-    primaryType: result.data.primaryType,
-    difficulty: result.data.difficulty,
-    estimatedDurationMinutes: result.data.estimatedDurationMinutes,
-  });
+  await createWorkoutForUser(user.id, result.data);
 
   revalidatePath("/workouts");
   redirect("/workouts");
