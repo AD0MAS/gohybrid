@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { scheduleWorkoutForUser } from "@/lib/scheduled-workouts";
+import { validateScheduleInput } from "@/lib/scheduled-workouts-validation";
 import {
   createWorkoutForUser,
   deleteWorkoutForUser,
@@ -76,4 +78,43 @@ export async function toggleFavorite(id: string) {
 
   revalidatePath("/workouts");
   revalidatePath(`/workouts/${id}`);
+}
+
+/**
+ * Schedules one of the authenticated user's workouts for a future date,
+ * from the workout detail page's Schedule control — bound with the
+ * workout id via .bind(null, workoutId). Uses the same
+ * validateScheduleInput rules as POST /api/scheduled-workouts, so the two
+ * never drift apart. Throws on invalid input or if the workout isn't
+ * found/owned, so ScheduleWorkoutForm can catch and display the error —
+ * same contract as toggleFavorite. Revalidates the workout detail page and
+ * /schedule on success, no redirect, since this is used inline on the
+ * detail page.
+ */
+export async function scheduleWorkout(workoutId: string, formData: FormData) {
+  const user = await requireUser();
+
+  const result = validateScheduleInput({
+    workoutId,
+    scheduledDate: formData.get("scheduledDate"),
+    notes: formData.get("notes"),
+  });
+
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+
+  const created = await scheduleWorkoutForUser(
+    user.id,
+    result.data.workoutId,
+    result.data.scheduledDate,
+    result.data.notes
+  );
+
+  if (!created) {
+    throw new Error("Workout not found.");
+  }
+
+  revalidatePath(`/workouts/${workoutId}`);
+  revalidatePath("/schedule");
 }

@@ -6,6 +6,7 @@ import {
   uuid,
   text,
   timestamp,
+  date,
   integer,
   boolean,
   numeric,
@@ -271,4 +272,56 @@ export const workoutSessions = pgTable(
       table.completedAt
     ),
   ]
+);
+
+// A planned occurrence of a workout on a calendar day. Points at its
+// workout_session via a nullable session_id rather than the other way
+// round — the plan owns the state, and workout_sessions stays an
+// independent record that knows nothing about scheduling. No status enum:
+// completed is derived from session_id IS NOT NULL, skipped is its own
+// boolean, and planned is neither — same reasoning as workout_sessions
+// having no status field (GOHYBRID_PLAN.md §5/§6).
+export const scheduledWorkouts = pgTable(
+  "scheduled_workouts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    workoutId: uuid("workout_id")
+      .notNull()
+      .references(() => workouts.id, { onDelete: "cascade" }),
+    // date, not timestamptz — a scheduled workout is a calendar day, not an
+    // instant. Storing it as timestamptz would mean midnight in the user's
+    // timezone could land on the previous UTC day.
+    scheduledDate: date("scheduled_date").notNull(),
+    sessionId: uuid("session_id").references(() => workoutSessions.id, {
+      onDelete: "set null",
+    }),
+    isSkipped: boolean("is_skipped").notNull().default(false),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("scheduled_workouts_user_id_scheduled_date_idx").on(
+      table.userId,
+      table.scheduledDate
+    ),
+  ]
+);
+
+export const scheduledWorkoutsRelations = relations(
+  scheduledWorkouts,
+  ({ one }) => ({
+    workout: one(workouts, {
+      fields: [scheduledWorkouts.workoutId],
+      references: [workouts.id],
+    }),
+    session: one(workoutSessions, {
+      fields: [scheduledWorkouts.sessionId],
+      references: [workoutSessions.id],
+    }),
+  })
 );

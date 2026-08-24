@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
-import { deleteWorkout, toggleFavorite } from "../actions";
+import { deleteWorkout, scheduleWorkout, toggleFavorite } from "../actions";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import DeleteWorkoutModal from "./DeleteWorkoutModal";
 import FavoriteToggle from "../FavoriteToggle";
+import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
 
 /**
  * Workout detail page: the workout's own fields, then each block (title,
@@ -88,6 +89,8 @@ export default async function WorkoutDetailPage(
           </div>
         )}
       </div>
+
+      <ScheduleWorkoutForm scheduleAction={scheduleWorkout.bind(null, workout.id)} />
 
       {workout.blocks.length === 0 ? (
         <p className="text-sm text-gray-600">

@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { workoutSessions, workouts } from "@/db/schema";
+import { linkTodaysScheduledWorkoutToSession } from "./scheduled-workouts";
 
 /**
  * Creates a workout_session recording that `userId` completed one of their
@@ -10,6 +11,13 @@ import { workoutSessions, workouts } from "@/db/schema";
  * keeps showing the workout as it was at completion time even if the
  * template is later edited or deleted. Returns null if the workout doesn't
  * exist or isn't owned by `userId`, in which case no session is created.
+ *
+ * If `userId` has a still-open scheduled_workouts entry for this workout
+ * dated today (see linkTodaysScheduledWorkoutToSession in
+ * lib/scheduled-workouts.ts), it's linked to the new session in the same
+ * transaction, so the plan shows as completed. If there is none — the
+ * common case, since most workouts are started unscheduled — this is a
+ * no-op and the session is created exactly as before.
  */
 export async function createSessionForWorkout(
   userId: string,
@@ -28,17 +36,26 @@ export async function createSessionForWorkout(
     return null;
   }
 
-  const [created] = await db
-    .insert(workoutSessions)
-    .values({
-      userId,
-      workoutId: workout.id,
-      workoutTitle: workout.title,
-      workoutPrimaryType: workout.primaryType,
-    })
-    .returning();
+  return db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(workoutSessions)
+      .values({
+        userId,
+        workoutId: workout.id,
+        workoutTitle: workout.title,
+        workoutPrimaryType: workout.primaryType,
+      })
+      .returning();
 
-  return created;
+    await linkTodaysScheduledWorkoutToSession(
+      userId,
+      workout.id,
+      created.id,
+      tx
+    );
+
+    return created;
+  });
 }
 
 /**
