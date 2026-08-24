@@ -47,6 +47,9 @@ export default async function WorkoutDetailPage(
         <Link href={`/workouts/${workout.id}/edit`} className="text-sm underline">
           Edit
         </Link>
+        <Link href={`/workouts/${workout.id}/start`} className="text-sm underline">
+          Start Workout
+        </Link>
         <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
       </div>
 
