@@ -15,6 +15,21 @@ const MONTH_NAMES = [
 
 const WEEKDAY_SHORT_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const MONTH_SHORT_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 /** Weekday initials, Monday first — for the week strip's day cells. */
 export const WEEKDAY_INITIALS = ["M", "T", "W", "T", "F", "S", "S"];
 
@@ -96,6 +111,15 @@ export function formatDayHeading(date: string): string {
 export function formatMonthYearHeading(date: string): string {
   const { year, month } = parseDateString(date);
   return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+/**
+ * Formats a YYYY-MM-DD string's month as a 3-letter abbreviation, e.g.
+ * "Sep" — the activity heatmap's compact month labels.
+ */
+export function formatMonthShort(date: string): string {
+  const { month } = parseDateString(date);
+  return MONTH_SHORT_NAMES[month - 1];
 }
 
 /**

@@ -39,6 +39,10 @@ export default async function Home(props: PageProps<"/">) {
           Upcoming
         </Link>
 
+        <Link href="/stats" className="underline">
+          Stats
+        </Link>
+
         <form action={signOut}>
           <button type="submit" className="rounded bg-black p-2 text-white">
             Log out
