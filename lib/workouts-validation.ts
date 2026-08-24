@@ -36,7 +36,7 @@ export function isValidUuid(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
-function isOneOf<T extends readonly string[]>(
+export function isOneOf<T extends readonly string[]>(
   value: unknown,
   allowed: T
 ): value is T[number] {

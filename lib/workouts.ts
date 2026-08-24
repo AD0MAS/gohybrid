@@ -2,6 +2,7 @@ import { and, eq, sql, TransactionRollbackError } from "drizzle-orm";
 import { db } from "@/db";
 import { workoutBlocks, workoutItems, workouts, workoutTags } from "@/db/schema";
 import type { ValidatedBuilderPayload } from "./workout-builder-validation";
+import type { WorkoutListFilters } from "./workouts-filters";
 import type { ValidatedWorkoutInput } from "./workouts-validation";
 
 /** The transaction handle db.transaction()'s callback receives — used to
@@ -17,10 +18,44 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * so every call site is forced to supply it explicitly. Since RLS is
  * disabled on this database, that filter is the only thing preventing one
  * user from reading another user's workouts; it must never be dropped.
+ *
+ * `filters` (see WorkoutListFilters in lib/workouts-filters.ts) is
+ * optional and every field within it is independently optional; only the
+ * conditions for fields actually present are added to the WHERE clause, so
+ * the query never fetches the full table and filters in application code.
+ * Different filter kinds combine with AND (e.g. difficulty + a tag both
+ * apply); `tagIds` itself combines with OR — a workout matches if it has
+ * ANY of the given tags, via a `workouts.id IN (SELECT workout_id FROM
+ * workout_tags WHERE tag_id IN (...))` subquery, since with eleven tags in
+ * the catalog requiring ALL of them would return nothing in most
+ * combinations.
  */
-export async function getWorkoutsForUser(userId: string) {
+export async function getWorkoutsForUser(
+  userId: string,
+  filters: WorkoutListFilters = {}
+) {
   return db.query.workouts.findMany({
-    where: (workouts, { eq }) => eq(workouts.userId, userId),
+    where: (workouts, { and, eq, ilike, inArray }) =>
+      and(
+        eq(workouts.userId, userId),
+        filters.q ? ilike(workouts.title, `%${filters.q}%`) : undefined,
+        filters.primaryType
+          ? eq(workouts.primaryType, filters.primaryType)
+          : undefined,
+        filters.difficulty
+          ? eq(workouts.difficulty, filters.difficulty)
+          : undefined,
+        filters.favoritesOnly ? eq(workouts.isFavorite, true) : undefined,
+        filters.tagIds && filters.tagIds.length > 0
+          ? inArray(
+              workouts.id,
+              db
+                .select({ workoutId: workoutTags.workoutId })
+                .from(workoutTags)
+                .where(inArray(workoutTags.tagId, filters.tagIds))
+            )
+          : undefined
+      ),
     orderBy: (workouts, { desc }) => [desc(workouts.createdAt)],
     with: {
       workoutTags: {
