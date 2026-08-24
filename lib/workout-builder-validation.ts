@@ -47,6 +47,7 @@ export type ValidatedBuilderPayload = {
   difficulty: (typeof workoutDifficultyEnum.enumValues)[number];
   estimatedDurationMinutes: number | null;
   blocks: ValidatedBuilderBlock[];
+  tagIds: string[];
 };
 
 export type BuilderValidationResult =
@@ -105,15 +106,50 @@ export type RawBuilderPayload = {
   difficulty?: unknown;
   estimatedDurationMinutes?: unknown;
   blocks?: unknown;
+  tagIds?: unknown;
 };
 
 function isOneOf(value: unknown, allowed: readonly string[]): value is string {
   return typeof value === "string" && allowed.includes(value);
 }
 
+// Duplicated from lib/workouts-validation.ts's isValidUuid rather than
+// imported from it — that module has a runtime import of db/schema.ts,
+// and this file must stay free of one (see the module comment above).
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Distinct from `null` (explicitly "not set") and any real parsed
  * value — signals "the caller provided something, but it's not valid". */
 const INVALID = Symbol("invalid");
+
+/**
+ * Validates the workout's selected tag ids. Like `exerciseId` on an item,
+ * a tag id is only checked for being a syntactically valid UUID here, not
+ * cross-checked against the tag catalog — an id that doesn't exist in
+ * `tags` is caught by the workout_tags foreign key at insert time instead.
+ * Duplicate ids are silently collapsed rather than rejected, since the
+ * multi-select UI can't produce them but a hand-built request could.
+ */
+function parseTagIds(value: unknown): string[] | typeof INVALID {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    return INVALID;
+  }
+
+  const tagIds: string[] = [];
+  for (const raw of value) {
+    if (typeof raw !== "string" || !UUID_REGEX.test(raw)) {
+      return INVALID;
+    }
+    if (!tagIds.includes(raw)) {
+      tagIds.push(raw);
+    }
+  }
+  return tagIds;
+}
 
 function parseOptionalEnumValue(
   value: unknown,
@@ -336,7 +372,9 @@ function parseBuilderBlock(
  * against saving an "empty" workout with no real content. A
  * duration-type volume satisfies this the same way any other volume
  * value does, since duration is represented as volumeType "duration"
- * plus volumeValue, not a separate field.
+ * plus volumeValue, not a separate field. tagIds defaults to an empty
+ * array when absent (tags are optional) and each entry must be a
+ * syntactically valid UUID, deduplicated rather than rejected.
  */
 export function validateBuilderPayload(
   input: RawBuilderPayload,
@@ -409,6 +447,11 @@ export function validateBuilderPayload(
     };
   }
 
+  const tagIds = parseTagIds(input.tagIds);
+  if (tagIds === INVALID) {
+    return { success: false, error: "One or more selected tags are invalid." };
+  }
+
   return {
     success: true,
     data: {
@@ -418,6 +461,7 @@ export function validateBuilderPayload(
       difficulty: difficulty as ValidatedBuilderPayload["difficulty"],
       estimatedDurationMinutes,
       blocks,
+      tagIds,
     },
   };
 }

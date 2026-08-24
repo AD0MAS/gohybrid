@@ -1,6 +1,6 @@
-import { and, desc, eq, sql, TransactionRollbackError } from "drizzle-orm";
+import { and, eq, sql, TransactionRollbackError } from "drizzle-orm";
 import { db } from "@/db";
-import { workoutBlocks, workoutItems, workouts } from "@/db/schema";
+import { workoutBlocks, workoutItems, workouts, workoutTags } from "@/db/schema";
 import type { ValidatedBuilderPayload } from "./workout-builder-validation";
 import type { ValidatedWorkoutInput } from "./workouts-validation";
 
@@ -10,26 +10,36 @@ import type { ValidatedWorkoutInput } from "./workouts-validation";
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
- * Lists a user's workouts, most recently created first. `userId` is a
- * required parameter — not read from a session internally — so every
- * call site is forced to supply it explicitly. Since RLS is disabled on
- * this database, that filter is the only thing preventing one user from
- * reading another user's workouts; it must never be dropped.
+ * Lists a user's workouts, most recently created first, each with its
+ * tags nested (joined through workout_tags — see getWorkoutForUser's
+ * comment on why that's a join table and not an array column).
+ * `userId` is a required parameter — not read from a session internally —
+ * so every call site is forced to supply it explicitly. Since RLS is
+ * disabled on this database, that filter is the only thing preventing one
+ * user from reading another user's workouts; it must never be dropped.
  */
 export async function getWorkoutsForUser(userId: string) {
-  return db
-    .select()
-    .from(workouts)
-    .where(eq(workouts.userId, userId))
-    .orderBy(desc(workouts.createdAt));
+  return db.query.workouts.findMany({
+    where: (workouts, { eq }) => eq(workouts.userId, userId),
+    orderBy: (workouts, { desc }) => [desc(workouts.createdAt)],
+    with: {
+      workoutTags: {
+        with: { tag: true },
+      },
+    },
+  });
 }
 
 /**
- * Fetches a single workout owned by `userId`, with its blocks and items
- * nested — blocks ordered by sort_order, items within each block ordered
- * by sort_order, each item's linked exercise included. Returns null both
- * when the id doesn't exist and when it belongs to a different user, so
- * callers can't distinguish "not found" from "not yours".
+ * Fetches a single workout owned by `userId`, with its blocks, items, and
+ * tags nested — blocks ordered by sort_order, items within each block
+ * ordered by sort_order, each item's linked exercise included. Tags come
+ * back as `workoutTags`, an array of the workout_tags join rows with each
+ * row's `tag` nested; workout_tags exists as a table (rather than an array
+ * column on workouts) specifically so a tag deletion can cascade instead
+ * of leaving a dangling id behind. Returns null both when the id doesn't
+ * exist and when it belongs to a different user, so callers can't
+ * distinguish "not found" from "not yours".
  */
 export async function getWorkoutForUser(id: string, userId: string) {
   const workout = await db.query.workouts.findFirst({
@@ -46,6 +56,9 @@ export async function getWorkoutForUser(id: string, userId: string) {
             },
           },
         },
+      },
+      workoutTags: {
+        with: { tag: true },
       },
     },
   });
@@ -196,13 +209,34 @@ async function insertBlocksAndItems(
 }
 
 /**
- * Creates a full workout — the workout row, its blocks, and each
- * block's items — from an already-validated builder payload (see
- * validateBuilderPayload in lib/workout-builder-validation.ts). Everything
- * runs inside a single db.transaction() so a failure partway through
- * (e.g. a foreign-key violation on one item) rolls back the whole tree
- * instead of leaving a partial workout behind. Returns the created
- * workout row.
+ * Inserts workout_tags rows linking `workoutId` to `tagIds`, inside an
+ * existing transaction. A no-op for an empty array. Shared by
+ * createFullWorkoutForUser (fresh workout) and updateFullWorkoutForUser
+ * (after deleting the workout's existing tag links), mirroring how
+ * insertBlocksAndItems is shared between the two for the block/item tree.
+ */
+async function insertWorkoutTagLinks(
+  tx: Transaction,
+  workoutId: string,
+  tagIds: ValidatedBuilderPayload["tagIds"]
+) {
+  if (tagIds.length === 0) {
+    return;
+  }
+
+  await tx
+    .insert(workoutTags)
+    .values(tagIds.map((tagId) => ({ workoutId, tagId })));
+}
+
+/**
+ * Creates a full workout — the workout row, its blocks, each block's
+ * items, and its tag links — from an already-validated builder payload
+ * (see validateBuilderPayload in lib/workout-builder-validation.ts).
+ * Everything runs inside a single db.transaction() so a failure partway
+ * through (e.g. a foreign-key violation on one item, or on an unknown tag
+ * id) rolls back the whole tree instead of leaving a partial workout
+ * behind. Returns the created workout row.
  */
 export async function createFullWorkoutForUser(
   userId: string,
@@ -222,6 +256,7 @@ export async function createFullWorkoutForUser(
       .returning();
 
     await insertBlocksAndItems(tx, createdWorkout.id, payload.blocks);
+    await insertWorkoutTagLinks(tx, createdWorkout.id, payload.tagIds);
 
     return createdWorkout;
   });
@@ -229,14 +264,16 @@ export async function createFullWorkoutForUser(
 
 /**
  * Replaces a full workout owned by `userId` — its own fields, plus its
- * entire block/item tree — from an already-validated builder payload.
- * Blocks and items have no identity that anything else references
- * (workout_sessions references workouts, not blocks — see
+ * entire block/item tree and its tag links — from an already-validated
+ * builder payload. Blocks and items have no identity that anything else
+ * references (workout_sessions references workouts, not blocks — see
  * GOHYBRID_PLAN.md §6), so rather than diffing the existing tree against
  * the new one, every existing block is deleted (items cascade via their
  * block_id FK) and the submitted tree is re-inserted with sort_order from
  * array position, exactly as createFullWorkoutForUser does for a new
- * workout.
+ * workout. Tag links are replaced the same way: every existing
+ * workout_tags row for this workout is deleted and the submitted tag ids
+ * are re-inserted, rather than diffed.
  *
  * The workout row's own UPDATE has the ownership check
  * (`WHERE id = ... AND user_id = ...`) built into its WHERE clause. If
@@ -245,8 +282,8 @@ export async function createFullWorkoutForUser(
  * function returns null; the caller can't tell those two cases apart,
  * matching updateWorkoutForUser's contract. Everything else runs in the
  * same transaction, so a failure at any point (including the ownership
- * check) leaves the original workout, blocks, and items completely
- * unchanged.
+ * check) leaves the original workout, blocks, items, and tag links
+ * completely unchanged.
  */
 export async function updateFullWorkoutForUser(
   id: string,
@@ -273,6 +310,9 @@ export async function updateFullWorkoutForUser(
 
       await tx.delete(workoutBlocks).where(eq(workoutBlocks.workoutId, id));
       await insertBlocksAndItems(tx, id, payload.blocks);
+
+      await tx.delete(workoutTags).where(eq(workoutTags.workoutId, id));
+      await insertWorkoutTagLinks(tx, id, payload.tagIds);
 
       return updatedWorkout;
     });

@@ -1,6 +1,7 @@
 import type {
   blockTypeEnum,
   exercises,
+  tags,
   targetPresetEnum,
   targetTypeEnum,
   volumeTypeEnum,
@@ -19,6 +20,7 @@ export type VolumeType = (typeof volumeTypeEnum.enumValues)[number];
 export type TargetType = (typeof targetTypeEnum.enumValues)[number];
 export type TargetPreset = (typeof targetPresetEnum.enumValues)[number];
 export type CatalogExercise = typeof exercises.$inferSelect;
+export type CatalogTag = typeof tags.$inferSelect;
 
 export type WorkoutMeta = {
   title: string;
@@ -28,6 +30,7 @@ export type WorkoutMeta = {
   primaryType: PrimaryType | "";
   difficulty: Difficulty | "";
   estimatedDurationMinutes: number | null;
+  tagIds: string[];
 };
 
 /**
@@ -109,8 +112,15 @@ export type LoadableWorkoutBlock = {
   items: LoadableWorkoutItem[];
 };
 
+/** Shape of one workout_tags join row as returned by getWorkoutForUser —
+ * only the field LOAD_WORKOUT reads; the nested `tag` object it also
+ * carries is ignored here. */
+export type LoadableWorkoutTagLink = {
+  tagId: string;
+};
+
 /**
- * Shape of a workout-with-blocks-and-items as returned by
+ * Shape of a workout-with-blocks-items-and-tags as returned by
  * getWorkoutForUser — the input LOAD_WORKOUT converts into BuilderState.
  * Structurally compatible with (but not imported from) that function's
  * return type, so this file keeps its zero-runtime-drizzle-import
@@ -123,6 +133,7 @@ export type LoadableWorkout = {
   difficulty: Difficulty;
   estimatedDurationMinutes: number | null;
   blocks: LoadableWorkoutBlock[];
+  workoutTags: LoadableWorkoutTagLink[];
 };
 
 type BlockTimingField =
@@ -261,6 +272,12 @@ type UpdateItemFieldAction =
  */
 type LoadWorkoutAction = { type: "LOAD_WORKOUT"; workout: LoadableWorkout };
 
+/** Toggles one tag on the workout: adds it to meta.tagIds if absent,
+ * removes it if present. Tag ids need no separate identity handling like
+ * block/item ids do — they're the database's own tag ids, since the tag
+ * catalog is fetched (not created) by the builder. */
+type ToggleTagAction = { type: "TOGGLE_TAG"; tagId: string };
+
 export type BuilderAction =
   | UpdateMetaFieldAction
   | AddBlockAction
@@ -269,7 +286,8 @@ export type BuilderAction =
   | AddItemAction
   | RemoveItemAction
   | UpdateItemFieldAction
-  | LoadWorkoutAction;
+  | LoadWorkoutAction
+  | ToggleTagAction;
 
 /** Empty builder state for a brand-new workout. */
 export function createInitialBuilderState(): BuilderState {
@@ -280,6 +298,7 @@ export function createInitialBuilderState(): BuilderState {
       primaryType: "",
       difficulty: "",
       estimatedDurationMinutes: null,
+      tagIds: [],
     },
     blocks: [],
   };
@@ -340,6 +359,17 @@ export function builderReducer(
       return {
         ...state,
         meta: { ...state.meta, [action.field]: action.value },
+      };
+
+    case "TOGGLE_TAG":
+      return {
+        ...state,
+        meta: {
+          ...state.meta,
+          tagIds: state.meta.tagIds.includes(action.tagId)
+            ? state.meta.tagIds.filter((tagId) => tagId !== action.tagId)
+            : [...state.meta.tagIds, action.tagId],
+        },
       };
 
     case "ADD_BLOCK":
@@ -460,6 +490,7 @@ export function builderReducer(
           primaryType: action.workout.primaryType,
           difficulty: action.workout.difficulty,
           estimatedDurationMinutes: action.workout.estimatedDurationMinutes,
+          tagIds: action.workout.workoutTags.map((link) => link.tagId),
         },
         blocks: action.workout.blocks.map((block) => ({
           id: crypto.randomUUID(),

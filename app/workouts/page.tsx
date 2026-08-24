@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { getWorkoutsForUser } from "@/lib/workouts";
 import { toggleFavorite } from "./actions";
 import FavoriteToggle from "./FavoriteToggle";
+import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 /**
  * Lists the authenticated user's workouts: title, primary type, difficulty.
@@ -46,6 +47,18 @@ export default async function WorkoutsPage() {
               <p className="text-sm text-gray-600">
                 {workout.primaryType} · {workout.difficulty}
               </p>
+              {workout.workoutTags.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {workout.workoutTags.map(({ tag }) => (
+                    <span
+                      key={tag.id}
+                      className={`rounded-full border px-2 py-0.5 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>

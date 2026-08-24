@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import { deleteWorkout, toggleFavorite } from "../actions";
+import { TAG_COLOR_CLASSES } from "../tag-colors";
 import DeleteWorkoutModal from "./DeleteWorkoutModal";
 import FavoriteToggle from "../FavoriteToggle";
 
@@ -74,6 +75,18 @@ export default async function WorkoutDetailPage(
             .filter(Boolean)
             .join(" · ")}
         </p>
+        {workout.workoutTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {workout.workoutTags.map(({ tag }) => (
+              <span
+                key={tag.id}
+                className={`rounded-full border px-3 py-1 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {workout.blocks.length === 0 ? (

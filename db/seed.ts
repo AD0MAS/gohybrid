@@ -6,6 +6,11 @@ type ExerciseSeed = {
   category: "exercise" | "run" | "rest";
 };
 
+type TagSeed = {
+  name: string;
+  color: "red" | "orange" | "green" | "blue" | "purple" | "gray";
+};
+
 // Equipment strings are reused deliberately across exercises that share the
 // same piece of kit — they double as the equipment tags on Workout Detail.
 const EXERCISES: ExerciseSeed[] = [
@@ -71,17 +76,43 @@ const EXERCISES: ExerciseSeed[] = [
   { name: "Ring Rows", equipment: "Rings", category: "exercise" },
 ];
 
+// Colours are grouped by what the tag means, not assigned one-per-tag:
+// orange for tempo/high-output work, red for intensity/testing, green for
+// easy/rest, purple for skill, blue for aerobic base, gray for location
+// context (which carries no intensity meaning at all).
+const TAGS: TagSeed[] = [
+  { name: "Endurance", color: "blue" },
+  { name: "Speed", color: "orange" },
+  { name: "Intervals", color: "orange" },
+  { name: "Power", color: "red" },
+  { name: "Recovery", color: "green" },
+  { name: "Technique", color: "purple" },
+  { name: "Race Prep", color: "red" },
+  { name: "Deload", color: "green" },
+  { name: "Benchmark", color: "red" },
+  { name: "Home", color: "gray" },
+  { name: "Gym", color: "gray" },
+];
+
 async function main() {
   const { db } = await import("./index");
-  const { exercises } = await import("./schema");
+  const { exercises, tags } = await import("./schema");
 
-  const inserted = await db
+  const insertedExercises = await db
     .insert(exercises)
     .values(EXERCISES)
     .onConflictDoNothing()
     .returning({ id: exercises.id });
 
-  console.log(`Inserted ${inserted.length} exercise(s).`);
+  console.log(`Inserted ${insertedExercises.length} exercise(s).`);
+
+  const insertedTags = await db
+    .insert(tags)
+    .values(TAGS)
+    .onConflictDoNothing()
+    .returning({ id: tags.id });
+
+  console.log(`Inserted ${insertedTags.length} tag(s).`);
   process.exit(0);
 }
 

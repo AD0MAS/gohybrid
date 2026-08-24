@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
+import { getTagCatalog } from "@/lib/tags";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import WorkoutBuilder from "../../builder/WorkoutBuilder";
@@ -33,9 +34,10 @@ export default async function EditWorkoutPage(
     notFound();
   }
 
-  const [workout, exerciseCatalog] = await Promise.all([
+  const [workout, exerciseCatalog, tagCatalog] = await Promise.all([
     getWorkoutForUser(id, user.id),
     getExerciseCatalog(),
+    getTagCatalog(),
   ]);
 
   if (!workout) {
@@ -58,6 +60,7 @@ export default async function EditWorkoutPage(
         targetTypeOptions={targetTypeEnum.enumValues}
         targetPresetOptions={targetPresetEnum.enumValues}
         exerciseCatalog={exerciseCatalog}
+        tagCatalog={tagCatalog}
         initialWorkout={workout}
         workoutId={workout.id}
       />

@@ -2,6 +2,7 @@
 
 import { useReducer, useState } from "react";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
+import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
 import BlockEditor from "./BlockEditor";
 import {
@@ -10,6 +11,7 @@ import {
   type BlockType,
   type BuilderState,
   type CatalogExercise,
+  type CatalogTag,
   type Difficulty,
   type LoadableWorkout,
   type PrimaryType,
@@ -33,6 +35,7 @@ function toBuilderPayload(state: BuilderState) {
     difficulty: state.meta.difficulty,
     estimatedDurationMinutes: state.meta.estimatedDurationMinutes,
     blocks: state.blocks,
+    tagIds: state.meta.tagIds,
   };
 }
 
@@ -44,6 +47,7 @@ type WorkoutBuilderProps = {
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
   exerciseCatalog: readonly CatalogExercise[];
+  tagCatalog: readonly CatalogTag[];
   /** When present, the builder starts pre-loaded from this workout (via
    * the LOAD_WORKOUT reducer action) and Save edits it in place instead
    * of creating a new one. */
@@ -54,9 +58,10 @@ type WorkoutBuilderProps = {
 };
 
 /**
- * Client-side workout builder: workout meta fields, then a list of
- * blocks with add/remove controls. The whole tree lives in useReducer
- * state until Save. In create mode (no `initialWorkout`/`workoutId`),
+ * Client-side workout builder: workout meta fields (including a tag
+ * multi-select over the tag catalog), then a list of blocks with
+ * add/remove controls. The whole tree lives in useReducer state until
+ * Save. In create mode (no `initialWorkout`/`workoutId`),
  * Save calls the createFullWorkout Server Action; in edit mode, it calls
  * updateFullWorkout instead, which replaces the existing workout's whole
  * tree. Either way, Save runs validateBuilderPayload locally first, for
@@ -75,6 +80,7 @@ export default function WorkoutBuilder({
   targetTypeOptions,
   targetPresetOptions,
   exerciseCatalog,
+  tagCatalog,
   initialWorkout,
   workoutId,
 }: WorkoutBuilderProps) {
@@ -220,6 +226,36 @@ export default function WorkoutBuilder({
             className="rounded border border-gray-300 p-2"
           />
         </label>
+
+        <div className="flex flex-col gap-1 text-sm">
+          Tags
+          <div className="flex flex-wrap gap-2">
+            {tagCatalog.length === 0 ? (
+              <p className="text-sm text-gray-600">No tags available.</p>
+            ) : (
+              tagCatalog.map((tag) => {
+                const selected = state.meta.tagIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() =>
+                      dispatch({ type: "TOGGLE_TAG", tagId: tag.id })
+                    }
+                    className={`rounded-full border px-3 py-1 text-xs ${
+                      selected
+                        ? TAG_COLOR_CLASSES[tag.color]
+                        : "border-gray-300 text-gray-600"
+                    }`}
+                  >
+                    {tag.name}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-4">

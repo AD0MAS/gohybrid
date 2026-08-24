@@ -10,6 +10,7 @@ import {
   boolean,
   numeric,
   index,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 // Not managed by drizzle-kit (schemaFilter is ["public"]) — declared only
@@ -71,11 +72,31 @@ export const targetPresetEnum = pgEnum("target_preset", [
   "recovery",
 ]);
 
+export const tagColorEnum = pgEnum("tag_color", [
+  "red",
+  "orange",
+  "green",
+  "blue",
+  "purple",
+  "gray",
+]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
   equipment: text("equipment"),
   category: exerciseCategoryEnum("category").notNull().default("exercise"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+// System-wide catalog, not user-created — same shape as exercises. No
+// user_id column; add one only if per-user tags become a real requirement.
+export const tags = pgTable("tags", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  color: tagColorEnum("color").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -108,6 +129,22 @@ export const workouts = pgTable(
       table.primaryType
     ),
   ]
+);
+
+// Many-to-many join table, not a Postgres array column on workouts — an
+// array can't carry a foreign key, so deleting a tag would leave dangling
+// ids behind instead of cascading.
+export const workoutTags = pgTable(
+  "workout_tags",
+  {
+    workoutId: uuid("workout_id")
+      .notNull()
+      .references(() => workouts.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => tags.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.workoutId, table.tagId] })]
 );
 
 export const workoutBlocks = pgTable(
@@ -172,6 +209,22 @@ export const exercisesRelations = relations(exercises, ({ many }) => ({
 
 export const workoutsRelations = relations(workouts, ({ many }) => ({
   blocks: many(workoutBlocks),
+  workoutTags: many(workoutTags),
+}));
+
+export const tagsRelations = relations(tags, ({ many }) => ({
+  workoutTags: many(workoutTags),
+}));
+
+export const workoutTagsRelations = relations(workoutTags, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [workoutTags.workoutId],
+    references: [workouts.id],
+  }),
+  tag: one(tags, {
+    fields: [workoutTags.tagId],
+    references: [tags.id],
+  }),
 }));
 
 export const workoutBlocksRelations = relations(
