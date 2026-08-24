@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { getWorkoutForUser } from "@/lib/workouts";
+import { finishWorkout } from "./actions";
 
 type Workout = NonNullable<Awaited<ReturnType<typeof getWorkoutForUser>>>;
 type Item = Workout["blocks"][number]["items"][number];
@@ -67,6 +69,10 @@ function formatItemDetails(item: Item): string[] {
 export default function StartWorkoutClient({ workout }: StartWorkoutClientProps) {
   const [checkedItemIds, setCheckedItemIds] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
+  const [isFinishing, startFinishing] = useTransition();
+  const router = useRouter();
   const updatedAtIso = workout.updatedAt.toISOString();
 
   // localStorage isn't available during server rendering, so the saved
@@ -129,6 +135,44 @@ export default function StartWorkoutClient({ workout }: StartWorkoutClientProps)
       }
       return next;
     });
+  }
+
+  /**
+   * Creates the workout_session, then clears this workout's saved
+   * localStorage progress and redirects to Training History. The clear has
+   * to happen client-side after the action resolves — rather than inside
+   * finishWorkout itself, which could redirect server-side instead — since
+   * localStorage doesn't exist on the server.
+   */
+  function finish() {
+    setFinishError(null);
+    startFinishing(async () => {
+      try {
+        await finishWorkout(workout.id);
+        try {
+          window.localStorage.removeItem(storageKey(workout.id));
+        } catch {
+          // Inaccessible storage — the session was still created; nothing
+          // to clean up here.
+        }
+        router.push("/history");
+      } catch {
+        setFinishError(
+          "Couldn't finish this workout. It may have been deleted."
+        );
+      }
+    });
+  }
+
+  // Per the product decision, only interrupt with a confirmation when the
+  // checklist is incomplete; finishing a fully-checked workout needs no
+  // prompt.
+  function handleFinishClick() {
+    if (checkedItemIds.size < totalItems) {
+      setShowConfirm(true);
+    } else {
+      finish();
+    }
   }
 
   return (
@@ -218,12 +262,48 @@ export default function StartWorkoutClient({ workout }: StartWorkoutClientProps)
         </ul>
       )}
 
+      {finishError && <p className="text-sm text-red-700">{finishError}</p>}
+
       <button
         type="button"
-        className="rounded bg-black px-4 py-2 text-sm font-medium text-white"
+        onClick={handleFinishClick}
+        disabled={isFinishing}
+        className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
       >
-        Finish Workout
+        {isFinishing ? "Finishing…" : "Finish Workout"}
       </button>
+
+      {showConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-4">
+            <p className="text-sm">
+              {checkedItemIds.size} / {totalItems} items are checked. Finish
+              anyway?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="text-sm underline"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  finish();
+                }}
+                className="rounded bg-black px-3 py-2 text-sm text-white"
+              >
+                Finish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

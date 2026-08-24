@@ -21,6 +21,10 @@ export default async function Home() {
         Workouts
       </Link>
 
+      <Link href="/history" className="underline">
+        Training History
+      </Link>
+
       <form action={signOut}>
         <button type="submit" className="rounded bg-black p-2 text-white">
           Log out
