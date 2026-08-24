@@ -11,8 +11,10 @@ const PUBLIC_PATHS = ["/login", "/register"];
  * /register, and API routes. API routes are exempt from the redirect
  * because a caller there expects a JSON 401 from the Route Handler, not an
  * HTML redirect — each Route Handler is responsible for its own auth
- * check. Intended to be called from the root middleware/proxy on every
- * matched request.
+ * check. Also redirects the other way: a request that already has a
+ * session but targets /login or /register is sent to / instead, so a
+ * logged-in user can't land on an empty auth form. Intended to be called
+ * from the root middleware/proxy on every matched request.
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -53,6 +55,12 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublicPath && !isApiPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (user && isPublicPath) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
