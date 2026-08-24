@@ -22,6 +22,10 @@ export default async function Home(props: PageProps<"/">) {
 
       <WeekStrip userId={user.id} searchParams={searchParams} />
 
+      <Link href="/calendar" className="self-end text-sm underline">
+        Full calendar
+      </Link>
+
       <div className="flex flex-col gap-4">
         <Link href="/workouts" className="underline">
           Workouts

@@ -21,6 +21,7 @@ export type RawScheduleInput = {
 };
 
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
 
 /**
@@ -32,6 +33,14 @@ const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
  */
 export function isValidDateString(value: unknown): value is string {
   return typeof value === "string" && DATE_REGEX.test(value);
+}
+
+/**
+ * Checks whether a value is a syntactically valid YYYY-MM month string —
+ * the /calendar page's `month` search param shape.
+ */
+export function isValidMonthString(value: unknown): value is string {
+  return typeof value === "string" && MONTH_REGEX.test(value);
 }
 
 /**

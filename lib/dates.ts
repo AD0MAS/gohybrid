@@ -33,6 +33,16 @@ function parseDateString(date: string): {
 }
 
 /**
+ * Splits a YYYY-MM string into its numeric parts. No validation — callers
+ * only ever pass strings that already passed isValidMonthString or were
+ * derived from getMonthString.
+ */
+function parseMonthString(month: string): { year: number; month: number } {
+  const [year, m] = month.split("-").map(Number);
+  return { year, month: m };
+}
+
+/**
  * Adds `days` (negative to subtract) to a YYYY-MM-DD string, returning a new
  * YYYY-MM-DD string. Built entirely on Date.UTC and the getUTC* accessors —
  * never the local-timezone-sensitive `new Date(string)` + getDate()/getDay()
@@ -86,4 +96,55 @@ export function formatDayHeading(date: string): string {
 export function formatMonthYearHeading(date: string): string {
   const { year, month } = parseDateString(date);
   return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+/**
+ * Whole days from `from` to `to` (both YYYY-MM-DD), negative if `to` is
+ * earlier. Built on Date.UTC, same as addDays, so the result never depends
+ * on the server's local timezone or on DST — there is no DST in UTC, so a
+ * millisecond subtraction always lands on a whole number of days here.
+ */
+export function diffInDays(from: string, to: string): number {
+  const a = parseDateString(from);
+  const b = parseDateString(to);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return (
+    (Date.UTC(b.year, b.month - 1, b.day) -
+      Date.UTC(a.year, a.month - 1, a.day)) /
+    msPerDay
+  );
+}
+
+/** Extracts the YYYY-MM prefix from a YYYY-MM-DD date string. */
+export function getMonthString(date: string): string {
+  return date.slice(0, 7);
+}
+
+/** The first day of `month` (YYYY-MM) as a YYYY-MM-DD string. */
+export function getFirstDayOfMonth(month: string): string {
+  return `${month}-01`;
+}
+
+/**
+ * Number of days in `month` (YYYY-MM), leap years included. Derived from
+ * asking for day 0 of the following month — Date.UTC's day argument accepts
+ * 0 to mean "the day before the 1st of this month," which is the last day
+ * of `month`.
+ */
+export function getDaysInMonth(month: string): number {
+  const { year, month: m } = parseMonthString(month);
+  return new Date(Date.UTC(year, m, 0)).getUTCDate();
+}
+
+/**
+ * Adds `months` (negative to subtract) to a YYYY-MM string, returning a new
+ * YYYY-MM string. Same Date.UTC-based approach as addDays — year rollover
+ * (December → January and back) falls out of the arithmetic for free.
+ */
+export function addMonths(month: string, months: number): string {
+  const { year, month: m } = parseMonthString(month);
+  const result = new Date(Date.UTC(year, m - 1 + months, 1));
+  const y = result.getUTCFullYear();
+  const mm = String(result.getUTCMonth() + 1).padStart(2, "0");
+  return `${y}-${mm}`;
 }
