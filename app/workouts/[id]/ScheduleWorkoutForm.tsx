@@ -8,7 +8,7 @@ type ScheduleWorkoutFormProps = {
 
 /**
  * "Schedule this workout" control on the workout detail page: a date
- * picker plus optional notes. The workout id is already baked into
+ * picker plus optional time and notes. The workout id is already baked into
  * `scheduleAction` via .bind(null, id) from the (Server Component) page,
  * mirroring FavoriteToggle and DeleteWorkoutModal — the client boundary is
  * limited to the form's own pending/error/success state.
@@ -48,6 +48,15 @@ export default function ScheduleWorkoutForm({
           type="date"
           name="scheduledDate"
           required
+          className="rounded border border-gray-300 p-2"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        Time (optional)
+        <input
+          type="time"
+          name="scheduledTime"
           className="rounded border border-gray-300 p-2"
         />
       </label>

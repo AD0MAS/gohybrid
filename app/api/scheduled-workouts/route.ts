@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     user.id,
     result.data.workoutId,
     result.data.scheduledDate,
+    result.data.scheduledTime,
     result.data.notes
   );
 

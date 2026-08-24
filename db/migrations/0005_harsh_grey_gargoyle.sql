@@ -1,0 +1,1 @@
+ALTER TABLE "scheduled_workouts" ADD COLUMN "scheduled_time" time;

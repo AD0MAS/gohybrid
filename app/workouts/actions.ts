@@ -97,6 +97,7 @@ export async function scheduleWorkout(workoutId: string, formData: FormData) {
   const result = validateScheduleInput({
     workoutId,
     scheduledDate: formData.get("scheduledDate"),
+    scheduledTime: formData.get("scheduledTime"),
     notes: formData.get("notes"),
   });
 
@@ -108,6 +109,7 @@ export async function scheduleWorkout(workoutId: string, formData: FormData) {
     user.id,
     result.data.workoutId,
     result.data.scheduledDate,
+    result.data.scheduledTime,
     result.data.notes
   );
 
