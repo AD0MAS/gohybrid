@@ -144,6 +144,40 @@ export function getMonthString(date: string): string {
   return date.slice(0, 7);
 }
 
+/**
+ * Formats a YYYY-MM-DD string as e.g. "24 Aug" — the weekly stats chart's
+ * compact x-axis labels.
+ */
+export function formatDayMonthShort(date: string): string {
+  return `${getDayNumber(date)} ${formatMonthShort(date)}`;
+}
+
+/**
+ * Monday-anchored week starts ending with the week containing `today`,
+ * oldest first, length `count` — the weekly stats chart's x-axis and the
+ * bucket keys for getWeeklySessionCountsForUser. Callers zero-fill any
+ * bucket absent from that query's result, the same "absence means zero"
+ * convention as the activity heatmap.
+ */
+export function getWeekStartsEndingAt(today: string, count: number): string[] {
+  const lastMonday = getMondayOfWeek(today);
+  return Array.from({ length: count }, (_, i) =>
+    addDays(lastMonday, -(count - 1 - i) * 7)
+  );
+}
+
+/**
+ * YYYY-MM month strings ending with the month containing `today`, oldest
+ * first, length `count` — same role as getWeekStartsEndingAt, for
+ * getMonthlySessionCountsForUser.
+ */
+export function getMonthsEndingAt(today: string, count: number): string[] {
+  const currentMonth = getMonthString(today);
+  return Array.from({ length: count }, (_, i) =>
+    addMonths(currentMonth, -(count - 1 - i))
+  );
+}
+
 /** The first day of `month` (YYYY-MM) as a YYYY-MM-DD string. */
 export function getFirstDayOfMonth(month: string): string {
   return `${month}-01`;
