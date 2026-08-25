@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
-import { TAG_COLOR_CLASSES } from "../workouts/tag-colors";
-import { markScheduledWorkoutSkipped, unscheduleWorkout } from "./actions";
+import { TAG_COLOR_CLASSES } from "./workouts/tag-colors";
+import { markScheduledWorkoutSkipped, unscheduleWorkout } from "./upcoming-actions";
 
-const UPCOMING_LIMIT = 50;
+type UpcomingListProps = {
+  limit: number;
+};
 
 /**
  * Upcoming scheduled workouts: soonest first, each with its workout's
@@ -14,14 +16,21 @@ const UPCOMING_LIMIT = 50;
  * still a genuinely open plan. Queries the database directly via
  * lib/scheduled-workouts rather than fetching an API route — same
  * reasoning as the /workouts list and detail pages.
+ *
+ * A reusable component, not a page (GOHYBRID_PLAN.md §5A): Home and
+ * Workouts both render this list at a different length, and a dedicated
+ * /schedule route would be a third place carrying the same query. It
+ * fetches its own data from `limit` rather than taking entries as a prop
+ * so both call sites can render it without threading the query through
+ * their own page component.
  */
-export default async function SchedulePage() {
+export default async function UpcomingList({ limit }: UpcomingListProps) {
   const user = await requireUser();
-  const upcoming = await getUpcomingForUser(user.id, UPCOMING_LIMIT);
+  const upcoming = await getUpcomingForUser(user.id, limit);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <h1 className="text-xl font-semibold">Upcoming</h1>
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold">Upcoming</h2>
 
       {upcoming.length === 0 ? (
         <p className="text-sm text-gray-600">
@@ -76,6 +85,6 @@ export default async function SchedulePage() {
           ))}
         </ul>
       )}
-    </main>
+    </section>
   );
 }

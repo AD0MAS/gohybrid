@@ -20,19 +20,24 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * user from reading another user's workouts; it must never be dropped.
  *
  * `filters` (see WorkoutListFilters in lib/workouts-filters.ts) is
- * optional and every field within it is independently optional; only the
- * conditions for fields actually present are added to the WHERE clause, so
- * the query never fetches the full table and filters in application code.
- * Different filter kinds combine with AND (e.g. difficulty + a tag both
- * apply); `tagIds` itself combines with OR — a workout matches if it has
- * ANY of the given tags, via a `workouts.id IN (SELECT workout_id FROM
- * workout_tags WHERE tag_id IN (...))` subquery, since with eleven tags in
- * the catalog requiring ALL of them would return nothing in most
- * combinations.
+ * optional and every field within it — other than `sort`, which always has
+ * a value — is independently optional; only the conditions for fields
+ * actually present are added to the WHERE clause, so the query never
+ * fetches the full table and filters in application code. Different filter
+ * kinds combine with AND (e.g. difficulty + a tag both apply); `tagIds`
+ * itself combines with OR — a workout matches if it has ANY of the given
+ * tags, via a `workouts.id IN (SELECT workout_id FROM workout_tags WHERE
+ * tag_id IN (...))` subquery, since with eleven tags in the catalog
+ * requiring ALL of them would return nothing in most combinations.
+ *
+ * `filters.sort` picks the ORDER BY: "newest"/"oldest" by created_at,
+ * "title" alphabetically (case-insensitive), "updated" by updated_at
+ * descending. Every option ends with `id` as a tiebreaker so two rows
+ * sharing a timestamp still sort the same way on every load.
  */
 export async function getWorkoutsForUser(
   userId: string,
-  filters: WorkoutListFilters = {}
+  filters: WorkoutListFilters = { sort: "newest" }
 ) {
   return db.query.workouts.findMany({
     where: (workouts, { and, eq, ilike, inArray }) =>
@@ -56,7 +61,19 @@ export async function getWorkoutsForUser(
             )
           : undefined
       ),
-    orderBy: (workouts, { desc }) => [desc(workouts.createdAt)],
+    orderBy: (workouts, { asc, desc, sql }) => {
+      switch (filters.sort) {
+        case "oldest":
+          return [asc(workouts.createdAt), asc(workouts.id)];
+        case "title":
+          return [asc(sql`lower(${workouts.title})`), asc(workouts.id)];
+        case "updated":
+          return [desc(workouts.updatedAt), asc(workouts.id)];
+        case "newest":
+        default:
+          return [desc(workouts.createdAt), asc(workouts.id)];
+      }
+    },
     with: {
       workoutTags: {
         with: { tag: true },

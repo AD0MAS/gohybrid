@@ -1,0 +1,52 @@
+import Link from "next/link";
+import { requireUser } from "@/lib/auth";
+import { getRecentSessionsForUser } from "@/lib/sessions";
+
+const RECENT_ACTIVITY_LIMIT = 5;
+
+/**
+ * Home's recent activity: the last 5 completed workout sessions, newest
+ * first, read-only. Renders workout_title and workout_primary_type from
+ * each session's own snapshot columns (GOHYBRID_PLAN.md §7), same as
+ * Training History — but this is a fixed five-row list with no actions,
+ * not the full chronological list, so it stays its own component rather
+ * than a shared one with /history.
+ */
+export default async function RecentActivity() {
+  const user = await requireUser();
+  const sessions = await getRecentSessionsForUser(
+    user.id,
+    RECENT_ACTIVITY_LIMIT
+  );
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-semibold">Recent activity</h2>
+
+      {sessions.length === 0 ? (
+        <p className="text-sm text-gray-600">
+          No completed workouts yet. Finish a workout to see it here.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {sessions.map((session) => (
+            <li
+              key={session.id}
+              className="rounded border border-gray-300 p-3"
+            >
+              <p className="font-medium">{session.workoutTitle}</p>
+              <p className="text-sm text-gray-600">
+                {session.workoutPrimaryType} ·{" "}
+                {session.completedAt.toLocaleDateString()}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Link href="/history" className="self-end text-sm underline">
+        Full history
+      </Link>
+    </section>
+  );
+}

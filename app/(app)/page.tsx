@@ -1,24 +1,26 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import WeekStrip from "./WeekStrip";
+import HomeSummaryCards from "./HomeSummaryCards";
+import RecentActivity from "./RecentActivity";
+import UpcomingList from "./UpcomingList";
+
+const UPCOMING_LIMIT = 3;
 
 /**
- * Home: the week strip for at-a-glance planning. The nav shell covers
- * navigation to the other top-level pages, so this page holds only what's
- * specific to it (GOHYBRID_PLAN.md §5A) — summary cards and recent
- * activity land here in Layer 3's page restructure.
+ * Home: the at-a-glance state (GOHYBRID_PLAN.md §5A) — summary cards, then
+ * Upcoming, then recent activity. The week strip moved to /workouts, which
+ * is what it's primarily for; the nav shell covers navigation to the other
+ * top-level pages, so this page holds only what's specific to it.
  */
-export default async function Home(props: PageProps<"/">) {
+export default async function Home() {
   const user = await requireUser();
-  const searchParams = await props.searchParams;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-6 p-6">
-      <WeekStrip userId={user.id} searchParams={searchParams} />
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-8 p-6">
+      <h1 className="text-xl font-semibold">Home</h1>
 
-      <Link href="/calendar" className="self-end text-sm underline">
-        Full calendar
-      </Link>
+      <HomeSummaryCards userId={user.id} />
+      <UpcomingList limit={UPCOMING_LIMIT} />
+      <RecentActivity />
     </main>
   );
 }

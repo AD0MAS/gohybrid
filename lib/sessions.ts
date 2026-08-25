@@ -72,3 +72,19 @@ export async function getSessionsForUser(userId: string) {
     .where(eq(workoutSessions.userId, userId))
     .orderBy(desc(workoutSessions.completedAt));
 }
+
+/**
+ * Lists a user's most recently completed workout sessions, capped at
+ * `limit` — the Home page's recent activity list. Same query and snapshot-
+ * column reasoning as getSessionsForUser, just bounded; kept as a separate
+ * function rather than an optional parameter so the unbounded Training
+ * History query can't accidentally pick up a default cap.
+ */
+export async function getRecentSessionsForUser(userId: string, limit: number) {
+  return db
+    .select()
+    .from(workoutSessions)
+    .where(eq(workoutSessions.userId, userId))
+    .orderBy(desc(workoutSessions.completedAt))
+    .limit(limit);
+}

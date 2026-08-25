@@ -28,9 +28,9 @@ const MAX_VISIBLE_PER_DAY = 2;
  *
  * Entirely a Server Component: month navigation and day-cell links are
  * plain `<Link>`s to new search params, same convention as WeekStrip — an
- * in-month cell links to the home page's week strip for that day
- * (/?week=N&day=<date>), a muted adjacent-month cell instead navigates this
- * page to that month.
+ * in-month cell links to the Workouts page's week strip for that day
+ * (/workouts?week=N&day=<date>), a muted adjacent-month cell instead
+ * navigates this page to that month.
  */
 export default async function CalendarPage(props: PageProps<"/calendar">) {
   const user = await requireUser();
@@ -54,7 +54,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   const monthHref = (month: string) => `/calendar?month=${month}`;
   const weekStripHref = (date: string) =>
-    `/?week=${getWeekOffsetForDate(date, today)}&day=${date}`;
+    `/workouts?week=${getWeekOffsetForDate(date, today)}&day=${date}`;
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">

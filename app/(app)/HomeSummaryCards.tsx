@@ -1,47 +1,44 @@
 import {
   getSessionCountForUserInRange,
   getStreaksForUser,
-  getTotalSessionCountForUser,
 } from "@/lib/activity";
 import { getFirstDayOfMonth, getMondayOfWeek, getMonthString } from "@/lib/dates";
 import { getCurrentDateString } from "@/lib/scheduled-workouts";
-import SummaryCard from "./SummaryCard";
+import SummaryCard from "./stats/SummaryCard";
 
-type SummaryCardsProps = {
+type HomeSummaryCardsProps = {
   userId: string;
 };
 
 /**
- * /stats summary row: total sessions, sessions this week, sessions this
- * month, current streak, longest streak. Fetches its own data given
- * `userId`, same convention as ActivityHeatmap/WeekStrip. "This week" and
- * "this month" reuse getSessionCountForUserInRange over the current
- * calendar week/month rather than the 12-week/12-month chart windows
- * below, so this card stays correct on its own even if those windows
- * change.
+ * Home's at-a-glance row (GOHYBRID_PLAN.md §5A): this week, this month,
+ * current streak. A deliberate subset-and-duplicate of /stats' five-card
+ * SummaryCards, reusing the exact same lib/ functions and the shared
+ * SummaryCard tile — total sessions and longest streak stay /stats-only.
+ * Fetches its own data given `userId`, same convention as
+ * WeekStrip/UpcomingList.
  */
-export default async function SummaryCards({ userId }: SummaryCardsProps) {
+export default async function HomeSummaryCards({
+  userId,
+}: HomeSummaryCardsProps) {
   const today = await getCurrentDateString();
   const weekStart = getMondayOfWeek(today);
   const monthStart = getFirstDayOfMonth(getMonthString(today));
 
-  const [total, thisWeek, thisMonth, streaks] = await Promise.all([
-    getTotalSessionCountForUser(userId),
+  const [thisWeek, thisMonth, streaks] = await Promise.all([
     getSessionCountForUserInRange(userId, weekStart, today),
     getSessionCountForUserInRange(userId, monthStart, today),
     getStreaksForUser(userId, today),
   ]);
 
   const cards = [
-    { label: "Total sessions", value: total },
     { label: "This week", value: thisWeek },
     { label: "This month", value: thisMonth },
     { label: "Current streak", value: streaks.current },
-    { label: "Longest streak", value: streaks.longest },
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <section className="grid grid-cols-3 gap-3">
       {cards.map((card) => (
         <SummaryCard key={card.label} label={card.label} value={card.value} />
       ))}

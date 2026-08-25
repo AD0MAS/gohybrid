@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import type { CatalogTag, Difficulty, PrimaryType } from "./builder/reducer";
-import { TAG_COLOR_CLASSES } from "./tag-colors";
+import type { CatalogTag, Difficulty, PrimaryType } from "../builder/reducer";
+import { TAG_COLOR_CLASSES } from "../tag-colors";
+import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
 
 type WorkoutFiltersProps = {
   q: string;
@@ -11,6 +12,7 @@ type WorkoutFiltersProps = {
   difficulty: Difficulty | "";
   favoritesOnly: boolean;
   tagIds: string[];
+  sort: WorkoutSort;
   primaryTypeOptions: readonly PrimaryType[];
   difficultyOptions: readonly Difficulty[];
   tagCatalog: readonly CatalogTag[];
@@ -18,17 +20,29 @@ type WorkoutFiltersProps = {
 
 const QUERY_DEBOUNCE_MS = 400;
 
+const DEFAULT_SORT: WorkoutSort = "newest";
+
+const SORT_LABELS: Record<WorkoutSort, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  title: "Title A–Z",
+  updated: "Recently updated",
+};
+
 type FilterOverrides = Partial<{
   q: string;
   primaryType: PrimaryType | "";
   difficulty: Difficulty | "";
   favoritesOnly: boolean;
   tagIds: string[];
+  sort: WorkoutSort;
 }>;
 
 /**
- * Filter controls for the /workouts list: title search, primary type and
- * difficulty selects, toggleable tag chips, and a favorites toggle.
+ * Filter controls for /workouts/library: title search, primary type and
+ * difficulty selects, toggleable tag chips, a favorites toggle, and a sort
+ * select. Sort is a view preference rather than a filter — it's excluded
+ * from hasActiveFilters and survives "Clear filters" untouched.
  * Everything here reflects the current filters via URL search params
  * (passed down as props from the Server Component page, which is the
  * source of truth) rather than local component state — so the filtered
@@ -42,6 +56,7 @@ export default function WorkoutFilters({
   difficulty,
   favoritesOnly,
   tagIds,
+  sort,
   primaryTypeOptions,
   difficultyOptions,
   tagCatalog,
@@ -79,6 +94,7 @@ export default function WorkoutFilters({
       difficulty: overrides.difficulty ?? difficulty,
       favoritesOnly: overrides.favoritesOnly ?? favoritesOnly,
       tagIds: overrides.tagIds ?? tagIds,
+      sort: overrides.sort ?? sort,
     };
 
     const params = new URLSearchParams();
@@ -87,10 +103,11 @@ export default function WorkoutFilters({
     if (next.difficulty) params.set("difficulty", next.difficulty);
     if (next.favoritesOnly) params.set("favorites", "true");
     if (next.tagIds.length > 0) params.set("tags", next.tagIds.join(","));
+    if (next.sort !== DEFAULT_SORT) params.set("sort", next.sort);
 
     const query = params.toString();
     startTransition(() => {
-      router.push(query ? `/workouts?${query}` : "/workouts");
+      router.push(query ? `/workouts/library?${query}` : "/workouts/library");
     });
   }
 
@@ -101,10 +118,17 @@ export default function WorkoutFilters({
     navigate({ tagIds: next });
   }
 
+  // Sort is a view preference, not a filter — clearing filters resets
+  // q/primaryType/difficulty/favorites/tags but leaves the current sort
+  // order in place.
   function clearFilters() {
     setQInput("");
-    startTransition(() => {
-      router.push("/workouts");
+    navigate({
+      q: "",
+      primaryType: "",
+      difficulty: "",
+      favoritesOnly: false,
+      tagIds: [],
     });
   }
 
@@ -168,6 +192,21 @@ export default function WorkoutFilters({
         >
           ★ Favorites
         </button>
+
+        <select
+          value={sort}
+          onChange={(event) =>
+            navigate({ sort: event.target.value as WorkoutSort })
+          }
+          aria-label="Sort by"
+          className="rounded border border-gray-300 p-2 text-sm"
+        >
+          {WORKOUT_SORT_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {SORT_LABELS[option]}
+            </option>
+          ))}
+        </select>
 
         {isPending && (
           <span className="text-xs text-gray-500">Updating…</span>

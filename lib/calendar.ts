@@ -64,9 +64,9 @@ export function resolveCalendarView(
 /**
  * The week offset (relative to the week containing `today`, same convention
  * as WeekStripView.weekOffset) of the week containing `date` — used to link
- * a calendar day cell to the home page's week strip at
- * /?week=N&day=<date>. Computed from the whole-week difference between
- * that date's Monday and the current week's Monday.
+ * a calendar day cell to the Workouts page's week strip at
+ * /workouts?week=N&day=<date>. Computed from the whole-week difference
+ * between that date's Monday and the current week's Monday.
  */
 export function getWeekOffsetForDate(date: string, today: string): number {
   const targetMonday = getMondayOfWeek(date);

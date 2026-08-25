@@ -78,7 +78,8 @@ export async function scheduleWorkoutForUser(
  * with its workout (and that workout's tags) nested. Ordered by date, then
  * (within a day) by scheduled_time — entries with a time before ones
  * without, earliest first, since ASC ordering already sorts NULLs last in
- * Postgres. Used by the Upcoming list on /schedule and the home page.
+ * Postgres. Used by the UpcomingList component, rendered on /workouts and
+ * the home page.
  * `today` is computed in Postgres via `current_date` rather than passed in
  * from the application server, so it can't drift from the database's own
  * notion of "today."

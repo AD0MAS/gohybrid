@@ -9,7 +9,7 @@ import {
   getScheduledForUserInRange,
 } from "@/lib/scheduled-workouts";
 import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
-import { TAG_COLOR_CLASSES } from "./workouts/tag-colors";
+import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
@@ -25,7 +25,7 @@ type WeekStripProps = {
 };
 
 /**
- * Home page "this week" strip (Roxfit pattern): seven day cells, Monday
+ * Workouts page "this week" strip (Roxfit pattern): seven day cells, Monday
  * first, with prev/next week navigation and the selected day's scheduled
  * workouts underneath. Entirely a Server Component — every interaction
  * (changing week, picking a day) is a plain navigation to a new `week`/`day`
@@ -55,8 +55,10 @@ export default async function WeekStrip({
     ? (byDate.get(view.selectedDate) ?? [])
     : [];
 
-  const weekHref = (offset: number) => `/?week=${view.weekOffset + offset}`;
-  const dayHref = (date: string) => `/?week=${view.weekOffset}&day=${date}`;
+  const weekHref = (offset: number) =>
+    `/workouts?week=${view.weekOffset + offset}`;
+  const dayHref = (date: string) =>
+    `/workouts?week=${view.weekOffset}&day=${date}`;
 
   return (
     <section className="flex flex-col gap-3">

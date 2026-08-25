@@ -36,8 +36,8 @@ const ENUM_OPTIONS = {
  * the builder already used for immediate feedback, since client-side
  * validation is only a UX convenience, not the real gate. Returns an
  * error object on failure so the Save button can display it — never
- * swallowed. On success, revalidates /workouts and redirects to the new
- * workout's detail page.
+ * swallowed. On success, revalidates /workouts/library and redirects to
+ * the new workout's detail page.
  */
 export async function createFullWorkout(payload: RawBuilderPayload) {
   const user = await requireUser();
@@ -49,7 +49,7 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
 
   const workout = await createFullWorkoutForUser(user.id, result.data);
 
-  revalidatePath("/workouts");
+  revalidatePath("/workouts/library");
   redirect(`/workouts/${workout.id}`);
 }
 
@@ -61,8 +61,8 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
  * createFullWorkout. Returns an error object on failure (including
  * "not found", which covers both a missing workout and one owned by
  * another user) so the Save button can display it. On success,
- * revalidates /workouts and the workout's detail page, then redirects to
- * the detail page.
+ * revalidates /workouts/library and the workout's detail page, then
+ * redirects to the detail page.
  */
 export async function updateFullWorkout(id: string, payload: RawBuilderPayload) {
   const user = await requireUser();
@@ -78,7 +78,7 @@ export async function updateFullWorkout(id: string, payload: RawBuilderPayload) 
     return { error: "Workout not found." };
   }
 
-  revalidatePath("/workouts");
+  revalidatePath("/workouts/library");
   revalidatePath(`/workouts/${id}`);
   redirect(`/workouts/${id}`);
 }

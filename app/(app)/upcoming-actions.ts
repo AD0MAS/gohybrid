@@ -10,9 +10,9 @@ import {
 /**
  * Sets is_skipped on one of the authenticated user's scheduled workouts,
  * bound with the id (and the target value) via .bind(null, id, isSkipped)
- * from /schedule. Ownership is enforced by markSkippedForUser's WHERE
+ * from UpcomingList. Ownership is enforced by markSkippedForUser's WHERE
  * clause. Throws if nothing matched, so a forged id can't silently no-op.
- * Revalidates /schedule on success.
+ * Revalidates /workouts and / (Home) — the pages that render UpcomingList.
  */
 export async function markScheduledWorkoutSkipped(
   id: string,
@@ -26,19 +26,22 @@ export async function markScheduledWorkoutSkipped(
     throw new Error("Scheduled workout not found.");
   }
 
-  revalidatePath("/schedule");
+  revalidatePath("/workouts");
+  revalidatePath("/");
 }
 
 /**
  * Removes one of the authenticated user's scheduled workouts, bound with
- * the id via .bind(null, id) from /schedule. Ownership is enforced by
+ * the id via .bind(null, id) from UpcomingList. Ownership is enforced by
  * unscheduleForUser's WHERE clause. Any linked workout_session stays in
- * training history untouched. Revalidates /schedule on success.
+ * training history untouched. Revalidates /workouts and / (Home) — the
+ * pages that render UpcomingList.
  */
 export async function unscheduleWorkout(id: string) {
   const user = await requireUser();
 
   await unscheduleForUser(id, user.id);
 
-  revalidatePath("/schedule");
+  revalidatePath("/workouts");
+  revalidatePath("/");
 }
