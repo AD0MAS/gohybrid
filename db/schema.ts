@@ -83,6 +83,12 @@ export const tagColorEnum = pgEnum("tag_color", [
   "gray",
 ]);
 
+export const bodyMetricTypeEnum = pgEnum("body_metric_type", [
+  "weight",
+  "body_fat",
+  "resting_hr",
+]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -329,4 +335,34 @@ export const scheduledWorkoutsRelations = relations(
       references: [workoutSessions.id],
     }),
   })
+);
+
+// A single measurement (weight, body fat %, resting HR), always in
+// metric/SI units — unit conversion is a Layer 4 Settings UI concern, not
+// a DB one (GOHYBRID_PLAN.md §5 Layer 4). No unique constraint on
+// (user_id, metric_type, measured_at): two weigh-ins on the same day are
+// legitimate. measured_at is `date`, not timestamptz — a measurement is a
+// calendar day, not an instant, same reasoning as scheduled_date (§6A).
+export const bodyMetrics = pgTable(
+  "body_metrics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    metricType: bodyMetricTypeEnum("metric_type").notNull(),
+    value: numeric("value", { precision: 6, scale: 2 }).notNull(),
+    measuredAt: date("measured_at").notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("body_metrics_user_id_metric_type_measured_at_idx").on(
+      table.userId,
+      table.metricType,
+      table.measuredAt
+    ),
+  ]
 );

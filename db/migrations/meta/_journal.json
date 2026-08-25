@@ -43,6 +43,13 @@
       "when": 1787590810616,
       "tag": "0005_harsh_grey_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787684051282,
+      "tag": "0006_worried_sentry",
+      "breakpoints": true
     }
   ]
 }

@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { requireUser } from "@/lib/auth";
+import BodyMetricForm from "./BodyMetricForm";
+import BodyMetricsList from "./BodyMetricsList";
 
 /**
  * Profile (GOHYBRID_PLAN.md §5A): account details and sign-out, with a
  * Settings corner button in the top-right — the first use of the
  * corner-button pattern that /workouts and /workouts/library adopt next.
- * Intentionally sparse until Layer 4 adds body metrics and personal
- * records here.
+ * Layer 4 adds Body Metrics here; Personal Records land here next.
  */
 export default async function ProfilePage() {
   const user = await requireUser();
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-sm flex-col gap-8 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Profile</h1>
         <Link
@@ -34,6 +35,12 @@ export default async function ProfilePage() {
           Sign out
         </button>
       </form>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-semibold">Body Metrics</h2>
+        <BodyMetricForm />
+        <BodyMetricsList />
+      </section>
     </main>
   );
 }
