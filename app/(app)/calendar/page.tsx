@@ -58,12 +58,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <div className="flex items-center gap-4">
-        <Link href="/" className="text-sm underline">
-          Home
-        </Link>
-        <h1 className="text-xl font-semibold">Calendar</h1>
-      </div>
+      <h1 className="text-xl font-semibold">Calendar</h1>
 
       <div className="flex items-center justify-between">
         <Link

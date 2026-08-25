@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import ActivityHeatmap from "./ActivityHeatmap";
 import DistributionChart from "./DistributionChart";
@@ -18,12 +17,7 @@ export default async function StatsPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 p-6">
-      <div className="flex items-center gap-4">
-        <Link href="/" className="text-sm underline">
-          Home
-        </Link>
-        <h1 className="text-xl font-semibold">Stats</h1>
-      </div>
+      <h1 className="text-xl font-semibold">Stats</h1>
 
       <SummaryCards userId={user.id} />
       <ActivityHeatmap userId={user.id} />
