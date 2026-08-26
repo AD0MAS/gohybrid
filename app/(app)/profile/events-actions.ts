@@ -1,0 +1,61 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth";
+import { createEventForUser, deleteEventForUser } from "@/lib/events";
+import { validateEventInput } from "@/lib/events-validation";
+
+export type EventFormState = { error: string | null };
+
+/**
+ * Creates a new event for the authenticated user. Passed to useActionState
+ * in EventForm, so a validation failure is an expected outcome of a form
+ * submission — it returns { error } for the form to render, rather than
+ * throwing (which would hit app/error.tsx and replace the whole page).
+ * Genuine unexpected failures (e.g. a DB error from createEventForUser)
+ * still throw and belong to the error boundary. Revalidates /profile (the
+ * Events section) and / (Home's next-event line) on success.
+ */
+export async function addEvent(
+  _prevState: EventFormState,
+  formData: FormData
+): Promise<EventFormState> {
+  const user = await requireUser();
+
+  const result = validateEventInput({
+    title: formData.get("title"),
+    eventDate: formData.get("eventDate"),
+    eventType: formData.get("eventType"),
+    location: formData.get("location"),
+    notes: formData.get("notes"),
+  });
+
+  if (!result.success) {
+    return { error: result.error };
+  }
+
+  await createEventForUser(user.id, result.data);
+
+  revalidatePath("/profile");
+  revalidatePath("/");
+  return { error: null };
+}
+
+/**
+ * Deletes one of the authenticated user's events, bound with the id via
+ * .bind(null, id) from /profile. Ownership is enforced by
+ * deleteEventForUser's WHERE clause. Throws if nothing matched, so a
+ * forged id can't silently no-op. Revalidates /profile and / on success.
+ */
+export async function deleteEvent(id: string) {
+  const user = await requireUser();
+
+  const deleted = await deleteEventForUser(id, user.id);
+
+  if (!deleted) {
+    throw new Error("Event not found.");
+  }
+
+  revalidatePath("/profile");
+  revalidatePath("/");
+}

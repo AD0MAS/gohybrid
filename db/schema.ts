@@ -114,6 +114,13 @@ export const goalPeriodEnum = pgEnum("goal_period", [
   "all_time",
 ]);
 
+export const eventTypeEnum = pgEnum("event_type", [
+  "race",
+  "competition",
+  "test",
+  "other",
+]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -492,3 +499,33 @@ export const goalsRelations = relations(goals, ({ one }) => ({
     references: [exercises.id],
   }),
 }));
+
+// An upcoming or past race/competition/test a user wants a countdown or
+// record for. event_date is `date`, not timestamptz — an event is a
+// calendar day, same reasoning as scheduled_workouts.scheduled_date (§6A)
+// and personal_records.achieved_at. No is_completed/is_past column: an
+// event is past once event_date < today, same reasoning as
+// workout_sessions having no status field and goals having no
+// is_completed column. No FK to goals or scheduled_workouts — linking them
+// would add a column that changes nothing about how either behaves (§6,
+// "no field just in case").
+export const events = pgTable(
+  "events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    eventDate: date("event_date").notNull(),
+    eventType: eventTypeEnum("event_type").notNull(),
+    location: text("location"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("events_user_id_event_date_idx").on(table.userId, table.eventDate),
+  ]
+);
