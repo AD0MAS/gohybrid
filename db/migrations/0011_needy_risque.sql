@@ -1,0 +1,1 @@
+ALTER TABLE "exercises" ADD COLUMN "is_hyrox_station" boolean DEFAULT false NOT NULL;

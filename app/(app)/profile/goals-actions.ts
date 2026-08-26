@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { getExerciseById } from "@/lib/exercises";
 import {
   createGoalForUser,
   deleteGoalForUser,
   setGoalArchivedForUser,
 } from "@/lib/goals";
 import { validateGoalInput } from "@/lib/goals-validation";
+import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
+import { getUserContext } from "@/lib/user-settings";
 
 export type GoalFormState = { error: string | null };
 
@@ -17,27 +20,70 @@ export type GoalFormState = { error: string | null };
  * submission — it returns { error } for the form to render, rather than
  * throwing (which would hit app/error.tsx and replace the whole page).
  * Genuine unexpected failures (e.g. a DB error from createGoalForUser)
- * still throw and belong to the error boundary. Revalidates /profile on
- * success.
+ * still throw and belong to the error boundary.
+ *
+ * Under imperial, a body_metric weight goal's targetValue/startValue was
+ * typed in lb, and a personal_record goal's in lb (weight) or ft/m
+ * (distance — see resolveDistanceInputUnit in lib/units.ts, fed by the
+ * same isHyroxStation lookup the Personal Records write path uses).
+ * session_count and streak goals never convert. Both fields go through
+ * convertGoalValue, before validateGoalInput, so the validator (and the
+ * database) only ever see metric — same principle as
+ * addBodyMetric/addPersonalRecord. Revalidates /profile on success.
  */
 export async function addGoal(
   _prevState: GoalFormState,
   formData: FormData
 ): Promise<GoalFormState> {
   const user = await requireUser();
+  const { unitSystem } = await getUserContext(user.id);
+
+  const goalType = formData.get("goalType");
+  const targetMetricType = formData.get("targetMetricType");
+  const targetRecordType = formData.get("targetRecordType");
+  const targetExerciseId = formData.get("targetExerciseId");
+
+  let isHyroxStation = false;
+  if (
+    goalType === "personal_record" &&
+    typeof targetExerciseId === "string" &&
+    targetExerciseId !== ""
+  ) {
+    const exercise = await getExerciseById(targetExerciseId);
+    isHyroxStation = exercise?.isHyroxStation ?? false;
+  }
+
+  function convertGoalValue(raw: FormDataEntryValue | null): unknown {
+    if (typeof raw !== "string" || raw === "") return raw;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return raw;
+
+    if (goalType === "body_metric" && targetMetricType === "weight") {
+      return convertWeightInputToKg(parsed, unitSystem);
+    }
+    if (goalType === "personal_record") {
+      if (targetRecordType === "weight") {
+        return convertWeightInputToKg(parsed, unitSystem);
+      }
+      if (targetRecordType === "distance") {
+        return convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      }
+    }
+    return parsed;
+  }
 
   const result = validateGoalInput({
     title: formData.get("title"),
-    goalType: formData.get("goalType"),
+    goalType,
     direction: formData.get("direction"),
     period: formData.get("period"),
-    targetValue: formData.get("targetValue"),
-    startValue: formData.get("startValue"),
+    targetValue: convertGoalValue(formData.get("targetValue")),
+    startValue: convertGoalValue(formData.get("startValue")),
     targetPrimaryType: formData.get("targetPrimaryType"),
-    targetMetricType: formData.get("targetMetricType"),
-    targetExerciseId: formData.get("targetExerciseId"),
+    targetMetricType,
+    targetExerciseId,
     targetCustomName: formData.get("targetCustomName"),
-    targetRecordType: formData.get("targetRecordType"),
+    targetRecordType,
   });
 
   if (!result.success) {

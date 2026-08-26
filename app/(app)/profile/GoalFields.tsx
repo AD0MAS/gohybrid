@@ -7,15 +7,18 @@ import {
   goalPeriodEnum,
   goalTypeEnum,
   personalRecordTypeEnum,
+  unitSystemEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
+import { formatBodyMetricValue, formatPersonalRecordValue, resolveDistanceInputUnit } from "@/lib/units";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, type GoalFormState } from "./goals-actions";
 
 type GoalFieldsProps = {
-  catalog: { id: string; name: string }[];
+  catalog: { id: string; name: string; isHyroxStation: boolean }[];
+  unitSystem: (typeof unitSystemEnum.enumValues)[number];
 };
 
 const initialState: GoalFormState = { error: null };
@@ -41,14 +44,32 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * chosen earlier can't linger into a goal_type that forbids it. Mirrors
  * PersonalRecordFields' single-select exercise/custom-name choice for
  * personal_record goals.
+ *
+ * targetValue/startValue's placeholders show the unit the user is
+ * expected to type — same resolution PersonalRecordFields uses for its
+ * own value input (formatBodyMetricValue/formatPersonalRecordValue/
+ * resolveDistanceInputUnit from lib/units.ts), which is why
+ * targetMetricType and targetRecordType need their own local state here
+ * too (previously uncontrolled, since nothing else depended on their
+ * current value). addGoal (goals-actions.ts) does the actual
+ * imperial→metric conversion server-side — this component only ever
+ * displays a unit, never converts a value.
  */
-export default function GoalFields({ catalog }: GoalFieldsProps) {
+export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
   const [state, formAction] = useActionState(addGoal, initialState);
   const [goalType, setGoalType] =
     useState<(typeof goalTypeEnum.enumValues)[number]>("session_count");
   const [direction, setDirection] =
     useState<(typeof goalDirectionEnum.enumValues)[number]>("increase");
   const [exerciseId, setExerciseId] = useState("");
+  const [targetMetricType, setTargetMetricType] =
+    useState<(typeof bodyMetricTypeEnum.enumValues)[number]>(
+      bodyMetricTypeEnum.enumValues[0]
+    );
+  const [targetRecordType, setTargetRecordType] =
+    useState<(typeof personalRecordTypeEnum.enumValues)[number]>(
+      personalRecordTypeEnum.enumValues[0]
+    );
 
   const showDirectionChoice = DIRECTION_CHOICE_TYPES.has(goalType);
 
@@ -58,6 +79,34 @@ export default function GoalFields({ catalog }: GoalFieldsProps) {
     setGoalType(value);
     if (!DIRECTION_CHOICE_TYPES.has(value)) {
       setDirection("increase");
+    }
+  }
+
+  let valueUnit: string;
+  switch (goalType) {
+    case "session_count":
+      valueUnit = "sessions";
+      break;
+    case "streak":
+      valueUnit = "days";
+      break;
+    case "body_metric":
+      valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
+      break;
+    case "personal_record": {
+      const isHyroxStation =
+        catalog.find((exercise) => exercise.id === exerciseId)
+          ?.isHyroxStation ?? false;
+      valueUnit =
+        targetRecordType === "distance"
+          ? resolveDistanceInputUnit(unitSystem, isHyroxStation)
+          : formatPersonalRecordValue(
+              targetRecordType,
+              0,
+              unitSystem,
+              isHyroxStation
+            ).unit;
+      break;
     }
   }
 
@@ -106,7 +155,12 @@ export default function GoalFields({ catalog }: GoalFieldsProps) {
       {goalType === "body_metric" && (
         <select
           name="targetMetricType"
-          defaultValue={bodyMetricTypeEnum.enumValues[0]}
+          value={targetMetricType}
+          onChange={(e) =>
+            setTargetMetricType(
+              e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+            )
+          }
           className="rounded border border-gray-300 p-2 text-sm"
         >
           {bodyMetricTypeEnum.enumValues.map((type) => (
@@ -144,7 +198,12 @@ export default function GoalFields({ catalog }: GoalFieldsProps) {
 
           <select
             name="targetRecordType"
-            defaultValue={personalRecordTypeEnum.enumValues[0]}
+            value={targetRecordType}
+            onChange={(e) =>
+              setTargetRecordType(
+                e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+              )
+            }
             className="rounded border border-gray-300 p-2 text-sm"
           >
             {personalRecordTypeEnum.enumValues.map((type) => (
@@ -196,7 +255,7 @@ export default function GoalFields({ catalog }: GoalFieldsProps) {
           step="0.01"
           min="0"
           required
-          placeholder="Starting value"
+          placeholder={`Starting value (${valueUnit})`}
           className="rounded border border-gray-300 p-2 text-sm"
         />
       )}
@@ -207,7 +266,7 @@ export default function GoalFields({ catalog }: GoalFieldsProps) {
         step="0.01"
         min="0"
         required
-        placeholder="Target value"
+        placeholder={`Target value (${valueUnit})`}
         className="rounded border border-gray-300 p-2 text-sm"
       />
 

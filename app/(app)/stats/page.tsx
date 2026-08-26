@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { getProgressSeriesForUser } from "@/lib/progress";
+import { getUserContext } from "@/lib/user-settings";
 import ActivityHeatmap from "./ActivityHeatmap";
 import DistributionChart from "./DistributionChart";
 import ProgressChart from "./ProgressChart";
@@ -16,7 +17,8 @@ import WeeklyChart from "./WeeklyChart";
  */
 export default async function StatsPage() {
   const user = await requireUser();
-  const progressSeries = await getProgressSeriesForUser(user.id);
+  const { unitSystem } = await getUserContext(user.id);
+  const progressSeries = await getProgressSeriesForUser(user.id, unitSystem);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 p-6">

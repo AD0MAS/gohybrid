@@ -7,6 +7,7 @@ import {
   deleteBodyMetricForUser,
 } from "@/lib/body-metrics";
 import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
+import { convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 
 export type BodyMetricFormState = { error: string | null };
@@ -21,19 +22,36 @@ export type BodyMetricFormState = { error: string | null };
  * boundary. `today` for the "not in the future" check comes from
  * getUserContext — the user's own calendar day, not the database's UTC
  * `current_date` — same ground truth used everywhere else date validity is
- * judged against "today". Revalidates /profile on success.
+ * judged against "today".
+ *
+ * Under imperial, a weight measurement was typed in lb (see
+ * BodyMetricFields' placeholder) — convertWeightInputToKg runs here,
+ * before validateBodyMetricInput, so the validator (and the database)
+ * only ever see kg. body_fat/resting_hr never convert (see
+ * lib/units.ts). Revalidates /profile on success.
  */
 export async function addBodyMetric(
   _prevState: BodyMetricFormState,
   formData: FormData
 ): Promise<BodyMetricFormState> {
   const user = await requireUser();
-  const { today } = await getUserContext(user.id);
+  const { today, unitSystem } = await getUserContext(user.id);
+
+  const metricType = formData.get("metricType");
+  const rawValue = formData.get("value");
+
+  let value: unknown = rawValue;
+  if (metricType === "weight" && typeof rawValue === "string" && rawValue !== "") {
+    const parsed = Number(rawValue);
+    if (Number.isFinite(parsed)) {
+      value = convertWeightInputToKg(parsed, unitSystem);
+    }
+  }
 
   const result = validateBodyMetricInput(
     {
-      metricType: formData.get("metricType"),
-      value: formData.get("value"),
+      metricType,
+      value,
       measuredAt: formData.get("measuredAt"),
       notes: formData.get("notes"),
     },

@@ -2,14 +2,18 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import type { unitSystemEnum } from "@/db/schema";
 import type { getWorkoutForUser } from "@/lib/workouts";
+import { formatDistanceMetres, formatWeightKg } from "@/lib/units";
 import { finishWorkout } from "./actions";
 
 type Workout = NonNullable<Awaited<ReturnType<typeof getWorkoutForUser>>>;
 type Item = Workout["blocks"][number]["items"][number];
+type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
 type StartWorkoutClientProps = {
   workout: Workout;
+  unitSystem: UnitSystem;
 };
 
 /** Shape persisted to localStorage — see the component doc comment for why
@@ -26,14 +30,30 @@ function storageKey(workoutId: string) {
 /**
  * Builds the same "Sets: … · Volume: … · Target: … · Weight: … · Rest: …"
  * line the workout detail page shows, omitting whichever fields aren't set
- * on this item.
+ * on this item. Weight and a distance volume are converted for display via
+ * lib/units.ts — pure, DB-free functions, so calling them here (rather
+ * than pre-formatting server-side, as lib/progress.ts does for the
+ * Progress Chart) is fine: `unitSystem` is already available as a prop,
+ * and nothing here needs another query.
  */
-function formatItemDetails(item: Item): string[] {
-  const volume =
-    item.volumeType &&
-    (item.volumeValue != null
-      ? `${item.volumeValue} ${item.volumeType}`
-      : `${item.volumeType} (open ended)`);
+function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
+  const isHyroxStation = item.exercise?.isHyroxStation ?? false;
+
+  let volume: string | null = null;
+  if (item.volumeType) {
+    if (item.volumeValue == null) {
+      volume = `${item.volumeType} (open ended)`;
+    } else if (item.volumeType === "distance") {
+      const d = formatDistanceMetres(
+        Number(item.volumeValue),
+        unitSystem,
+        isHyroxStation
+      );
+      volume = `${d.value} ${d.unit}`;
+    } else {
+      volume = `${item.volumeValue} ${item.volumeType}`;
+    }
+  }
 
   const target =
     item.targetPreset ??
@@ -43,11 +63,16 @@ function formatItemDetails(item: Item): string[] {
         : item.targetType
       : null);
 
+  const weight =
+    item.weightKg != null
+      ? formatWeightKg(Number(item.weightKg), unitSystem)
+      : null;
+
   return [
     `Sets: ${item.sets}`,
     volume && `Volume: ${volume}`,
     target && `Target: ${target}`,
-    item.weightKg != null && `Weight: ${item.weightKg} kg`,
+    weight && `Weight: ${weight.value} ${weight.unit}`,
     item.restSeconds != null && `Rest: ${item.restSeconds}s`,
   ].filter((part): part is string => Boolean(part));
 }
@@ -66,7 +91,10 @@ function formatItemDetails(item: Item): string[] {
  * items. There is one checkbox per item — block `rounds` and item `sets`
  * are shown as information only, not multiplied into separate checkboxes.
  */
-export default function StartWorkoutClient({ workout }: StartWorkoutClientProps) {
+export default function StartWorkoutClient({
+  workout,
+  unitSystem,
+}: StartWorkoutClientProps) {
   const [checkedItemIds, setCheckedItemIds] = useState<Set<string>>(new Set());
   const [hydrated, setHydrated] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -218,7 +246,7 @@ export default function StartWorkoutClient({ workout }: StartWorkoutClientProps)
                         item.exercise?.name ??
                         item.customName ??
                         "Unnamed exercise";
-                      const details = formatItemDetails(item);
+                      const details = formatItemDetails(item, unitSystem);
                       const checked = checkedItemIds.has(item.id);
 
                       return (

@@ -4,6 +4,9 @@ type ExerciseSeed = {
   name: string;
   equipment: string | null;
   category: "exercise" | "run" | "rest";
+  // Defaults to false when omitted — only the eight official HYROX
+  // stations set this. See exercises.is_hyrox_station in db/schema.ts.
+  isHyroxStation?: boolean;
 };
 
 type TagSeed = {
@@ -18,15 +21,16 @@ const EXERCISES: ExerciseSeed[] = [
   { name: "Run", equipment: null, category: "run" },
   { name: "Rest", equipment: null, category: "rest" },
 
-  // --- HYROX official stations ---
-  { name: "Ski Erg", equipment: "Ski Erg", category: "exercise" },
-  { name: "Sled Push", equipment: "Sled", category: "exercise" },
-  { name: "Sled Pull", equipment: "Sled", category: "exercise" },
-  { name: "Burpee Broad Jumps", equipment: null, category: "exercise" },
-  { name: "Row Erg", equipment: "Rower", category: "exercise" },
-  { name: "Farmers Carry", equipment: "Kettlebells", category: "exercise" },
-  { name: "Sandbag Lunges", equipment: "Sandbag", category: "exercise" },
-  { name: "Wall Balls", equipment: "Medicine Ball", category: "exercise" },
+  // --- HYROX official stations (all eight set isHyroxStation: true —
+  // drives the metric-only distance display rule in lib/units.ts) ---
+  { name: "Ski Erg", equipment: "Ski Erg", category: "exercise", isHyroxStation: true },
+  { name: "Sled Push", equipment: "Sled", category: "exercise", isHyroxStation: true },
+  { name: "Sled Pull", equipment: "Sled", category: "exercise", isHyroxStation: true },
+  { name: "Burpee Broad Jumps", equipment: null, category: "exercise", isHyroxStation: true },
+  { name: "Row Erg", equipment: "Rower", category: "exercise", isHyroxStation: true },
+  { name: "Farmers Carry", equipment: "Kettlebells", category: "exercise", isHyroxStation: true },
+  { name: "Sandbag Lunges", equipment: "Sandbag", category: "exercise", isHyroxStation: true },
+  { name: "Wall Balls", equipment: "Medicine Ball", category: "exercise", isHyroxStation: true },
 
   // --- Strength: squat, deadlift, press, lunge variants ---
   { name: "Back Squat", equipment: "Barbell", category: "exercise" },
@@ -96,15 +100,31 @@ const TAGS: TagSeed[] = [
 
 async function main() {
   const { db } = await import("./index");
+  const { sql } = await import("drizzle-orm");
   const { exercises, tags } = await import("./schema");
 
-  const insertedExercises = await db
+  // onConflictDoUpdate, not onConflictDoNothing: this seed must be
+  // re-runnable, and re-running it after adding is_hyrox_station needs to
+  // backfill that column on rows the catalog already had — onConflictDoNothing
+  // would silently leave every existing HYROX station's flag at its default
+  // (false). `excluded.*` (Postgres's upsert pseudo-table) reuses each row's
+  // own new values rather than a single fixed value applied to every match.
+  const upsertedExercises = await db
     .insert(exercises)
-    .values(EXERCISES)
-    .onConflictDoNothing()
+    .values(
+      EXERCISES.map((e) => ({ ...e, isHyroxStation: e.isHyroxStation ?? false }))
+    )
+    .onConflictDoUpdate({
+      target: exercises.name,
+      set: {
+        equipment: sql`excluded.equipment`,
+        category: sql`excluded.category`,
+        isHyroxStation: sql`excluded.is_hyrox_station`,
+      },
+    })
     .returning({ id: exercises.id });
 
-  console.log(`Inserted ${insertedExercises.length} exercise(s).`);
+  console.log(`Upserted ${upsertedExercises.length} exercise(s).`);
 
   const insertedTags = await db
     .insert(tags)

@@ -13,7 +13,7 @@ export type PersonalRecord = {
   achievedAt: string;
   notes: string | null;
   createdAt: Date;
-  exercise: { id: string; name: string } | null;
+  exercise: { id: string; name: string; isHyroxStation: boolean } | null;
 };
 
 /**
@@ -23,7 +23,7 @@ export type PersonalRecord = {
  */
 function toPersonalRecord(
   row: typeof personalRecords.$inferSelect & {
-    exercise: { id: string; name: string } | null;
+    exercise: { id: string; name: string; isHyroxStation: boolean } | null;
   }
 ): PersonalRecord {
   return { ...row, value: Number(row.value) };
@@ -47,7 +47,7 @@ export async function getPersonalRecordsForUser(
     ],
     with: {
       exercise: {
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, isHyroxStation: true },
       },
     },
   });
@@ -81,7 +81,7 @@ export async function createPersonalRecordForUser(
   const exercise = input.exerciseId
     ? await db.query.exercises.findFirst({
         where: (exercises, { eq }) => eq(exercises.id, input.exerciseId!),
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, isHyroxStation: true },
       })
     : null;
 

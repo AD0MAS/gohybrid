@@ -40,7 +40,7 @@ export type Goal = {
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
-  exercise: { id: string; name: string } | null;
+  exercise: { id: string; name: string; isHyroxStation: boolean } | null;
 };
 
 /**
@@ -50,7 +50,7 @@ export type Goal = {
  */
 function toGoal(
   row: typeof goals.$inferSelect & {
-    exercise: { id: string; name: string } | null;
+    exercise: { id: string; name: string; isHyroxStation: boolean } | null;
   }
 ): Goal {
   return {
@@ -80,7 +80,7 @@ export async function getGoalsForUser(
     orderBy: (goals, { desc }) => [desc(goals.createdAt)],
     with: {
       exercise: {
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, isHyroxStation: true },
       },
     },
   });
@@ -119,7 +119,7 @@ export async function createGoalForUser(
   const exercise = input.targetExerciseId
     ? await db.query.exercises.findFirst({
         where: (exercises, { eq }) => eq(exercises.id, input.targetExerciseId!),
-        columns: { id: true, name: true },
+        columns: { id: true, name: true, isHyroxStation: true },
       })
     : null;
 

@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { getExerciseById } from "@/lib/exercises";
 import {
   createPersonalRecordForUser,
   deletePersonalRecordForUser,
 } from "@/lib/personal-records";
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
+import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 
 export type PersonalRecordFormState = { error: string | null };
@@ -21,21 +23,50 @@ export type PersonalRecordFormState = { error: string | null };
  * boundary. `today` for the "not in the future" check comes from
  * getUserContext — the user's own calendar day, not the database's UTC
  * `current_date` — same ground truth used everywhere else date validity is
- * judged against "today". Revalidates /profile on success.
+ * judged against "today".
+ *
+ * Under imperial, a weight record was typed in lb and a distance record in
+ * ft (or m, if the chosen exercise is a HYROX station — see
+ * resolveDistanceInputUnit in lib/units.ts, which the isHyroxStation
+ * lookup below feeds). Both convert here, before validatePersonalRecordInput,
+ * so the validator (and the database) only ever see metric — reps/time
+ * never convert. Revalidates /profile on success.
  */
 export async function addPersonalRecord(
   _prevState: PersonalRecordFormState,
   formData: FormData
 ): Promise<PersonalRecordFormState> {
   const user = await requireUser();
-  const { today } = await getUserContext(user.id);
+  const { today, unitSystem } = await getUserContext(user.id);
+
+  const exerciseId = formData.get("exerciseId");
+  const recordType = formData.get("recordType");
+  const rawValue = formData.get("value");
+
+  let isHyroxStation = false;
+  if (typeof exerciseId === "string" && exerciseId !== "") {
+    const exercise = await getExerciseById(exerciseId);
+    isHyroxStation = exercise?.isHyroxStation ?? false;
+  }
+
+  let value: unknown = rawValue;
+  if (typeof rawValue === "string" && rawValue !== "") {
+    const parsed = Number(rawValue);
+    if (Number.isFinite(parsed)) {
+      if (recordType === "weight") {
+        value = convertWeightInputToKg(parsed, unitSystem);
+      } else if (recordType === "distance") {
+        value = convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      }
+    }
+  }
 
   const result = validatePersonalRecordInput(
     {
-      exerciseId: formData.get("exerciseId"),
+      exerciseId,
       customName: formData.get("customName"),
-      recordType: formData.get("recordType"),
-      value: formData.get("value"),
+      recordType,
+      value,
       achievedAt: formData.get("achievedAt"),
       notes: formData.get("notes"),
     },

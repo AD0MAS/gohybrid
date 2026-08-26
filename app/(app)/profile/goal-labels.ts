@@ -1,4 +1,5 @@
-import type { goalPeriodEnum, goalTypeEnum } from "@/db/schema";
+import type { goalPeriodEnum, goalTypeEnum, unitSystemEnum } from "@/db/schema";
+import { formatBodyMetricValue, formatPersonalRecordValue } from "@/lib/units";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import type { Goal } from "@/lib/goals";
@@ -26,24 +27,40 @@ export const GOAL_PERIOD_LABELS: Record<GoalPeriod, { label: string }> = {
 };
 
 /**
- * The unit a goal's current/target values are expressed in, derived from
- * its goal_type (and, for body_metric/personal_record goals, the specific
- * target it points at) rather than stored as its own column — a
- * session_count goal is always "sessions", a streak is always "days", and
- * the other two reuse the same label maps the Body Metrics and Personal
- * Records sections already use, so a unit can't read differently in two
- * places.
+ * Formats one of a goal's values (its current progress, or its target) for
+ * display, given the raw metric number computeGoalProgress produced —
+ * never the other way round: computeGoalProgress's `percent` is computed
+ * from the raw metric current/target and must never be recomputed from a
+ * converted value (GOHYBRID_PLAN.md §5 Layer 4). session_count is always
+ * "sessions" and streak is always "days" (both unit-system-independent,
+ * value carried through unchanged); body_metric and personal_record route
+ * through lib/units.ts's formatters, the same ones the Body Metrics and
+ * Personal Records sections use, so a unit can't read differently in two
+ * places. Called separately for `current` and `target` rather than once
+ * for "the goal's unit" — a distance personal_record's two values can
+ * legitimately land in different display units (e.g. current 800 ft vs.
+ * target 1.2 mi), since formatPersonalRecordValue's distance rule is
+ * per-value.
  */
-export function getGoalUnit(goal: Goal): string {
+export function formatGoalValue(
+  goal: Goal,
+  rawValue: number,
+  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+): { value: number; unit: string } {
   switch (goal.goalType) {
     case "session_count":
-      return "sessions";
+      return { value: rawValue, unit: "sessions" };
     case "streak":
-      return "days";
+      return { value: rawValue, unit: "days" };
     case "body_metric":
-      return BODY_METRIC_LABELS[goal.targetMetricType!].unit;
+      return formatBodyMetricValue(goal.targetMetricType!, rawValue, unitSystem);
     case "personal_record":
-      return PERSONAL_RECORD_LABELS[goal.targetRecordType!].unit;
+      return formatPersonalRecordValue(
+        goal.targetRecordType!,
+        rawValue,
+        unitSystem,
+        goal.exercise?.isHyroxStation ?? false
+      );
   }
 }
 

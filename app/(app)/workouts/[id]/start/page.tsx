@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import StartWorkoutClient from "./StartWorkoutClient";
@@ -27,7 +28,10 @@ export default async function StartWorkoutPage(
     notFound();
   }
 
-  const workout = await getWorkoutForUser(id, user.id);
+  const [workout, { unitSystem }] = await Promise.all([
+    getWorkoutForUser(id, user.id),
+    getUserContext(user.id),
+  ]);
 
   if (!workout) {
     notFound();
@@ -53,7 +57,7 @@ export default async function StartWorkoutPage(
         </p>
       </div>
 
-      <StartWorkoutClient workout={workout} />
+      <StartWorkoutClient workout={workout} unitSystem={unitSystem} />
     </main>
   );
 }

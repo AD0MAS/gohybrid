@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { formatDistanceMetres, formatWeightKg } from "@/lib/units";
+import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import { deleteWorkout, scheduleWorkout, toggleFavorite } from "../actions";
@@ -32,7 +34,10 @@ export default async function WorkoutDetailPage(
     notFound();
   }
 
-  const workout = await getWorkoutForUser(id, user.id);
+  const [workout, { unitSystem }] = await Promise.all([
+    getWorkoutForUser(id, user.id),
+    getUserContext(user.id),
+  ]);
 
   if (!workout) {
     notFound();
@@ -132,11 +137,24 @@ export default async function WorkoutDetailPage(
                         item.customName ??
                         "Unnamed exercise";
 
-                      const volume =
-                        item.volumeType &&
-                        (item.volumeValue != null
-                          ? `${item.volumeValue} ${item.volumeType}`
-                          : `${item.volumeType} (open ended)`);
+                      const isHyroxStation =
+                        item.exercise?.isHyroxStation ?? false;
+
+                      let volume: string | null = null;
+                      if (item.volumeType) {
+                        if (item.volumeValue == null) {
+                          volume = `${item.volumeType} (open ended)`;
+                        } else if (item.volumeType === "distance") {
+                          const d = formatDistanceMetres(
+                            Number(item.volumeValue),
+                            unitSystem,
+                            isHyroxStation
+                          );
+                          volume = `${d.value} ${d.unit}`;
+                        } else {
+                          volume = `${item.volumeValue} ${item.volumeType}`;
+                        }
+                      }
 
                       const target =
                         item.targetPreset ??
@@ -146,11 +164,16 @@ export default async function WorkoutDetailPage(
                             : item.targetType
                           : null);
 
+                      const weight =
+                        item.weightKg != null
+                          ? formatWeightKg(Number(item.weightKg), unitSystem)
+                          : null;
+
                       const details = [
                         `Sets: ${item.sets}`,
                         volume && `Volume: ${volume}`,
                         target && `Target: ${target}`,
-                        item.weightKg != null && `Weight: ${item.weightKg} kg`,
+                        weight && `Weight: ${weight.value} ${weight.unit}`,
                         item.restSeconds != null &&
                           `Rest: ${item.restSeconds}s`,
                       ].filter(Boolean);

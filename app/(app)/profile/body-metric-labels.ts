@@ -3,17 +3,15 @@ import type { bodyMetricTypeEnum } from "@/db/schema";
 type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
 
 /**
- * Display label and unit per body_metric_type enum value — the metric
- * type select, the measurement list, and the delete confirmation all read
- * from here so a value can't be labeled differently in two places. Units
- * are always the DB's metric/SI units (kg, %, bpm); converting for display
- * is a Layer 4 Settings concern, not implemented yet.
+ * Display label per body_metric_type enum value — the metric type select
+ * and the measurement list both read from here so a value can't be
+ * labeled differently in two places. No `unit` field here: the unit
+ * depends on the viewing user's unit_system (and, for weight, actually
+ * converts), so it comes from lib/units.ts's formatBodyMetricValue, not
+ * this map — one definition per unit (GOHYBRID_PLAN.md §5 Layer 4).
  */
-export const BODY_METRIC_LABELS: Record<
-  BodyMetricType,
-  { label: string; unit: string }
-> = {
-  weight: { label: "Weight", unit: "kg" },
-  body_fat: { label: "Body fat", unit: "%" },
-  resting_hr: { label: "Resting HR", unit: "bpm" },
+export const BODY_METRIC_LABELS: Record<BodyMetricType, { label: string }> = {
+  weight: { label: "Weight" },
+  body_fat: { label: "Body fat" },
+  resting_hr: { label: "Resting HR" },
 };

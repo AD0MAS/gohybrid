@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
 import { getUserContext } from "@/lib/user-settings";
-import { getGoalSubjectLabel, getGoalUnit, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
+import { formatGoalValue, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
 /**
@@ -18,7 +18,7 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  */
 export default async function GoalsList() {
   const user = await requireUser();
-  const [allGoals, { today, timezone }] = await Promise.all([
+  const [allGoals, { today, timezone, unitSystem }] = await Promise.all([
     getGoalsForUser(user.id, true),
     getUserContext(user.id),
   ]);
@@ -53,7 +53,8 @@ export default async function GoalsList() {
       )}
 
       {activeWithProgress.map(({ goal, progress }) => {
-        const unit = getGoalUnit(goal);
+        const currentDisplay = formatGoalValue(goal, progress.current, unitSystem);
+        const targetDisplay = formatGoalValue(goal, progress.target, unitSystem);
         const subject = getGoalSubjectLabel(goal);
 
         return (
@@ -85,7 +86,8 @@ export default async function GoalsList() {
             </div>
 
             <p className="text-sm">
-              {progress.current} / {progress.target} {unit}
+              {currentDisplay.value} {currentDisplay.unit} /{" "}
+              {targetDisplay.value} {targetDisplay.unit}
             </p>
 
             <div className="h-2 w-full rounded bg-gray-200">
@@ -105,7 +107,7 @@ export default async function GoalsList() {
           </summary>
           <div className="flex flex-col gap-2 p-3 pt-0">
             {archivedGoals.map((goal) => {
-              const unit = getGoalUnit(goal);
+              const targetDisplay = formatGoalValue(goal, goal.targetValue, unitSystem);
               const subject = getGoalSubjectLabel(goal);
 
               return (
@@ -118,7 +120,7 @@ export default async function GoalsList() {
                     <p className="text-sm text-gray-600">
                       {GOAL_TYPE_LABELS[goal.goalType].label}
                       {subject ? ` · ${subject}` : ""} · Target{" "}
-                      {goal.targetValue} {unit}
+                      {targetDisplay.value} {targetDisplay.unit}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">

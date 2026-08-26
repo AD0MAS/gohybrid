@@ -128,6 +128,13 @@ export const exercises = pgTable("exercises", {
   name: text("name").notNull().unique(),
   equipment: text("equipment"),
   category: exerciseCategoryEnum("category").notNull().default("exercise"),
+  // Drives the distance-display rule in lib/units.ts: an official HYROX
+  // station's distance is always shown in metres, never converted to
+  // imperial, because the event itself is defined in metric worldwide. A
+  // column rather than a hardcoded name list in lib/ for the same reason
+  // `category` exists (GOHYBRID_PLAN.md §7) — renaming an exercise must
+  // not silently change display behaviour.
+  isHyroxStation: boolean("is_hyrox_station").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
