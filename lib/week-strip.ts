@@ -28,9 +28,10 @@ function firstValue(
  * a hand-edited or stale URL degrades gracefully rather than erroring the
  * page, same convention as parseWorkoutListSearchParams.
  *
- * `today` must come from the database (see getCurrentDateString) — this
- * function does no timezone-sensitive date derivation itself, only string
- * and integer arithmetic on the dates it's given.
+ * `today` must come from the database, in the viewing user's own timezone
+ * (see getUserContext in lib/user-settings.ts) — this function does no
+ * timezone-sensitive date derivation itself, only string and integer
+ * arithmetic on the dates it's given.
  */
 export function resolveWeekStripView(
   searchParams: Record<string, string | string[] | undefined>,

@@ -1,7 +1,7 @@
 import { getDailySessionCountsForUser } from "@/lib/activity";
 import { formatDayHeading, WEEKDAY_INITIALS } from "@/lib/dates";
 import { buildHeatmapColumns, getHeatmapRange } from "@/lib/heatmap";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 type ActivityHeatmapProps = {
   userId: string;
@@ -25,14 +25,16 @@ function shadeClassForCount(count: number): string {
  * see getDailySessionCountsForUser for the timezone-correct day grouping.
  * Fetches its own data given `userId`, same convention as WeekStrip, so the
  * page that renders it stays a plain Server Component with no props
- * plumbing beyond the user id.
+ * plumbing beyond the user id. Both "today" and the bucketing queries'
+ * timezone come from getUserContext (cached — see SummaryCards), so they're
+ * always the same user's calendar day.
  */
 export default async function ActivityHeatmap({
   userId,
 }: ActivityHeatmapProps) {
-  const today = await getCurrentDateString();
+  const { today, timezone } = await getUserContext(userId);
   const { from, to } = getHeatmapRange(today);
-  const counts = await getDailySessionCountsForUser(userId, from, to);
+  const counts = await getDailySessionCountsForUser(userId, from, to, timezone);
   const columns = buildHeatmapColumns(from, to, counts);
   const totalSessions = counts.reduce((sum, entry) => sum + entry.count, 0);
 

@@ -9,10 +9,8 @@ import {
   WEEKDAY_INITIALS,
 } from "@/lib/dates";
 import { requireUser } from "@/lib/auth";
-import {
-  getCurrentDateString,
-  getScheduledForUserInRange,
-} from "@/lib/scheduled-workouts";
+import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 /** Scheduled-workout titles shown per day cell before collapsing the rest
  * into a "+N more" indicator. */
@@ -36,7 +34,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
   const user = await requireUser();
   const searchParams = await props.searchParams;
 
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(user.id);
   const view = resolveCalendarView(searchParams, today);
 
   const scheduled = await getScheduledForUserInRange(

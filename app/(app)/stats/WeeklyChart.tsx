@@ -1,7 +1,7 @@
 import { getWeeklySessionCountsForUser } from "@/lib/activity";
 import { buildAxisScale } from "@/lib/charts";
 import { formatDayMonthShort, getWeekStartsEndingAt } from "@/lib/dates";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 type WeeklyChartProps = {
   userId: string;
@@ -30,15 +30,19 @@ const PLOT_BOTTOM = MARGIN_TOP + PLOT_HEIGHT;
  * (non-degenerate) axis instead of dividing by zero.
  *
  * `viewBox`-scaled with no fixed pixel width/height, so the chart shrinks
- * with its container on narrow screens instead of overflowing.
+ * with its container on narrow screens instead of overflowing. Both
+ * "today" and the bucketing query's timezone come from getUserContext
+ * (cached — see SummaryCards), so they're always the same user's calendar
+ * day.
  */
 export default async function WeeklyChart({ userId }: WeeklyChartProps) {
-  const today = await getCurrentDateString();
+  const { today, timezone } = await getUserContext(userId);
   const weekStarts = getWeekStartsEndingAt(today, WEEKS);
   const counts = await getWeeklySessionCountsForUser(
     userId,
     weekStarts[0],
-    today
+    today,
+    timezone
   );
   const countByWeek = new Map(counts.map((c) => [c.weekStart, c.count]));
   const bars = weekStarts.map((weekStart) => ({

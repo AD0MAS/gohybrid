@@ -1,6 +1,6 @@
 import { getSessionCountsByPrimaryTypeForUser } from "@/lib/activity";
 import { getWeekStartsEndingAt } from "@/lib/dates";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 type DistributionChartProps = {
   userId: string;
@@ -27,17 +27,20 @@ const BAR_MAX_WIDTH =
  * simply sees one bar.
  *
  * Fetches its own data given `userId`, same convention as ActivityHeatmap.
- * `viewBox`-scaled with no fixed pixel width/height.
+ * `viewBox`-scaled with no fixed pixel width/height. Both "today" and the
+ * bucketing query's timezone come from getUserContext (cached — see
+ * SummaryCards), so they're always the same user's calendar day.
  */
 export default async function DistributionChart({
   userId,
 }: DistributionChartProps) {
-  const today = await getCurrentDateString();
+  const { today, timezone } = await getUserContext(userId);
   const weekStarts = getWeekStartsEndingAt(today, WEEKS);
   const rows = await getSessionCountsByPrimaryTypeForUser(
     userId,
     weekStarts[0],
-    today
+    today,
+    timezone
   );
 
   const viewHeight = rows.length * ROW_HEIGHT + MARGIN * 2;

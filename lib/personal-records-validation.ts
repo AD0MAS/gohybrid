@@ -41,8 +41,9 @@ const MAX_PERSONAL_RECORD_VALUE = 9999999.99;
  * constraint is the last line of defence, not the first) and is rounded to
  * 2 decimal places here rather than left for Postgres to round silently;
  * achievedAt must be a YYYY-MM-DD date not later than `today` (passed in by
- * the caller, same ground truth as getCurrentDateString elsewhere); notes,
- * if present, is trimmed and normalized to null when empty.
+ * the caller, same ground truth as getUserContext elsewhere —
+ * lib/user-settings.ts); notes, if present, is trimmed and normalized to
+ * null when empty.
  */
 export function validatePersonalRecordInput(
   input: RawPersonalRecordInput,

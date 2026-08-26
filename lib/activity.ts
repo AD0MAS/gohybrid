@@ -2,10 +2,9 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { workoutPrimaryTypeEnum, workoutSessions } from "@/db/schema";
 import { diffInDays } from "./dates";
-import { APP_TIMEZONE } from "./timezone";
 
 export type DailySessionCount = {
-  /** YYYY-MM-DD, the calendar day in APP_TIMEZONE. */
+  /** YYYY-MM-DD, the calendar day in the query's timezone. */
   date: string;
   count: number;
 };
@@ -17,25 +16,33 @@ export type DailySessionCount = {
  *
  * `completed_at` is a `timestamptz` (an instant), but the heatmap groups by
  * calendar day, so the instant is converted to a day with `AT TIME ZONE
- * APP_TIMEZONE` inside the query itself — never by deriving a day from a
- * JavaScript Date. A session completed at 23:30 in Vilnius is already the
- * next day in UTC and must still land on the day it was experienced as.
+ * timezone` inside the query itself — never by deriving a day from a
+ * JavaScript Date. A session completed at 23:30 in the user's timezone is
+ * already the next day in UTC and must still land on the day it was
+ * experienced as.
  *
  * Days with no sessions are absent from the result, not present with count
  * 0 — callers treat a missing date as 0.
+ *
+ * `timezone` is the caller's own — see getUserSettings in
+ * lib/user-settings.ts, which falls back to APP_TIMEZONE (lib/timezone.ts)
+ * for a user with no saved settings — rather than a module-level constant,
+ * so each user's heatmap buckets by the calendar day they actually
+ * experienced, not a fixed one.
  */
 export async function getDailySessionCountsForUser(
   userId: string,
   from: string,
-  to: string
+  to: string,
+  timezone: string
 ): Promise<DailySessionCount[]> {
   const rows = await db.execute<{ date: string; count: number }>(sql`
     select
-      (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date::text as date,
+      (${workoutSessions.completedAt} at time zone ${timezone})::date::text as date,
       count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
-      and (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date
+      and (${workoutSessions.completedAt} at time zone ${timezone})::date
         between ${from}::date and ${to}::date
     group by date
     order by date
@@ -65,18 +72,20 @@ export async function getTotalSessionCountForUser(
  * YYYY-MM-DD, inclusive), converting `completed_at` to a calendar day the
  * same way getDailySessionCountsForUser does. Used for the /stats "this
  * week" and "this month" summary cards, where the range is exactly the
- * current week or month and only the total is needed.
+ * current week or month and only the total is needed. `timezone` is the
+ * caller's own, same reasoning as getDailySessionCountsForUser.
  */
 export async function getSessionCountForUserInRange(
   userId: string,
   from: string,
-  to: string
+  to: string,
+  timezone: string
 ): Promise<number> {
   const [row] = await db.execute<{ count: number }>(sql`
     select count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
-      and (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date
+      and (${workoutSessions.completedAt} at time zone ${timezone})::date
         between ${from}::date and ${to}::date
   `);
 
@@ -84,7 +93,7 @@ export async function getSessionCountForUserInRange(
 }
 
 export type WeeklySessionCount = {
-  /** Monday of the week, YYYY-MM-DD, in APP_TIMEZONE. */
+  /** Monday of the week, YYYY-MM-DD, in the query's timezone. */
   weekStart: string;
   count: number;
 };
@@ -97,20 +106,22 @@ export type WeeklySessionCount = {
  * (getMondayOfWeek, getWeekStartsEndingAt). One GROUP BY query; weeks with
  * no sessions are absent from the result, same "absence means 0" contract
  * as getDailySessionCountsForUser — callers zero-fill with
- * getWeekStartsEndingAt.
+ * getWeekStartsEndingAt. `timezone` is the caller's own, same reasoning as
+ * getDailySessionCountsForUser.
  */
 export async function getWeeklySessionCountsForUser(
   userId: string,
   from: string,
-  to: string
+  to: string,
+  timezone: string
 ): Promise<WeeklySessionCount[]> {
   const rows = await db.execute<{ week_start: string; count: number }>(sql`
     select
-      date_trunc('week', (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE}))::date::text as week_start,
+      date_trunc('week', (${workoutSessions.completedAt} at time zone ${timezone}))::date::text as week_start,
       count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
-      and (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date
+      and (${workoutSessions.completedAt} at time zone ${timezone})::date
         between ${from}::date and ${to}::date
     group by week_start
     order by week_start
@@ -120,7 +131,7 @@ export async function getWeeklySessionCountsForUser(
 }
 
 export type MonthlySessionCount = {
-  /** YYYY-MM, in APP_TIMEZONE. */
+  /** YYYY-MM, in the query's timezone. */
   month: string;
   count: number;
 };
@@ -129,20 +140,22 @@ export type MonthlySessionCount = {
  * Per-month session counts for `userId` between `from` and `to` (both
  * YYYY-MM-DD, inclusive). Same shape/contract as
  * getWeeklySessionCountsForUser, bucketed by calendar month instead of
- * week; callers zero-fill with getMonthsEndingAt.
+ * week; callers zero-fill with getMonthsEndingAt. `timezone` is the
+ * caller's own, same reasoning as getDailySessionCountsForUser.
  */
 export async function getMonthlySessionCountsForUser(
   userId: string,
   from: string,
-  to: string
+  to: string,
+  timezone: string
 ): Promise<MonthlySessionCount[]> {
   const rows = await db.execute<{ month: string; count: number }>(sql`
     select
-      to_char(date_trunc('month', (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})), 'YYYY-MM') as month,
+      to_char(date_trunc('month', (${workoutSessions.completedAt} at time zone ${timezone})), 'YYYY-MM') as month,
       count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
-      and (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date
+      and (${workoutSessions.completedAt} at time zone ${timezone})::date
         between ${from}::date and ${to}::date
     group by month
     order by month
@@ -163,11 +176,14 @@ export type PrimaryTypeSessionCount = {
  * present in the result; the enum deliberately has no "hybrid" value (see
  * GOHYBRID_PLAN.md §5 Layer 3), and this query doesn't invent one. Ordered
  * by count descending so the largest slice of training renders first.
+ * `timezone` is the caller's own, same reasoning as
+ * getDailySessionCountsForUser.
  */
 export async function getSessionCountsByPrimaryTypeForUser(
   userId: string,
   from: string,
-  to: string
+  to: string,
+  timezone: string
 ): Promise<PrimaryTypeSessionCount[]> {
   const rows = await db.execute<{
     primary_type: PrimaryTypeSessionCount["primaryType"];
@@ -178,7 +194,7 @@ export async function getSessionCountsByPrimaryTypeForUser(
       count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
-      and (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date
+      and (${workoutSessions.completedAt} at time zone ${timezone})::date
         between ${from}::date and ${to}::date
     group by primary_type
     order by count desc
@@ -240,16 +256,18 @@ export function computeStreaks(
 /**
  * Current and longest streaks of consecutive days with at least one
  * session, for `userId` — see computeStreaks for the run-length logic.
- * `today` is the caller's ground-truth "today" (see
- * getCurrentDateString in lib/scheduled-workouts.ts), not derived from a
- * JavaScript Date here.
+ * `today` is the caller's ground-truth "today" (see getUserContext in
+ * lib/user-settings.ts), not derived from a JavaScript Date here.
+ * `timezone` is the caller's own, same reasoning as
+ * getDailySessionCountsForUser.
  */
 export async function getStreaksForUser(
   userId: string,
-  today: string
+  today: string,
+  timezone: string
 ): Promise<StreakSummary> {
   const rows = await db.execute<{ date: string }>(sql`
-    select distinct (${workoutSessions.completedAt} at time zone ${APP_TIMEZONE})::date::text as date
+    select distinct (${workoutSessions.completedAt} at time zone ${timezone})::date::text as date
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
     order by date

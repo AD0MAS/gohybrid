@@ -3,7 +3,7 @@ import {
   getStreaksForUser,
 } from "@/lib/activity";
 import { getFirstDayOfMonth, getMondayOfWeek, getMonthString } from "@/lib/dates";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 import SummaryCard from "./stats/SummaryCard";
 
 type HomeSummaryCardsProps = {
@@ -16,19 +16,23 @@ type HomeSummaryCardsProps = {
  * SummaryCards, reusing the exact same lib/ functions and the shared
  * SummaryCard tile — total sessions and longest streak stay /stats-only.
  * Fetches its own data given `userId`, same convention as
- * WeekStrip/UpcomingList.
+ * WeekStrip/UpcomingList. Both "today" and the day-bucketing queries'
+ * timezone come from getUserContext, so they're always the same user's
+ * calendar day (never Postgres's UTC `current_date` alongside a per-user
+ * timezone, which would put "today" and the AT TIME ZONE buckets in two
+ * different frames).
  */
 export default async function HomeSummaryCards({
   userId,
 }: HomeSummaryCardsProps) {
-  const today = await getCurrentDateString();
+  const { today, timezone } = await getUserContext(userId);
   const weekStart = getMondayOfWeek(today);
   const monthStart = getFirstDayOfMonth(getMonthString(today));
 
   const [thisWeek, thisMonth, streaks] = await Promise.all([
-    getSessionCountForUserInRange(userId, weekStart, today),
-    getSessionCountForUserInRange(userId, monthStart, today),
-    getStreaksForUser(userId, today),
+    getSessionCountForUserInRange(userId, weekStart, today, timezone),
+    getSessionCountForUserInRange(userId, monthStart, today, timezone),
+    getStreaksForUser(userId, today, timezone),
   ]);
 
   const cards = [

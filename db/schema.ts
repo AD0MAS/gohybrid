@@ -121,6 +121,8 @@ export const eventTypeEnum = pgEnum("event_type", [
   "other",
 ]);
 
+export const unitSystemEnum = pgEnum("unit_system", ["metric", "imperial"]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -529,3 +531,30 @@ export const events = pgTable(
     index("events_user_id_event_date_idx").on(table.userId, table.eventDate),
   ]
 );
+
+// Per-user Settings (GOHYBRID_PLAN.md §5 Layer 4): timezone and unit
+// system. user_id is itself the primary key rather than a separate `id` —
+// there's exactly one row per user, so a second identity column would only
+// duplicate the uniqueness the FK already gives it. timezone is `text`,
+// not an enum — there are hundreds of IANA zones, and validating against
+// them belongs in application code (Intl.supportedValuesOf("timeZone"),
+// see lib/user-settings-validation.ts), not a hand-maintained Postgres
+// enum. unit_system is added now, even though nothing reads it until the
+// next Layer 4 step, so this table doesn't need a second migration a few
+// days apart from this one. A missing row (no user has saved settings yet)
+// is a normal, common state — see DEFAULT_USER_SETTINGS in
+// lib/user-settings.ts — not backfilled at registration.
+export const userSettings = pgTable("user_settings", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  timezone: text("timezone").notNull().default("Europe/Vilnius"),
+  unitSystem: unitSystemEnum("unit_system").notNull().default("metric"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});

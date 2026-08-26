@@ -7,7 +7,7 @@ import {
   deleteBodyMetricForUser,
 } from "@/lib/body-metrics";
 import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 export type BodyMetricFormState = { error: string | null };
 
@@ -18,17 +18,17 @@ export type BodyMetricFormState = { error: string | null };
  * form to render, rather than throwing (which would hit app/error.tsx and
  * replace the whole page). Genuine unexpected failures (e.g. a DB error
  * from createBodyMetricForUser) still throw and belong to the error
- * boundary. `today` for the "not in the future" check comes from the
- * database (see getCurrentDateString), same ground truth used everywhere
- * else date validity is judged against "today". Revalidates /profile on
- * success.
+ * boundary. `today` for the "not in the future" check comes from
+ * getUserContext — the user's own calendar day, not the database's UTC
+ * `current_date` — same ground truth used everywhere else date validity is
+ * judged against "today". Revalidates /profile on success.
  */
 export async function addBodyMetric(
   _prevState: BodyMetricFormState,
   formData: FormData
 ): Promise<BodyMetricFormState> {
   const user = await requireUser();
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(user.id);
 
   const result = validateBodyMetricInput(
     {

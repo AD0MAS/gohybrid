@@ -35,9 +35,9 @@ const MAX_BODY_METRIC_VALUE = 9999.99;
  * the last line of defence, not the first) and is rounded to 2 decimal
  * places here rather than left for Postgres to round silently; measuredAt
  * must be a YYYY-MM-DD date not later than `today` (passed in by the
- * caller — see getCurrentDateString in lib/scheduled-workouts.ts — so "the
- * future" is judged against the database's own notion of today, not the
- * application server's clock); notes, if present, is trimmed and
+ * caller — see getUserContext in lib/user-settings.ts — so "the future" is
+ * judged against the user's own calendar day, not the application
+ * server's clock or a fixed UTC one); notes, if present, is trimmed and
  * normalized to null when empty.
  */
 export function validateBodyMetricInput(

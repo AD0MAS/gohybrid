@@ -255,22 +255,28 @@ function resolveGoalPeriodRange(
  *     targetRecordType, found via groupPersonalRecordsBySubject and the
  *     same subjectKey format personal-records.ts's own grouping uses; 0
  *     when there's no record for that subject yet.
+ *
+ * `timezone` is the user's own (see getUserSettings in
+ * lib/user-settings.ts), threaded through to the two goal_types whose
+ * source queries bucket workout_sessions by calendar day.
  */
 export async function resolveGoalCurrentValue(
   goal: Goal,
   userId: string,
-  today: string
+  today: string,
+  timezone: string
 ): Promise<number> {
   switch (goal.goalType) {
     case "session_count": {
       const { from, to } = resolveGoalPeriodRange(goal.period, today);
       if (goal.targetPrimaryType === null) {
-        return getSessionCountForUserInRange(userId, from, to);
+        return getSessionCountForUserInRange(userId, from, to, timezone);
       }
       const counts = await getSessionCountsByPrimaryTypeForUser(
         userId,
         from,
-        to
+        to,
+        timezone
       );
       return (
         counts.find((c) => c.primaryType === goal.targetPrimaryType)
@@ -278,7 +284,7 @@ export async function resolveGoalCurrentValue(
       );
     }
     case "streak": {
-      const { current } = await getStreaksForUser(userId, today);
+      const { current } = await getStreaksForUser(userId, today, timezone);
       return current;
     }
     case "body_metric": {

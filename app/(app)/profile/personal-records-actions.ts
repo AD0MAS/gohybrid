@@ -7,7 +7,7 @@ import {
   deletePersonalRecordForUser,
 } from "@/lib/personal-records";
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 export type PersonalRecordFormState = { error: string | null };
 
@@ -18,17 +18,17 @@ export type PersonalRecordFormState = { error: string | null };
  * form to render, rather than throwing (which would hit app/error.tsx and
  * replace the whole page). Genuine unexpected failures (e.g. a DB error
  * from createPersonalRecordForUser) still throw and belong to the error
- * boundary. `today` for the "not in the future" check comes from the
- * database (see getCurrentDateString), same ground truth used everywhere
- * else date validity is judged against "today". Revalidates /profile on
- * success.
+ * boundary. `today` for the "not in the future" check comes from
+ * getUserContext — the user's own calendar day, not the database's UTC
+ * `current_date` — same ground truth used everywhere else date validity is
+ * judged against "today". Revalidates /profile on success.
  */
 export async function addPersonalRecord(
   _prevState: PersonalRecordFormState,
   formData: FormData
 ): Promise<PersonalRecordFormState> {
   const user = await requireUser();
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(user.id);
 
   const result = validatePersonalRecordInput(
     {

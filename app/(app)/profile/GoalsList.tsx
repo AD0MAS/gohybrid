@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 import { getGoalSubjectLabel, getGoalUnit, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
@@ -11,13 +11,16 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  * `userId` via requireUser(), same self-fetching convention as
  * PersonalRecordsList/BodyMetricsList. Archived goals skip the
  * current-value resolution (and so show no progress bar): they're hidden
- * by default and their progress isn't the point once archived.
+ * by default and their progress isn't the point once archived. Both
+ * "today" and the source queries' timezone come from getUserContext
+ * (cached, so this and EventsList/BodyMetricForm/PersonalRecordForm share
+ * one pair of queries per request).
  */
 export default async function GoalsList() {
   const user = await requireUser();
-  const [allGoals, today] = await Promise.all([
+  const [allGoals, { today, timezone }] = await Promise.all([
     getGoalsForUser(user.id, true),
-    getCurrentDateString(),
+    getUserContext(user.id),
   ]);
 
   const activeGoals = allGoals.filter((g) => !g.isArchived);
@@ -33,7 +36,12 @@ export default async function GoalsList() {
 
   const activeWithProgress = await Promise.all(
     activeGoals.map(async (goal) => {
-      const current = await resolveGoalCurrentValue(goal, user.id, today);
+      const current = await resolveGoalCurrentValue(
+        goal,
+        user.id,
+        today,
+        timezone
+      );
       return { goal, progress: computeGoalProgress(goal, current) };
     })
   );

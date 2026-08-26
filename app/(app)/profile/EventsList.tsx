@@ -5,7 +5,7 @@ import {
   getPastEventsForUser,
   getUpcomingEventsForUser,
 } from "@/lib/events";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { deleteEvent } from "./events-actions";
 
@@ -15,12 +15,13 @@ import { deleteEvent } from "./events-actions";
  * native `<details>` disclosure — same JS-free toggle GoalsList uses for
  * archived goals. Fetches its own data given `userId` via requireUser(),
  * same self-fetching convention as GoalsList/PersonalRecordsList. The
- * countdown is computed from getCurrentDateString(), not a client-side
+ * countdown is computed from getUserContext()'s `today` (cached, shared
+ * with GoalsList/BodyMetricForm/PersonalRecordForm), not a client-side
  * `new Date()` — see daysUntil in lib/events.ts.
  */
 export default async function EventsList() {
   const user = await requireUser();
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(user.id);
   const [upcoming, past] = await Promise.all([
     getUpcomingEventsForUser(user.id, today),
     getPastEventsForUser(user.id, today),

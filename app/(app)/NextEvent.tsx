@@ -1,5 +1,5 @@
 import { daysUntil, formatCountdown, getNextEventForUser } from "@/lib/events";
-import { getCurrentDateString } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 
 type NextEventProps = {
   userId: string;
@@ -12,12 +12,17 @@ type NextEventProps = {
  * no empty state here, unlike the Upcoming/Events lists elsewhere, since a
  * user with no events shouldn't see a permanent "no events" line at the
  * very top of their home screen. The countdown is computed from
- * getCurrentDateString() and daysUntil (lib/events.ts), never a
+ * getUserContext()'s `today` and daysUntil (lib/events.ts), never a
  * client-side `new Date()`, which would introduce the user's clock as a
- * third source of truth alongside the DB and APP_TIMEZONE.
+ * second source of truth alongside the database's. daysUntil itself takes
+ * no timezone — events.event_date is a `date`, not a `timestamptz`, so
+ * it's plain YYYY-MM-DD string arithmetic, same as scheduled_workouts'
+ * date handling (GOHYBRID_PLAN.md §6A) — but "today" still has to be the
+ * user's own calendar day, via getUserContext, or a user behind or ahead
+ * of UTC would see an off-by-one countdown.
  */
 export default async function NextEvent({ userId }: NextEventProps) {
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(userId);
   const event = await getNextEventForUser(userId, today);
 
   if (!event) return null;

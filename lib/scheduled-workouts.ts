@@ -20,20 +20,6 @@ const upcomingScheduledWorkoutQuery = {
 } as const;
 
 /**
- * Returns "today" as a YYYY-MM-DD string, computed in Postgres via
- * `current_date` rather than derived from `new Date()` on the application
- * server — the same ground truth already used by getUpcomingForUser and
- * linkTodaysScheduledWorkoutToSession, so the home page's week strip can't
- * disagree with the database about which day is "today."
- */
-export async function getCurrentDateString(): Promise<string> {
-  const [row] = await db.execute<{ today: string }>(
-    sql`select current_date as today`
-  );
-  return row.today;
-}
-
-/**
  * Schedules one of `userId`'s workouts for `scheduledDate` (a YYYY-MM-DD
  * string), optionally at `scheduledTime` (an HH:MM/HH:MM:SS string, or null
  * for "no specific time" — a normal, common state). Verifies the workout is

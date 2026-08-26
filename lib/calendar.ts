@@ -35,9 +35,9 @@ function firstValue(
  * resolveWeekStripView: an invalid or absent param degrades to the current
  * month rather than erroring the page.
  *
- * `today` must come from the database (see getCurrentDateString), so the
- * fallback month agrees with the database's notion of "now," not the
- * server's clock.
+ * `today` must come from the database, in the viewing user's own timezone
+ * (see getUserContext in lib/user-settings.ts), so the fallback month
+ * agrees with that user's notion of "now," not the server's clock or UTC.
  */
 export function resolveCalendarView(
   searchParams: Record<string, string | string[] | undefined>,

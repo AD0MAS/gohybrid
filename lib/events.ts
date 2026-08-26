@@ -20,9 +20,10 @@ export type Event = {
  * the /profile Events section's main list. `userId` is a required first
  * parameter, not read from a session internally — with RLS disabled, this
  * filter is the only thing preventing one user from reading another
- * user's events. `today` comes from the caller (see getCurrentDateString
- * in lib/scheduled-workouts.ts), the same ground truth used everywhere
- * else "today" matters, rather than being computed here.
+ * user's events. `today` comes from the caller (see getUserContext in
+ * lib/user-settings.ts — the user's own calendar day), the same ground
+ * truth used everywhere else "today" matters, rather than being computed
+ * here.
  */
 export async function getUpcomingEventsForUser(
   userId: string,

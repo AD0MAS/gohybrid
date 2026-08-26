@@ -4,10 +4,8 @@ import {
   getDayNumber,
   WEEKDAY_INITIALS,
 } from "@/lib/dates";
-import {
-  getCurrentDateString,
-  getScheduledForUserInRange,
-} from "@/lib/scheduled-workouts";
+import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
 import { TAG_COLOR_CLASSES } from "./tag-colors";
 
@@ -30,13 +28,14 @@ type WeekStripProps = {
  * workouts underneath. Entirely a Server Component — every interaction
  * (changing week, picking a day) is a plain navigation to a new `week`/`day`
  * search param combination, resolved by resolveWeekStripView, so nothing
- * here needs client-side state.
+ * here needs client-side state. `today` comes from getUserContext, so it's
+ * always the viewing user's own calendar day, not the database's UTC one.
  */
 export default async function WeekStrip({
   userId,
   searchParams,
 }: WeekStripProps) {
-  const today = await getCurrentDateString();
+  const { today } = await getUserContext(userId);
   const view = resolveWeekStripView(searchParams, today);
   const scheduled = await getScheduledForUserInRange(
     userId,
