@@ -96,6 +96,24 @@ export const personalRecordTypeEnum = pgEnum("personal_record_type", [
   "distance",
 ]);
 
+export const goalTypeEnum = pgEnum("goal_type", [
+  "session_count",
+  "streak",
+  "body_metric",
+  "personal_record",
+]);
+
+export const goalDirectionEnum = pgEnum("goal_direction", [
+  "increase",
+  "decrease",
+]);
+
+export const goalPeriodEnum = pgEnum("goal_period", [
+  "week",
+  "month",
+  "all_time",
+]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -420,3 +438,57 @@ export const personalRecordsRelations = relations(
     }),
   })
 );
+
+// A user-defined target tracked against one of four sources. The five
+// target_* columns follow the same per-type pattern as workout_blocks'
+// duration_seconds/rounds/work_seconds/rest_seconds/interval_seconds: each
+// is filled only for its own goal_type, and which ones a given goal_type
+// requires is application-level validation (lib/goals-validation.ts), not a
+// DB constraint (GOHYBRID_PLAN.md §6). direction is stored here even though
+// personal_records derives an equivalent direction from record_type
+// (isBetterRecord in lib/personal-records.ts) — the same metric can be a
+// goal in either direction (lose weight vs. gain weight), so for goals it's
+// a user choice, not a property of the data. No is_completed column: a goal
+// is achieved when its computed progress reaches 100%, the same reasoning
+// as workout_sessions having no status field; is_archived is a separate,
+// user-driven action, not derived from progress.
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    goalType: goalTypeEnum("goal_type").notNull(),
+    direction: goalDirectionEnum("direction").notNull(),
+    period: goalPeriodEnum("period").notNull(),
+    targetValue: numeric("target_value", { precision: 9, scale: 2 }).notNull(),
+    startValue: numeric("start_value", { precision: 9, scale: 2 }),
+    targetPrimaryType: workoutPrimaryTypeEnum("target_primary_type"),
+    targetMetricType: bodyMetricTypeEnum("target_metric_type"),
+    targetExerciseId: uuid("target_exercise_id").references(() => exercises.id, {
+      onDelete: "set null",
+    }),
+    targetCustomName: text("target_custom_name"),
+    targetRecordType: personalRecordTypeEnum("target_record_type"),
+    isArchived: boolean("is_archived").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("goals_user_id_is_archived_idx").on(table.userId, table.isArchived),
+  ]
+);
+
+export const goalsRelations = relations(goals, ({ one }) => ({
+  exercise: one(exercises, {
+    fields: [goals.targetExerciseId],
+    references: [exercises.id],
+  }),
+}));

@@ -125,8 +125,14 @@ export function isBetterRecord(
 /** A personal record's subject+type: the catalog exercise id (or custom
  * name) — the two are mutually exclusive per row — plus record_type.
  * record_type is part of the key because values of different types (e.g. a
- * "Run" distance PR and a "Run" time PR) aren't comparable. */
-function subjectKey(record: PersonalRecord): string {
+ * "Run" distance PR and a "Run" time PR) aren't comparable. Exported so
+ * lib/goals.ts can look up a group by the same subject+type identity a
+ * personal-record goal targets, without redefining the key format. */
+export function subjectKey(record: {
+  exerciseId: string | null;
+  customName: string | null;
+  recordType: (typeof personalRecordTypeEnum.enumValues)[number];
+}): string {
   const subject = record.exerciseId ? `exercise:${record.exerciseId}` : `custom:${record.customName}`;
   return `${subject}:${record.recordType}`;
 }
