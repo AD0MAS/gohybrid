@@ -9,14 +9,24 @@ import {
 import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
 import { getCurrentDateString } from "@/lib/scheduled-workouts";
 
+export type BodyMetricFormState = { error: string | null };
+
 /**
- * Records a new body metric measurement for the authenticated user, from
- * the /profile add-measurement form. `today` for the "not in the future"
- * check comes from the database (see getCurrentDateString), same ground
- * truth used everywhere else date validity is judged against "today".
- * Revalidates /profile on success.
+ * Records a new body metric measurement for the authenticated user. Passed
+ * to useActionState in BodyMetricFields, so a validation failure is an
+ * expected outcome of a form submission — it returns { error } for the
+ * form to render, rather than throwing (which would hit app/error.tsx and
+ * replace the whole page). Genuine unexpected failures (e.g. a DB error
+ * from createBodyMetricForUser) still throw and belong to the error
+ * boundary. `today` for the "not in the future" check comes from the
+ * database (see getCurrentDateString), same ground truth used everywhere
+ * else date validity is judged against "today". Revalidates /profile on
+ * success.
  */
-export async function addBodyMetric(formData: FormData) {
+export async function addBodyMetric(
+  _prevState: BodyMetricFormState,
+  formData: FormData
+): Promise<BodyMetricFormState> {
   const user = await requireUser();
   const today = await getCurrentDateString();
 
@@ -31,12 +41,13 @@ export async function addBodyMetric(formData: FormData) {
   );
 
   if (!result.success) {
-    throw new Error(result.error);
+    return { error: result.error };
   }
 
   await createBodyMetricForUser(user.id, result.data);
 
   revalidatePath("/profile");
+  return { error: null };
 }
 
 /**

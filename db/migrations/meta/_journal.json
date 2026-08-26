@@ -50,6 +50,13 @@
       "when": 1787684051282,
       "tag": "0006_worried_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787726363032,
+      "tag": "0007_boring_husk",
+      "breakpoints": true
     }
   ]
 }

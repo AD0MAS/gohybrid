@@ -21,16 +21,24 @@ export type RawBodyMetricInput = {
   notes?: unknown;
 };
 
+// Must match body_metrics.value's numeric(6,2) in db/schema.ts — the
+// largest value that column can hold. Kept as a named constant so the two
+// can't drift without someone noticing.
+const MAX_BODY_METRIC_VALUE = 9999.99;
+
 /**
  * Validates and normalizes body-metric input. Shared by the /profile
  * add-measurement Server Action and any future API surface, same pattern
  * as validateWorkoutInput/validateScheduleInput. Rules: metricType must be
  * one of the enum values defined in db/schema.ts; value must be a positive
- * finite number; measuredAt must be a YYYY-MM-DD date not later than
- * `today` (passed in by the caller — see getCurrentDateString in
- * lib/scheduled-workouts.ts — so "the future" is judged against the
- * database's own notion of today, not the application server's clock);
- * notes, if present, is trimmed and normalized to null when empty.
+ * finite number no greater than MAX_BODY_METRIC_VALUE (the DB constraint is
+ * the last line of defence, not the first) and is rounded to 2 decimal
+ * places here rather than left for Postgres to round silently; measuredAt
+ * must be a YYYY-MM-DD date not later than `today` (passed in by the
+ * caller — see getCurrentDateString in lib/scheduled-workouts.ts — so "the
+ * future" is judged against the database's own notion of today, not the
+ * application server's clock); notes, if present, is trimmed and
+ * normalized to null when empty.
  */
 export function validateBodyMetricInput(
   input: RawBodyMetricInput,
@@ -47,10 +55,18 @@ export function validateBodyMetricInput(
   }
 
   const rawValue = input.value;
-  const value = typeof rawValue === "number" ? rawValue : Number(rawValue);
-  if (!Number.isFinite(value) || value <= 0) {
-    return { success: false, error: "value must be a positive number." };
+  const parsedValue = typeof rawValue === "number" ? rawValue : Number(rawValue);
+  if (
+    !Number.isFinite(parsedValue) ||
+    parsedValue <= 0 ||
+    parsedValue > MAX_BODY_METRIC_VALUE
+  ) {
+    return {
+      success: false,
+      error: `value must be between 0 and ${MAX_BODY_METRIC_VALUE}.`,
+    };
   }
+  const value = Math.round(parsedValue * 100) / 100;
 
   const measuredAt = input.measuredAt;
   if (!isValidDateString(measuredAt)) {

@@ -89,6 +89,13 @@ export const bodyMetricTypeEnum = pgEnum("body_metric_type", [
   "resting_hr",
 ]);
 
+export const personalRecordTypeEnum = pgEnum("personal_record_type", [
+  "weight",
+  "time",
+  "reps",
+  "distance",
+]);
+
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
@@ -365,4 +372,51 @@ export const bodyMetrics = pgTable(
       table.measuredAt
     ),
   ]
+);
+
+// A manually entered personal record, kept as history rather than a single
+// current value — the current best per subject is derived (see
+// isBetterRecord/groupPersonalRecordsBySubject in lib/personal-records.ts).
+// exercise_id + custom_name mirrors workout_items exactly (GOHYBRID_PLAN.md
+// §6): a record either points at the catalog or carries its own name,
+// neither required at the DB level — "at least one" is application-level
+// validation, same as everywhere else in this schema. numeric(9,2) rather
+// than the (6,2) body_metrics uses: time records are stored in seconds and
+// a marathon finish exceeds 9999.99. achieved_at is `date`, not
+// timestamptz — a PR is a calendar day, same reasoning as measured_at.
+export const personalRecords = pgTable(
+  "personal_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    exerciseId: uuid("exercise_id").references(() => exercises.id, {
+      onDelete: "set null",
+    }),
+    customName: text("custom_name"),
+    recordType: personalRecordTypeEnum("record_type").notNull(),
+    value: numeric("value", { precision: 9, scale: 2 }).notNull(),
+    achievedAt: date("achieved_at").notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("personal_records_user_id_achieved_at_idx").on(
+      table.userId,
+      table.achievedAt
+    ),
+  ]
+);
+
+export const personalRecordsRelations = relations(
+  personalRecords,
+  ({ one }) => ({
+    exercise: one(exercises, {
+      fields: [personalRecords.exerciseId],
+      references: [exercises.id],
+    }),
+  })
 );
