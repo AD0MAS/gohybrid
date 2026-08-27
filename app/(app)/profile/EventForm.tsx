@@ -27,13 +27,13 @@ export default function EventForm() {
         name="title"
         placeholder="Event title"
         required
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       <select
         name="eventType"
         defaultValue="race"
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       >
         {eventTypeEnum.enumValues.map((type) => (
           <option key={type} value={type}>
@@ -46,28 +46,28 @@ export default function EventForm() {
         type="date"
         name="eventDate"
         required
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       <input
         type="text"
         name="location"
         placeholder="Location (optional)"
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       <input
         type="text"
         name="notes"
         placeholder="Notes (optional)"
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       {state.error && <p className="text-sm text-red-700">{state.error}</p>}
 
       <button
         type="submit"
-        className="rounded bg-black p-2 text-sm text-white"
+        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
       >
         Add event
       </button>

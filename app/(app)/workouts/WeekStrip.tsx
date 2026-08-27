@@ -141,7 +141,7 @@ export default async function WeekStrip({
                 return (
                   <li
                     key={entry.id}
-                    className="rounded border border-gray-300 p-3"
+                    className="rounded border border-gray-300 p-5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Link

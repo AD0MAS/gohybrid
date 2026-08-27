@@ -18,22 +18,24 @@ export default async function SettingsPage() {
   const timezones = Intl.supportedValuesOf("timeZone");
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Settings</h1>
-        <Link
-          href="/profile"
-          className="rounded border border-gray-300 px-3 py-1 text-sm"
-        >
-          Profile
-        </Link>
-      </div>
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Settings</h1>
+          <Link
+            href="/profile"
+            className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+          >
+            Profile
+          </Link>
+        </div>
 
-      <SettingsFields
-        timezones={timezones}
-        currentTimezone={settings.timezone}
-        currentUnitSystem={settings.unitSystem}
-      />
+        <SettingsFields
+          timezones={timezones}
+          currentTimezone={settings.timezone}
+          currentUnitSystem={settings.unitSystem}
+        />
+      </div>
     </main>
   );
 }

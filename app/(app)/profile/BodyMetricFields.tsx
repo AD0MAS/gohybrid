@@ -48,7 +48,7 @@ export default function BodyMetricFields({
             e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
           )
         }
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       >
         {bodyMetricTypeEnum.enumValues.map((type) => (
           <option key={type} value={type}>
@@ -64,7 +64,7 @@ export default function BodyMetricFields({
         min="0"
         required
         placeholder={`Value (${unit})`}
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       <input
@@ -73,21 +73,21 @@ export default function BodyMetricFields({
         defaultValue={today}
         max={today}
         required
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       <input
         type="text"
         name="notes"
         placeholder="Notes (optional)"
-        className="rounded border border-gray-300 p-2 text-sm"
+        className="h-11 rounded border border-gray-300 px-4 text-base"
       />
 
       {state.error && <p className="text-sm text-red-700">{state.error}</p>}
 
       <button
         type="submit"
-        className="rounded bg-black p-2 text-sm text-white"
+        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
       >
         Add measurement
       </button>

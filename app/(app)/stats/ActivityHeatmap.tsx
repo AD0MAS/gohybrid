@@ -1,33 +1,158 @@
 import { getDailySessionCountsForUser } from "@/lib/activity";
 import { formatDayHeading, WEEKDAY_INITIALS } from "@/lib/dates";
-import { buildHeatmapColumns, getHeatmapRange } from "@/lib/heatmap";
+import {
+  buildHeatmapColumns,
+  getHeatmapRange,
+  type HeatmapColumn,
+} from "@/lib/heatmap";
 import { getUserContext } from "@/lib/user-settings";
 
 type ActivityHeatmapProps = {
   userId: string;
 };
 
+/** Number of columns (weeks) shown on the mobile grid — the trailing six months. */
+const MOBILE_WEEKS = 26;
+
 /**
  * Shading step for a day's session count: 0 sessions, 1, 2, or 3+ — four
- * levels, plain grays until the final UI pass picks a real palette.
+ * levels, plain grays until the final UI pass picks a real palette. Hex
+ * values are Tailwind's gray-100/300/500/700 — SVG `fill` doesn't take
+ * Tailwind classes, so the same scale is carried over as literal colors,
+ * matching WeeklyChart/DistributionChart's convention.
  */
-function shadeClassForCount(count: number): string {
-  if (count === 0) return "bg-gray-100";
-  if (count === 1) return "bg-gray-300";
-  if (count === 2) return "bg-gray-500";
-  return "bg-gray-700";
+function fillForCount(count: number): string {
+  if (count === 0) return "#f3f4f6";
+  if (count === 1) return "#d1d5db";
+  if (count === 2) return "#6b7280";
+  return "#374151";
+}
+
+/** Total sessions across a set of columns, treating a null cell as 0. */
+function sumSessions(columns: HeatmapColumn[]): number {
+  return columns.reduce(
+    (sum, column) =>
+      sum + column.cells.reduce((s, cell) => s + (cell.count ?? 0), 0),
+    0
+  );
+}
+
+const CELL = 10;
+const GAP = 3;
+const STEP = CELL + GAP;
+const LABEL_WIDTH = 20;
+const MONTH_LABEL_HEIGHT = 16;
+const GRID_HEIGHT = 7 * STEP - GAP;
+const VIEW_HEIGHT = GRID_HEIGHT + MONTH_LABEL_HEIGHT;
+
+type HeatmapGridProps = {
+  columns: HeatmapColumn[];
+  today: string;
+  ariaLabel: string;
+};
+
+/**
+ * One heatmap grid — weekday labels, cells, month labels — drawn from
+ * whatever slice of columns it's given. Shared by both the desktop (full
+ * year) and mobile (trailing six months) grids in ActivityHeatmap below, so
+ * the markup exists once. `viewBox`-scaled with no fixed pixel width/height
+ * (same convention as WeeklyChart/DistributionChart): CELL/GAP/STEP are
+ * fixed only in the coordinate system columns are drawn in, and are shared
+ * between both grids, so a wider (53-column) or narrower (26-column) grid
+ * scales to its own container without changing the cell:gap proportions.
+ */
+function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
+  const viewWidth = LABEL_WIDTH + columns.length * STEP - GAP;
+
+  return (
+    <svg
+      viewBox={`0 0 ${viewWidth} ${VIEW_HEIGHT}`}
+      className="w-full"
+      role="img"
+      aria-label={ariaLabel}
+    >
+      {WEEKDAY_INITIALS.map((initial, row) => {
+        const yCenter = row * STEP + CELL / 2;
+
+        return (
+          <text
+            key={row}
+            x={LABEL_WIDTH - 6}
+            y={yCenter + 3}
+            textAnchor="end"
+            fontSize={9}
+            fill="#6b7280"
+          >
+            {initial}
+          </text>
+        );
+      })}
+
+      {columns.map((column, col) =>
+        column.cells.map((cell, row) => {
+          if (cell.count === null) return null;
+
+          const x = LABEL_WIDTH + col * STEP;
+          const y = row * STEP;
+          const isToday = cell.date === today;
+
+          return (
+            <rect
+              key={cell.date}
+              x={x}
+              y={y}
+              width={CELL}
+              height={CELL}
+              rx={2}
+              fill={fillForCount(cell.count)}
+              stroke={isToday ? "#000000" : "none"}
+              strokeWidth={isToday ? 1.25 : 0}
+            >
+              <title>
+                {formatDayHeading(cell.date)} — {cell.count} session
+                {cell.count === 1 ? "" : "s"}
+              </title>
+            </rect>
+          );
+        })
+      )}
+
+      {columns.map((column, col) => {
+        if (!column.monthLabel) return null;
+
+        return (
+          <text
+            key={column.monday}
+            x={LABEL_WIDTH + col * STEP}
+            y={GRID_HEIGHT + MONTH_LABEL_HEIGHT / 2 + 3}
+            textAnchor="start"
+            fontSize={9}
+            fill="#6b7280"
+          >
+            {column.monthLabel}
+          </text>
+        );
+      })}
+    </svg>
+  );
 }
 
 /**
- * GitHub-style activity heatmap (Roxfit-inspired): the last ~six months of
- * workout_sessions, one column per week (Monday first), shaded by how many
- * sessions completed that calendar day. Source is workout_sessions only —
- * see getDailySessionCountsForUser for the timezone-correct day grouping.
- * Fetches its own data given `userId`, same convention as WeekStrip, so the
- * page that renders it stays a plain Server Component with no props
- * plumbing beyond the user id. Both "today" and the bucketing queries'
- * timezone come from getUserContext (cached — see SummaryCards), so they're
- * always the same user's calendar day.
+ * GitHub-style activity heatmap (Roxfit-inspired): workout_sessions shaded
+ * by day, one column per week (Monday first). Source is workout_sessions
+ * only — see getDailySessionCountsForUser for the timezone-correct day
+ * grouping. Fetches its own data given `userId`, same convention as
+ * WeekStrip, so the page that renders it stays a plain Server Component
+ * with no props plumbing beyond the user id. Both "today" and the
+ * bucketing queries' timezone come from getUserContext (cached — see
+ * SummaryCards), so they're always the same user's calendar day.
+ *
+ * One query fetches the full year (HEATMAP_WEEKS); two grids render from
+ * the same `columns` array — desktop shows all of it, mobile shows only
+ * the trailing MOBILE_WEEKS — so there's no second query and no client JS
+ * to decide which to show (that's left to `hidden md:block` / `md:hidden`,
+ * i.e. plain CSS media queries). The count line next to the heading swaps
+ * the same way, so the number always matches the grid actually visible.
  */
 export default async function ActivityHeatmap({
   userId,
@@ -36,55 +161,39 @@ export default async function ActivityHeatmap({
   const { from, to } = getHeatmapRange(today);
   const counts = await getDailySessionCountsForUser(userId, from, to, timezone);
   const columns = buildHeatmapColumns(from, to, counts);
-  const totalSessions = counts.reduce((sum, entry) => sum + entry.count, 0);
+  const mobileColumns = columns.slice(-MOBILE_WEEKS);
+
+  const yearTotal = sumSessions(columns);
+  const mobileTotal = sumSessions(mobileColumns);
 
   return (
     <section className="flex flex-col gap-3">
-      <p className="text-sm text-gray-600">
-        {totalSessions} session{totalSessions === 1 ? "" : "s"} in the last
-        six months
-      </p>
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="text-sm font-medium text-gray-700">Activity</h2>
+        <p className="text-sm text-gray-600">
+          <span className="hidden md:inline">
+            {yearTotal} session{yearTotal === 1 ? "" : "s"} in the last year
+          </span>
+          <span className="md:hidden">
+            {mobileTotal} session{mobileTotal === 1 ? "" : "s"} in the last
+            six months
+          </span>
+        </p>
+      </div>
 
-      <div className="flex gap-1 overflow-x-auto pb-2">
-        <div className="flex flex-col gap-1">
-          <span className="h-3 text-[10px] leading-3 text-gray-500" />
-          {WEEKDAY_INITIALS.map((initial, i) => (
-            <span
-              key={i}
-              className="flex h-3 w-3 items-center text-[10px] leading-3 text-gray-500"
-            >
-              {initial}
-            </span>
-          ))}
-        </div>
-
-        {columns.map((column) => (
-          <div key={column.monday} className="flex flex-col gap-1">
-            <span className="h-3 text-[10px] leading-3 whitespace-nowrap text-gray-500">
-              {column.monthLabel ?? ""}
-            </span>
-
-            {column.cells.map((cell) => {
-              if (cell.count === null) {
-                return <span key={cell.date} className="h-3 w-3" />;
-              }
-
-              const isToday = cell.date === today;
-
-              return (
-                <span
-                  key={cell.date}
-                  title={`${formatDayHeading(cell.date)} — ${cell.count} session${
-                    cell.count === 1 ? "" : "s"
-                  }`}
-                  className={`h-3 w-3 rounded-sm ${shadeClassForCount(cell.count)} ${
-                    isToday ? "ring-1 ring-black ring-offset-1" : ""
-                  }`}
-                />
-              );
-            })}
-          </div>
-        ))}
+      <div className="hidden md:block">
+        <HeatmapGrid
+          columns={columns}
+          today={today}
+          ariaLabel={`${yearTotal} session${yearTotal === 1 ? "" : "s"} in the last year`}
+        />
+      </div>
+      <div className="md:hidden">
+        <HeatmapGrid
+          columns={mobileColumns}
+          today={today}
+          ariaLabel={`${mobileTotal} session${mobileTotal === 1 ? "" : "s"} in the last six months`}
+        />
       </div>
     </section>
   );

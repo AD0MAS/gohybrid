@@ -7,8 +7,14 @@ import {
   getMondayOfWeek,
 } from "./dates";
 
-/** Number of week-columns the activity heatmap shows — roughly six months. */
-export const HEATMAP_WEEKS = 26;
+/**
+ * Number of week-columns the activity heatmap's full range covers — 52 full
+ * past weeks plus the current (possibly partial) week, i.e. a full year.
+ * The desktop grid draws all of these columns; the mobile grid draws only
+ * the trailing 26 (see ActivityHeatmap.tsx's MOBILE_WEEKS) from the same
+ * fetched range, so there's still only one query for both.
+ */
+export const HEATMAP_WEEKS = 53;
 
 export type HeatmapCell = {
   /** YYYY-MM-DD. */
@@ -35,11 +41,11 @@ export type HeatmapColumn = {
 
 /**
  * The activity heatmap's [from, to] date range: HEATMAP_WEEKS full
- * Monday-first weeks ending with the week containing `today`. `from` is
- * always a Monday; `to` is `today` itself, not the end of its week — the
- * days between `today` and the end of its week are legitimately in the
- * future, and buildHeatmapColumns renders them as empty cells rather than
- * as real 0-session days.
+ * Monday-first weeks (a full year) ending with the week containing `today`.
+ * `from` is always a Monday; `to` is `today` itself, not the end of its
+ * week — the days between `today` and the end of its week are legitimately
+ * in the future, and buildHeatmapColumns renders them as empty cells rather
+ * than as real 0-session days.
  */
 export function getHeatmapRange(today: string): { from: string; to: string } {
   const endMonday = getMondayOfWeek(today);

@@ -46,7 +46,8 @@ export default async function WorkoutDetailPage(
   const deleteWorkoutWithId = deleteWorkout.bind(null, workout.id);
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <div className="flex items-center gap-4">
         <Link href="/workouts/library" className="text-sm underline">
           Back to workouts
@@ -117,7 +118,7 @@ export default async function WorkoutDetailPage(
             return (
               <li
                 key={block.id}
-                className="rounded border border-gray-300 p-3"
+                className="rounded border border-gray-300 p-5"
               >
                 <p className="font-medium">
                   {block.title ? `${block.title} — ` : ""}
@@ -202,6 +203,7 @@ export default async function WorkoutDetailPage(
           })}
         </ul>
       )}
+      </div>
     </main>
   );
 }

@@ -11,7 +11,7 @@ type SummaryCardProps = {
  */
 export default function SummaryCard({ label, value }: SummaryCardProps) {
   return (
-    <div className="rounded border border-gray-300 p-3">
+    <div className="rounded border border-gray-300 p-5">
       <p className="text-2xl font-semibold">{value}</p>
       <p className="text-xs text-gray-600">{label}</p>
     </div>

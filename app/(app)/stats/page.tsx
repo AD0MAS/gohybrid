@@ -21,7 +21,7 @@ export default async function StatsPage() {
   const progressSeries = await getProgressSeriesForUser(user.id, unitSystem);
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 p-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-xl font-semibold">Stats</h1>
 
       <SummaryCards userId={user.id} />

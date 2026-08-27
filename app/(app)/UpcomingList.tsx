@@ -39,7 +39,7 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
       ) : (
         <ul className="flex flex-col gap-3">
           {upcoming.map((entry) => (
-            <li key={entry.id} className="rounded border border-gray-300 p-3">
+            <li key={entry.id} className="rounded border border-gray-300 p-5">
               <Link
                 href={`/workouts/${entry.workout.id}`}
                 className="font-medium underline"

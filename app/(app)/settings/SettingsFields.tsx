@@ -64,7 +64,7 @@ export default function SettingsFields({
           key={currentTimezone}
           name="timezone"
           defaultValue={currentTimezone}
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         >
           {timezones.map((zone) => (
             <option key={zone} value={zone}>
@@ -80,7 +80,7 @@ export default function SettingsFields({
           key={currentUnitSystem}
           name="unitSystem"
           defaultValue={currentUnitSystem}
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         >
           {unitSystemEnum.enumValues.map((value) => (
             <option key={value} value={value}>
@@ -94,7 +94,7 @@ export default function SettingsFields({
 
       <button
         type="submit"
-        className="rounded bg-black p-2 text-sm text-white"
+        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
       >
         Save
       </button>

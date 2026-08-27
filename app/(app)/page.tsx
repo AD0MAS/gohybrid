@@ -17,7 +17,7 @@ export default async function Home() {
   const user = await requireUser();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col gap-8 p-6">
+    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-xl font-semibold">Home</h1>
 
       <NextEvent userId={user.id} />

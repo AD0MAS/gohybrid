@@ -38,26 +38,28 @@ export default async function StartWorkoutPage(
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
-      <Link href={`/workouts/${workout.id}`} className="text-sm underline">
-        Back to workout
-      </Link>
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+        <Link href={`/workouts/${workout.id}`} className="text-sm underline">
+          Back to workout
+        </Link>
 
-      <div>
-        <h1 className="text-xl font-semibold">{workout.title}</h1>
-        <p className="text-sm text-gray-600">
-          {[
-            workout.primaryType,
-            workout.difficulty,
-            workout.estimatedDurationMinutes != null &&
-              `${workout.estimatedDurationMinutes} min`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
+        <div>
+          <h1 className="text-xl font-semibold">{workout.title}</h1>
+          <p className="text-sm text-gray-600">
+            {[
+              workout.primaryType,
+              workout.difficulty,
+              workout.estimatedDurationMinutes != null &&
+                `${workout.estimatedDurationMinutes} min`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        </div>
+
+        <StartWorkoutClient workout={workout} unitSystem={unitSystem} />
       </div>
-
-      <StartWorkoutClient workout={workout} unitSystem={unitSystem} />
     </main>
   );
 }

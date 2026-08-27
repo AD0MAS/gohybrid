@@ -30,7 +30,7 @@ export default function DeleteWorkoutModal({
 
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-4">
+          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-5">
             <p className="text-sm">
               Delete this workout? Its blocks and items are deleted with
               it. Any completed sessions from this workout stay in your
@@ -49,7 +49,7 @@ export default function DeleteWorkoutModal({
               <form action={deleteAction}>
                 <button
                   type="submit"
-                  className="rounded bg-red-700 px-3 py-2 text-sm text-white"
+                  className="flex h-11 items-center justify-center rounded bg-red-700 px-4 text-base text-white"
                 >
                   Delete
                 </button>

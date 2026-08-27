@@ -119,7 +119,7 @@ export default function ExercisePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search the catalog…"
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 

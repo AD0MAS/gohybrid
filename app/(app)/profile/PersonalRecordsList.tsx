@@ -52,7 +52,7 @@ export default async function PersonalRecordsList() {
           <div key={group.subjectKey} className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">{group.subjectLabel}</h3>
 
-            <div className="flex items-center justify-between gap-2 rounded border border-gray-300 bg-gray-50 p-3">
+            <div className="flex items-center justify-between gap-2 rounded border border-gray-300 bg-gray-50 p-5">
               <div>
                 <p className="text-sm font-semibold">
                   Best: {bestDisplay.value} {bestDisplay.unit} ·{" "}
@@ -82,7 +82,7 @@ export default async function PersonalRecordsList() {
                   return (
                     <li
                       key={entry.id}
-                      className="flex items-center justify-between gap-2 rounded border border-gray-200 p-3"
+                      className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
                     >
                       <div>
                         <p className="text-sm">

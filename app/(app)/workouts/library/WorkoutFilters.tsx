@@ -147,7 +147,7 @@ export default function WorkoutFilters({
           value={qInput}
           onChange={(event) => setQInput(event.target.value)}
           placeholder="Search by title"
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-3 text-sm"
         />
 
         <select
@@ -155,7 +155,7 @@ export default function WorkoutFilters({
           onChange={(event) =>
             navigate({ primaryType: event.target.value as PrimaryType | "" })
           }
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-3 text-sm"
         >
           <option value="">All types</option>
           {primaryTypeOptions.map((option) => (
@@ -170,7 +170,7 @@ export default function WorkoutFilters({
           onChange={(event) =>
             navigate({ difficulty: event.target.value as Difficulty | "" })
           }
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-3 text-sm"
         >
           <option value="">All difficulties</option>
           {difficultyOptions.map((option) => (
@@ -184,7 +184,7 @@ export default function WorkoutFilters({
           type="button"
           onClick={() => navigate({ favoritesOnly: !favoritesOnly })}
           aria-pressed={favoritesOnly}
-          className={`rounded border px-2 py-1 text-sm ${
+          className={`h-11 rounded border px-3 text-sm ${
             favoritesOnly
               ? "border-black bg-black text-white"
               : "border-gray-300"
@@ -199,7 +199,7 @@ export default function WorkoutFilters({
             navigate({ sort: event.target.value as WorkoutSort })
           }
           aria-label="Sort by"
-          className="rounded border border-gray-300 p-2 text-sm"
+          className="h-11 rounded border border-gray-300 px-3 text-sm"
         >
           {WORKOUT_SORT_OPTIONS.map((option) => (
             <option key={option} value={option}>

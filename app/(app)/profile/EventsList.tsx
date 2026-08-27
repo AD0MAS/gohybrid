@@ -44,7 +44,7 @@ export default async function EventsList() {
           {upcoming.map((event) => (
             <li
               key={event.id}
-              className="flex items-center justify-between gap-2 rounded border border-gray-300 p-3"
+              className="flex items-center justify-between gap-2 rounded border border-gray-300 p-5"
             >
               <div>
                 <p className="text-sm font-semibold">
@@ -78,7 +78,7 @@ export default async function EventsList() {
             {past.map((event) => (
               <li
                 key={event.id}
-                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-3"
+                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
               >
                 <div>
                   <p className="text-sm">{event.title}</p>

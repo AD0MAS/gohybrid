@@ -20,51 +20,53 @@ export default async function ProfilePage() {
   const user = await requireUser();
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-8 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Profile</h1>
-        <Link
-          href="/settings"
-          className="rounded border border-gray-300 px-3 py-1 text-sm"
-        >
-          Settings
-        </Link>
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Profile</h1>
+          <Link
+            href="/settings"
+            className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+          >
+            Settings
+          </Link>
+        </div>
+
+        <p className="text-sm text-gray-600">{user.email}</p>
+
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+          >
+            Sign out
+          </button>
+        </form>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Goals</h2>
+          <GoalForm />
+          <GoalsList />
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Events</h2>
+          <EventForm />
+          <EventsList />
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Body Metrics</h2>
+          <BodyMetricForm />
+          <BodyMetricsList />
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Personal Records</h2>
+          <PersonalRecordForm />
+          <PersonalRecordsList />
+        </section>
       </div>
-
-      <p className="text-sm text-gray-600">{user.email}</p>
-
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="rounded bg-black p-2 text-sm text-white"
-        >
-          Sign out
-        </button>
-      </form>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Goals</h2>
-        <GoalForm />
-        <GoalsList />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Events</h2>
-        <EventForm />
-        <EventsList />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Body Metrics</h2>
-        <BodyMetricForm />
-        <BodyMetricsList />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Personal Records</h2>
-        <PersonalRecordForm />
-        <PersonalRecordsList />
-      </section>
     </main>
   );
 }

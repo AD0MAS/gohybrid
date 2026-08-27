@@ -58,7 +58,7 @@ export default function BlockEditor({
       : "";
 
   return (
-    <fieldset className="flex flex-col gap-3 rounded border border-gray-300 p-3">
+    <fieldset className="flex flex-col gap-3 rounded border border-gray-300 p-5">
       <legend className="text-sm font-medium">Block {index + 1}</legend>
 
       <label className="flex flex-col gap-1 text-sm">
@@ -119,7 +119,7 @@ export default function BlockEditor({
                   e.target.value === "" ? null : Number(e.target.value) * 60,
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
       )}
@@ -144,7 +144,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
       )}
@@ -167,7 +167,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="rounded border border-gray-300 p-2"
+              className="h-11 rounded border border-gray-300 px-4 text-base"
             />
           </label>
 
@@ -187,7 +187,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="rounded border border-gray-300 p-2"
+              className="h-11 rounded border border-gray-300 px-4 text-base"
             />
           </label>
         </>
@@ -210,7 +210,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
       )}
@@ -241,7 +241,7 @@ export default function BlockEditor({
         <button
           type="button"
           onClick={() => dispatch({ type: "ADD_ITEM", blockId: block.id })}
-          className="self-start rounded border border-gray-300 px-3 py-2 text-sm"
+          className="flex h-11 items-center justify-center self-start rounded border border-gray-300 px-4 text-base"
         >
           Add item
         </button>

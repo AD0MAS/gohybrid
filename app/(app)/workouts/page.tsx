@@ -18,34 +18,36 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
   const searchParams = await props.searchParams;
 
   return (
-    <main className="mx-auto flex max-w-sm flex-col gap-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Workouts</h1>
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Workouts</h1>
+          <Link
+            href="/calendar"
+            className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+          >
+            Calendar
+          </Link>
+        </div>
+
+        <WeekStrip userId={user.id} searchParams={searchParams} />
+
         <Link
-          href="/calendar"
-          className="rounded border border-gray-300 px-3 py-1 text-sm"
+          href="/workouts/new"
+          className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
         >
-          Calendar
+          New workout
         </Link>
+
+        <Link
+          href="/workouts/library"
+          className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+        >
+          My Workouts
+        </Link>
+
+        <UpcomingList limit={UPCOMING_LIMIT} />
       </div>
-
-      <WeekStrip userId={user.id} searchParams={searchParams} />
-
-      <Link
-        href="/workouts/new"
-        className="rounded bg-black p-3 text-center text-sm text-white"
-      >
-        New workout
-      </Link>
-
-      <Link
-        href="/workouts/library"
-        className="rounded border border-gray-300 p-3 text-center text-sm"
-      >
-        My Workouts
-      </Link>
-
-      <UpcomingList limit={UPCOMING_LIMIT} />
     </main>
   );
 }

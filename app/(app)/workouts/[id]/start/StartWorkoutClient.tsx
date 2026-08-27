@@ -227,7 +227,7 @@ export default function StartWorkoutClient({
             return (
               <li
                 key={block.id}
-                className="rounded border border-gray-300 p-3"
+                className="rounded border border-gray-300 p-5"
               >
                 <p className="font-medium">
                   {block.title ? `${block.title} — ` : ""}
@@ -296,14 +296,14 @@ export default function StartWorkoutClient({
         type="button"
         onClick={handleFinishClick}
         disabled={isFinishing}
-        className="rounded bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base font-medium text-white disabled:opacity-50"
       >
         {isFinishing ? "Finishing…" : "Finish Workout"}
       </button>
 
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-4">
+          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-5">
             <p className="text-sm">
               {checkedItemIds.size} / {totalItems} items are checked. Finish
               anyway?
@@ -324,7 +324,7 @@ export default function StartWorkoutClient({
                   setShowConfirm(false);
                   finish();
                 }}
-                className="rounded bg-black px-3 py-2 text-sm text-white"
+                className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
               >
                 Finish
               </button>

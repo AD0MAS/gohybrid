@@ -47,12 +47,12 @@ export default async function WorkoutLibraryPage(
     (filters.tagIds?.length ?? 0) > 0;
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">My Workouts</h1>
         <Link
           href="/history"
-          className="rounded border border-gray-300 px-3 py-1 text-sm"
+          className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
         >
           History
         </Link>
@@ -92,7 +92,7 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="rounded border border-gray-300 p-3"
+              className="rounded border border-gray-300 p-5"
             >
               <div className="flex items-center gap-2">
                 <Link href={`/workouts/${workout.id}`} className="underline">

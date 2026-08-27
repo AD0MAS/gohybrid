@@ -53,7 +53,7 @@ export default async function BodyMetricsList() {
                 return (
                   <li
                     key={entry.id}
-                    className="flex items-center justify-between gap-2 rounded border border-gray-300 p-3"
+                    className="flex items-center justify-between gap-2 rounded border border-gray-300 p-5"
                   >
                     <div>
                       <p className="text-sm">

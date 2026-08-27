@@ -60,7 +60,7 @@ export default async function GoalsList() {
         return (
           <div
             key={goal.id}
-            className="flex flex-col gap-2 rounded border border-gray-300 p-3"
+            className="flex flex-col gap-2 rounded border border-gray-300 p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -113,7 +113,7 @@ export default async function GoalsList() {
               return (
                 <div
                   key={goal.id}
-                  className="flex items-center justify-between gap-2 rounded border border-gray-200 p-3"
+                  className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
                 >
                   <div>
                     <p className="text-sm">{goal.title}</p>

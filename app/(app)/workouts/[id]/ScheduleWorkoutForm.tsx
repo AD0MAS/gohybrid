@@ -38,7 +38,7 @@ export default function ScheduleWorkoutForm({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded border border-gray-300 p-3"
+      className="flex flex-col gap-2 rounded border border-gray-300 p-5"
     >
       <p className="text-sm font-medium">Schedule this workout</p>
 
@@ -48,7 +48,7 @@ export default function ScheduleWorkoutForm({
           type="date"
           name="scheduledDate"
           required
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -57,7 +57,7 @@ export default function ScheduleWorkoutForm({
         <input
           type="time"
           name="scheduledTime"
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -66,7 +66,7 @@ export default function ScheduleWorkoutForm({
         <input
           type="text"
           name="notes"
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -76,7 +76,7 @@ export default function ScheduleWorkoutForm({
       <button
         type="submit"
         disabled={isPending}
-        className="self-start rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-50"
+        className="flex h-11 items-center justify-center self-start rounded bg-black px-4 text-base text-white disabled:opacity-50"
       >
         {isPending ? "Scheduling…" : "Schedule"}
       </button>

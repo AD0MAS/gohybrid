@@ -55,7 +55,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
     `/workouts?week=${getWeekOffsetForDate(date, today)}&day=${date}`;
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-6 p-6">
+    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-xl font-semibold">Calendar</h1>
 
       <div className="flex items-center justify-between">

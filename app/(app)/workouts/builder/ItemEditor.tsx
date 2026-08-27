@@ -40,7 +40,7 @@ export default function ItemEditor({
   dispatch,
 }: ItemEditorProps) {
   return (
-    <li className="flex flex-col gap-2 rounded border border-gray-200 p-2">
+    <li className="flex flex-col gap-2 rounded border border-gray-200 p-5">
       <p className="text-sm font-medium">Item {index + 1}</p>
 
       <ExercisePicker
@@ -69,7 +69,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? 1 : Number(e.target.value),
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -86,7 +86,7 @@ export default function ItemEditor({
               value: e.target.value as VolumeType | "",
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         >
           <option value="">None</option>
           {volumeTypeOptions.map((value) => (
@@ -114,7 +114,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
       )}
@@ -132,7 +132,7 @@ export default function ItemEditor({
               value: e.target.value as TargetPreset | "",
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         >
           <option value="">None</option>
           {targetPresetOptions.map((value) => (
@@ -160,7 +160,7 @@ export default function ItemEditor({
               value: e.target.value as TargetType | "",
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         >
           <option value="">None</option>
           {targetTypeOptions.map((value) => (
@@ -187,7 +187,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
       )}
@@ -208,7 +208,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -228,7 +228,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="h-11 rounded border border-gray-300 px-4 text-base"
         />
       </label>
 
@@ -245,7 +245,7 @@ export default function ItemEditor({
               value: e.target.value,
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="rounded border border-gray-300 px-4 py-3 text-base"
         />
       </label>
 

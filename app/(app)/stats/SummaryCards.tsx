@@ -44,7 +44,7 @@ export default async function SummaryCards({ userId }: SummaryCardsProps) {
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <section className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((card) => (
         <SummaryCard key={card.label} label={card.label} value={card.value} />
       ))}

@@ -140,7 +140,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
 
@@ -155,7 +155,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="rounded border border-gray-300 px-4 py-3 text-base"
           />
         </label>
 
@@ -171,7 +171,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as PrimaryType | "",
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           >
             <option value="" disabled>
               Select a type
@@ -196,7 +196,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as Difficulty | "",
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           >
             <option value="" disabled>
               Select a difficulty
@@ -223,7 +223,7 @@ export default function WorkoutBuilder({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="rounded border border-gray-300 p-2"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
           />
         </label>
 
@@ -282,7 +282,7 @@ export default function WorkoutBuilder({
         <button
           type="button"
           onClick={() => dispatch({ type: "ADD_BLOCK" })}
-          className="self-start rounded border border-gray-300 px-3 py-2 text-sm"
+          className="flex h-11 items-center justify-center self-start rounded border border-gray-300 px-4 text-base"
         >
           Add block
         </button>
@@ -297,7 +297,7 @@ export default function WorkoutBuilder({
       <button
         type="button"
         onClick={handleSave}
-        className="self-start rounded bg-black px-4 py-2 text-sm text-white"
+        className="flex h-11 items-center justify-center self-start rounded bg-black px-4 text-base text-white"
       >
         Save
       </button>
