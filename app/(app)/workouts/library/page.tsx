@@ -50,20 +50,21 @@ export default async function WorkoutLibraryPage(
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-ink">My Workouts</h1>
-        <Link
-          href="/history"
-          className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          History
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/workouts/new"
+            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            New workout
+          </Link>
+          <Link
+            href="/history"
+            className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            History
+          </Link>
+        </div>
       </div>
-
-      <Link
-        href="/workouts/new"
-        className="text-sm text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        New workout
-      </Link>
 
       <WorkoutFilters
         q={filters.q ?? ""}

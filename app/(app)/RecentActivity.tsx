@@ -44,7 +44,10 @@ export default async function RecentActivity() {
         </ul>
       )}
 
-      <Link href="/history" className="self-end text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+      <Link
+        href="/history"
+        className="flex h-11 w-fit items-center justify-center self-end rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+      >
         Full history
       </Link>
     </section>
