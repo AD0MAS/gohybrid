@@ -26,7 +26,7 @@ export default async function SettingsPage() {
           <h1 className="text-xl font-semibold text-ink">Settings</h1>
           <Link
             href="/profile"
-            className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Profile
           </Link>
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
           <form action={signOut}>
             <button
               type="submit"
-              className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               Sign out
             </button>

@@ -44,6 +44,11 @@ const LABEL_WIDTH = 20;
 const MONTH_LABEL_HEIGHT = 16;
 const GRID_HEIGHT = 7 * STEP - GAP;
 const VIEW_HEIGHT = GRID_HEIGHT + MONTH_LABEL_HEIGHT;
+/** Today's cell strokeWidth is 1.25 — half of that plus a small margin, so
+ * the stroke isn't clipped by the viewBox when today falls in the last
+ * column (see getHeatmapRange: `to` is always today, so today's cell is
+ * always in the last column, never the first — no left-side margin needed). */
+const TODAY_STROKE_MARGIN = 2;
 
 type HeatmapGridProps = {
   columns: HeatmapColumn[];
@@ -62,7 +67,8 @@ type HeatmapGridProps = {
  * scales to its own container without changing the cell:gap proportions.
  */
 function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
-  const viewWidth = LABEL_WIDTH + columns.length * STEP - GAP;
+  const viewWidth =
+    LABEL_WIDTH + columns.length * STEP - GAP + TODAY_STROKE_MARGIN;
 
   return (
     <svg

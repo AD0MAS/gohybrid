@@ -48,7 +48,7 @@ export default function ScheduleWorkoutForm({
           type="date"
           name="scheduledDate"
           required
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -57,7 +57,7 @@ export default function ScheduleWorkoutForm({
         <input
           type="time"
           name="scheduledTime"
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -66,7 +66,7 @@ export default function ScheduleWorkoutForm({
         <input
           type="text"
           name="notes"
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -76,7 +76,7 @@ export default function ScheduleWorkoutForm({
       <button
         type="submit"
         disabled={isPending}
-        className="flex h-11 items-center justify-center self-start rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
+        className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
         {isPending ? "Scheduling…" : "Schedule"}
       </button>

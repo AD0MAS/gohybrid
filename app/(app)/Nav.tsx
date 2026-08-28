@@ -48,7 +48,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
             <li key={href}>
               <Link
                 href={href}
-                className={`flex items-center gap-3 rounded px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                   isActive(pathname, href)
                     ? "bg-surface-2 text-ink"
                     : "text-ink-subtle hover:bg-surface-1 hover:text-ink"
@@ -68,7 +68,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
           <form action={signOutAction}>
             <button
               type="submit"
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <LogOut className="h-4 w-4" />
               Sign out

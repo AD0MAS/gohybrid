@@ -95,7 +95,9 @@ export default async function WeekStrip({
               </span>
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                  isSelected ? "bg-surface-2 text-ink" : "text-ink"
+                  isSelected
+                    ? "bg-surface-2 text-ink outline outline-1 outline-accent"
+                    : "text-ink"
                 }`}
               >
                 {getDayNumber(date)}

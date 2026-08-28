@@ -59,7 +59,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded p-1 text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-md p-1 text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <X className="h-5 w-5" />
         </button>

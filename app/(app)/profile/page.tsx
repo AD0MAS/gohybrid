@@ -35,7 +35,7 @@ export default async function ProfilePage() {
           <h1 className="text-xl font-semibold text-ink">Profile</h1>
           <Link
             href="/settings"
-            className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Settings
           </Link>

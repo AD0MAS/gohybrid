@@ -67,7 +67,7 @@ export default function BodyMetricFields({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         <Plus className="h-4 w-4" />
         Add measurement
@@ -83,7 +83,7 @@ export default function BodyMetricFields({
                 e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
               )
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {bodyMetricTypeEnum.enumValues.map((type) => (
               <option key={type} value={type}>
@@ -99,7 +99,7 @@ export default function BodyMetricFields({
             min="0"
             required
             placeholder={`Value (${unit})`}
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <input
@@ -108,14 +108,14 @@ export default function BodyMetricFields({
             defaultValue={today}
             max={today}
             required
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <input
             type="text"
             name="notes"
             placeholder="Notes (optional)"
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           {state.status === "error" && (
@@ -124,7 +124,7 @@ export default function BodyMetricFields({
 
           <button
             type="submit"
-            className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Add measurement
           </button>

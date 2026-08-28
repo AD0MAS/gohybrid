@@ -74,7 +74,7 @@ export default function BlockEditor({
               value: e.target.value,
             })
           }
-          className="rounded border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-md border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -90,7 +90,7 @@ export default function BlockEditor({
               value: e.target.value as BlockType,
             })
           }
-          className="rounded border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-md border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {blockTypeOptions.map((value) => (
             <option key={value} value={value}>
@@ -119,7 +119,7 @@ export default function BlockEditor({
                   e.target.value === "" ? null : Number(e.target.value) * 60,
               })
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -144,7 +144,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -167,7 +167,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -187,7 +187,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
         </>
@@ -210,7 +210,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -241,7 +241,7 @@ export default function BlockEditor({
         <button
           type="button"
           onClick={() => dispatch({ type: "ADD_ITEM", blockId: block.id })}
-          className="flex h-11 items-center justify-center self-start rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add item
         </button>

@@ -48,7 +48,7 @@ export default function ProgressChart({ series }: ProgressChartProps) {
         <select
           value={selected.key}
           onChange={(e) => setSelectedKey(e.target.value)}
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {series.map((s) => (
             <option key={s.key} value={s.key}>

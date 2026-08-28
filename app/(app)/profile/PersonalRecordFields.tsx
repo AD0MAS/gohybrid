@@ -88,7 +88,7 @@ export default function PersonalRecordFields({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         <Plus className="h-4 w-4" />
         Add record
@@ -100,7 +100,7 @@ export default function PersonalRecordFields({
             name="exerciseId"
             value={exerciseId}
             onChange={(e) => setExerciseId(e.target.value)}
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="">Custom…</option>
             {catalog.map((exercise) => (
@@ -115,7 +115,7 @@ export default function PersonalRecordFields({
               type="text"
               name="customName"
               placeholder="Custom name"
-              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}
 
@@ -127,7 +127,7 @@ export default function PersonalRecordFields({
                 e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
               )
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {personalRecordTypeEnum.enumValues.map((type) => (
               <option key={type} value={type}>
@@ -143,7 +143,7 @@ export default function PersonalRecordFields({
             min="0"
             required
             placeholder={`Value (${unit})`}
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <input
@@ -152,14 +152,14 @@ export default function PersonalRecordFields({
             defaultValue={today}
             max={today}
             required
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <input
             type="text"
             name="notes"
             placeholder="Notes (optional)"
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           {state.status === "error" && (
@@ -168,7 +168,7 @@ export default function PersonalRecordFields({
 
           <button
             type="submit"
-            className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Add record
           </button>

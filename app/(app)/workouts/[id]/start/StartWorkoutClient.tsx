@@ -296,7 +296,7 @@ export default function StartWorkoutClient({
         type="button"
         onClick={handleFinishClick}
         disabled={isFinishing}
-        className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
+        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
         {isFinishing ? "Finishing…" : "Finish Workout"}
       </button>
@@ -324,7 +324,7 @@ export default function StartWorkoutClient({
                   setShowConfirm(false);
                   finish();
                 }}
-                className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Finish
               </button>

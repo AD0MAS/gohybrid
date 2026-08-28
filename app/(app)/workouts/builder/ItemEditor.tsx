@@ -69,7 +69,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? 1 : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -86,7 +86,7 @@ export default function ItemEditor({
               value: e.target.value as VolumeType | "",
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {volumeTypeOptions.map((value) => (
@@ -114,7 +114,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -132,7 +132,7 @@ export default function ItemEditor({
               value: e.target.value as TargetPreset | "",
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {targetPresetOptions.map((value) => (
@@ -160,7 +160,7 @@ export default function ItemEditor({
               value: e.target.value as TargetType | "",
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {targetTypeOptions.map((value) => (
@@ -187,7 +187,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -208,7 +208,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -228,7 +228,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -245,7 +245,7 @@ export default function ItemEditor({
               value: e.target.value,
             })
           }
-          className="rounded border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
