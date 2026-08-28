@@ -138,7 +138,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded bg-black px-4 text-base text-white"
+        className="flex h-11 items-center gap-2 rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         <Plus className="h-4 w-4" />
         Add goal
@@ -151,7 +151,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
             name="title"
             placeholder="Goal title"
             required
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <select
@@ -162,7 +162,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                 e.target.value as (typeof goalTypeEnum.enumValues)[number]
               )
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {goalTypeEnum.enumValues.map((type) => (
               <option key={type} value={type}>
@@ -175,7 +175,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
             <select
               name="targetPrimaryType"
               defaultValue=""
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <option value="">Any type</option>
               {workoutPrimaryTypeEnum.enumValues.map((type) => (
@@ -195,7 +195,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                   e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
                 )
               }
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               {bodyMetricTypeEnum.enumValues.map((type) => (
                 <option key={type} value={type}>
@@ -211,7 +211,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                 name="targetExerciseId"
                 value={exerciseId}
                 onChange={(e) => setExerciseId(e.target.value)}
-                className="h-11 rounded border border-gray-300 px-4 text-base"
+                className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 <option value="">Custom…</option>
                 {catalog.map((exercise) => (
@@ -226,7 +226,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                   type="text"
                   name="targetCustomName"
                   placeholder="Custom name"
-                  className="h-11 rounded border border-gray-300 px-4 text-base"
+                  className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 />
               )}
 
@@ -238,7 +238,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                     e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
                   )
                 }
-                className="h-11 rounded border border-gray-300 px-4 text-base"
+                className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 {personalRecordTypeEnum.enumValues.map((type) => (
                   <option key={type} value={type}>
@@ -258,7 +258,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                   e.target.value as (typeof goalDirectionEnum.enumValues)[number]
                 )
               }
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               {goalDirectionEnum.enumValues.map((value) => (
                 <option key={value} value={value}>
@@ -273,7 +273,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
           <select
             name="period"
             defaultValue="week"
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {goalPeriodEnum.enumValues.map((period) => (
               <option key={period} value={period}>
@@ -290,7 +290,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
               min="0"
               required
               placeholder={`Starting value (${valueUnit})`}
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}
 
@@ -301,16 +301,16 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
             min="0"
             required
             placeholder={`Target value (${valueUnit})`}
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           {state.status === "error" && (
-            <p className="text-sm text-red-700">{state.error}</p>
+            <p className="text-sm text-danger">{state.error}</p>
           )}
 
           <button
             type="submit"
-            className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+            className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Add goal
           </button>

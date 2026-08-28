@@ -58,12 +58,12 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-gray-700">
+      <h2 className="text-sm font-medium text-ink">
         Weekly volume — last {WEEKS} weeks
       </h2>
 
       {totalInRange === 0 && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           No sessions in the last {WEEKS} weeks.
         </p>
       )}
@@ -83,7 +83,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                 x2={VIEW_WIDTH - MARGIN_RIGHT}
                 y1={y}
                 y2={y}
-                stroke="#e5e7eb"
+                stroke="var(--color-hairline)"
                 strokeWidth={1}
               />
               <text
@@ -91,7 +91,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                 y={y + 3}
                 textAnchor="end"
                 fontSize={9}
-                fill="#6b7280"
+                fill="var(--color-ink-subtle)"
               >
                 {value}
               </text>
@@ -113,7 +113,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                   width={barWidth}
                   height={barHeight}
                   rx={2}
-                  fill="#6b7280"
+                  fill="var(--color-accent)"
                 />
               )}
               <title>
@@ -125,7 +125,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                 y={PLOT_BOTTOM + 14}
                 textAnchor="middle"
                 fontSize={9}
-                fill="#6b7280"
+                fill="var(--color-ink-subtle)"
               >
                 {formatDayMonthShort(bar.weekStart)}
               </text>

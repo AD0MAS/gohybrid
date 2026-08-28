@@ -23,15 +23,15 @@ export default function DeleteWorkoutModal({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="text-sm text-red-700 underline"
+        className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Delete
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-5">
-            <p className="text-sm">
+          <div className="flex max-w-sm flex-col gap-4 rounded border border-hairline bg-surface-1 p-5">
+            <p className="text-sm text-ink">
               Delete this workout? Its blocks and items are deleted with
               it. Any completed sessions from this workout stay in your
               training history.
@@ -41,7 +41,7 @@ export default function DeleteWorkoutModal({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-sm underline"
+                className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Cancel
               </button>
@@ -49,7 +49,7 @@ export default function DeleteWorkoutModal({
               <form action={deleteAction}>
                 <button
                   type="submit"
-                  className="flex h-11 items-center justify-center rounded bg-red-700 px-4 text-base text-white"
+                  className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 >
                   Delete
                 </button>

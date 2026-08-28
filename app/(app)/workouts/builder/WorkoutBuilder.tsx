@@ -140,7 +140,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -155,7 +155,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="rounded border border-gray-300 px-4 py-3 text-base"
+            className="rounded border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -171,7 +171,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as PrimaryType | "",
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="" disabled>
               Select a type
@@ -196,7 +196,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as Difficulty | "",
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="" disabled>
               Select a difficulty
@@ -223,7 +223,7 @@ export default function WorkoutBuilder({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -231,7 +231,7 @@ export default function WorkoutBuilder({
           Tags
           <div className="flex flex-wrap gap-2">
             {tagCatalog.length === 0 ? (
-              <p className="text-sm text-gray-600">No tags available.</p>
+              <p className="text-sm text-ink-subtle">No tags available.</p>
             ) : (
               tagCatalog.map((tag) => {
                 const selected = state.meta.tagIds.includes(tag.id);
@@ -246,7 +246,7 @@ export default function WorkoutBuilder({
                     className={`rounded-full border px-3 py-1 text-xs ${
                       selected
                         ? TAG_COLOR_CLASSES[tag.color]
-                        : "border-gray-300 text-gray-600"
+                        : "border-hairline text-ink-subtle hover:border-hairline-strong hover:text-ink"
                     }`}
                   >
                     {tag.name}
@@ -262,7 +262,7 @@ export default function WorkoutBuilder({
         <legend className="font-medium">Blocks</legend>
 
         {state.blocks.length === 0 ? (
-          <p className="text-sm text-gray-600">No blocks yet.</p>
+          <p className="text-sm text-ink-subtle">No blocks yet.</p>
         ) : (
           state.blocks.map((block, index) => (
             <BlockEditor
@@ -282,14 +282,14 @@ export default function WorkoutBuilder({
         <button
           type="button"
           onClick={() => dispatch({ type: "ADD_BLOCK" })}
-          className="flex h-11 items-center justify-center self-start rounded border border-gray-300 px-4 text-base"
+          className="flex h-11 items-center justify-center self-start rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add block
         </button>
       </fieldset>
 
       {saveError && (
-        <p className="rounded border border-red-400 bg-red-50 p-2 text-sm text-red-700">
+        <p className="rounded border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
           {saveError}
         </p>
       )}
@@ -297,7 +297,7 @@ export default function WorkoutBuilder({
       <button
         type="button"
         onClick={handleSave}
-        className="flex h-11 items-center justify-center self-start rounded bg-black px-4 text-base text-white"
+        className="flex h-11 items-center justify-center self-start rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

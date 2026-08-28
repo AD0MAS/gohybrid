@@ -25,7 +25,7 @@ export default function GlobalError({
 
   return (
     <html lang="en">
-      <body>
+      <body style={{ background: "#010102", margin: 0 }}>
         <main
           style={{
             maxWidth: 384,
@@ -37,12 +37,13 @@ export default function GlobalError({
             gap: 16,
             padding: 24,
             fontFamily: "sans-serif",
+            color: "#f7f8f8",
           }}
         >
           <h1 style={{ fontSize: 18, fontWeight: 600 }}>
             Something went wrong
           </h1>
-          <p style={{ fontSize: 14, color: "#4b5563" }}>
+          <p style={{ fontSize: 14, color: "#8a8f98" }}>
             An unexpected error occurred. You can try again, or go back home.
           </p>
 
@@ -51,8 +52,8 @@ export default function GlobalError({
               type="button"
               onClick={reset}
               style={{
-                borderRadius: 4,
-                background: "black",
+                borderRadius: 8,
+                background: "#5e6ad2",
                 color: "white",
                 padding: "8px 16px",
                 fontSize: 14,
@@ -63,7 +64,12 @@ export default function GlobalError({
             </button>
             <Link
               href="/"
-              style={{ fontSize: 14, textDecoration: "underline", alignSelf: "center" }}
+              style={{
+                fontSize: 14,
+                color: "#8a8f98",
+                textDecoration: "underline",
+                alignSelf: "center",
+              }}
             >
               Go home
             </Link>

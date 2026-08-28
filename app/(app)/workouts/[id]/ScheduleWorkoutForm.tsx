@@ -38,7 +38,7 @@ export default function ScheduleWorkoutForm({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded border border-gray-300 p-5"
+      className="flex flex-col gap-2 rounded border border-hairline p-5"
     >
       <p className="text-sm font-medium">Schedule this workout</p>
 
@@ -48,7 +48,7 @@ export default function ScheduleWorkoutForm({
           type="date"
           name="scheduledDate"
           required
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -57,7 +57,7 @@ export default function ScheduleWorkoutForm({
         <input
           type="time"
           name="scheduledTime"
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -66,17 +66,17 @@ export default function ScheduleWorkoutForm({
         <input
           type="text"
           name="notes"
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
-      {error && <p className="text-sm text-red-700">{error}</p>}
-      {scheduled && <p className="text-sm text-green-700">Scheduled.</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {scheduled && <p className="text-sm text-success">Scheduled.</p>}
 
       <button
         type="submit"
         disabled={isPending}
-        className="flex h-11 items-center justify-center self-start rounded bg-black px-4 text-base text-white disabled:opacity-50"
+        className="flex h-11 items-center justify-center self-start rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
         {isPending ? "Scheduling…" : "Schedule"}
       </button>

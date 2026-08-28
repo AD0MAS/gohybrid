@@ -210,7 +210,7 @@ export default function StartWorkoutClient({
       </p>
 
       {workout.blocks.length === 0 ? (
-        <p className="text-sm text-gray-600">This workout has no blocks yet.</p>
+        <p className="text-sm text-ink-subtle">This workout has no blocks yet.</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {workout.blocks.map((block) => {
@@ -227,18 +227,18 @@ export default function StartWorkoutClient({
             return (
               <li
                 key={block.id}
-                className="rounded border border-gray-300 p-5"
+                className="rounded border border-hairline p-5"
               >
                 <p className="font-medium">
                   {block.title ? `${block.title} — ` : ""}
                   {block.blockType}
                 </p>
                 {timing.length > 0 && (
-                  <p className="text-sm text-gray-600">{timing.join(" · ")}</p>
+                  <p className="text-sm text-ink-subtle">{timing.join(" · ")}</p>
                 )}
 
                 {block.items.length === 0 ? (
-                  <p className="mt-2 text-sm text-gray-600">No items yet.</p>
+                  <p className="mt-2 text-sm text-ink-subtle">No items yet.</p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-2">
                     {block.items.map((item) => {
@@ -252,7 +252,7 @@ export default function StartWorkoutClient({
                       return (
                         <li
                           key={item.id}
-                          className="border-t border-gray-200 pt-2"
+                          className="border-t border-hairline pt-2"
                         >
                           <label className="flex items-start gap-2">
                             <input
@@ -264,16 +264,16 @@ export default function StartWorkoutClient({
                             <span>
                               <p
                                 className={`text-sm font-medium ${
-                                  checked ? "text-gray-400 line-through" : ""
+                                  checked ? "text-ink-tertiary line-through" : ""
                                 }`}
                               >
                                 {name}
                               </p>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-ink-subtle">
                                 {details.join(" · ")}
                               </p>
                               {item.notes && (
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-ink-subtle">
                                   Notes: {item.notes}
                                 </p>
                               )}
@@ -290,21 +290,21 @@ export default function StartWorkoutClient({
         </ul>
       )}
 
-      {finishError && <p className="text-sm text-red-700">{finishError}</p>}
+      {finishError && <p className="text-sm text-danger">{finishError}</p>}
 
       <button
         type="button"
         onClick={handleFinishClick}
         disabled={isFinishing}
-        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base font-medium text-white disabled:opacity-50"
+        className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
         {isFinishing ? "Finishing…" : "Finish Workout"}
       </button>
 
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-w-sm flex-col gap-4 rounded bg-white p-5">
-            <p className="text-sm">
+          <div className="flex max-w-sm flex-col gap-4 rounded border border-hairline bg-surface-1 p-5">
+            <p className="text-sm text-ink">
               {checkedItemIds.size} / {totalItems} items are checked. Finish
               anyway?
             </p>
@@ -313,7 +313,7 @@ export default function StartWorkoutClient({
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="text-sm underline"
+                className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Cancel
               </button>
@@ -324,7 +324,7 @@ export default function StartWorkoutClient({
                   setShowConfirm(false);
                   finish();
                 }}
-                className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+                className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Finish
               </button>

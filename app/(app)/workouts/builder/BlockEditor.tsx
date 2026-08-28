@@ -58,7 +58,7 @@ export default function BlockEditor({
       : "";
 
   return (
-    <fieldset className="flex flex-col gap-3 rounded border border-gray-300 p-5">
+    <fieldset className="flex flex-col gap-3 rounded border border-hairline bg-surface-1 p-5">
       <legend className="text-sm font-medium">Block {index + 1}</legend>
 
       <label className="flex flex-col gap-1 text-sm">
@@ -74,7 +74,7 @@ export default function BlockEditor({
               value: e.target.value,
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="rounded border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -90,7 +90,7 @@ export default function BlockEditor({
               value: e.target.value as BlockType,
             })
           }
-          className="rounded border border-gray-300 p-2"
+          className="rounded border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {blockTypeOptions.map((value) => (
             <option key={value} value={value}>
@@ -119,7 +119,7 @@ export default function BlockEditor({
                   e.target.value === "" ? null : Number(e.target.value) * 60,
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -144,7 +144,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -167,7 +167,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -187,7 +187,7 @@ export default function BlockEditor({
                   value: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-11 rounded border border-gray-300 px-4 text-base"
+              className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
         </>
@@ -210,7 +210,7 @@ export default function BlockEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -219,7 +219,7 @@ export default function BlockEditor({
         <p className="text-sm font-medium">Items</p>
 
         {block.items.length === 0 ? (
-          <p className="text-sm text-gray-600">No items yet.</p>
+          <p className="text-sm text-ink-subtle">No items yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
             {block.items.map((item, itemIndex) => (
@@ -241,7 +241,7 @@ export default function BlockEditor({
         <button
           type="button"
           onClick={() => dispatch({ type: "ADD_ITEM", blockId: block.id })}
-          className="flex h-11 items-center justify-center self-start rounded border border-gray-300 px-4 text-base"
+          className="flex h-11 items-center justify-center self-start rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add item
         </button>
@@ -250,7 +250,7 @@ export default function BlockEditor({
       <button
         type="button"
         onClick={() => dispatch({ type: "REMOVE_BLOCK", blockId: block.id })}
-        className="self-start text-sm text-red-700 underline"
+        className="self-start text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Remove block
       </button>

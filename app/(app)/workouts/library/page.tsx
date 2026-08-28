@@ -49,16 +49,19 @@ export default async function WorkoutLibraryPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">My Workouts</h1>
+        <h1 className="text-xl font-semibold text-ink">My Workouts</h1>
         <Link
           href="/history"
-          className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+          className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           History
         </Link>
       </div>
 
-      <Link href="/workouts/new" className="text-sm underline">
+      <Link
+        href="/workouts/new"
+        className="text-sm text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+      >
         New workout
       </Link>
 
@@ -75,11 +78,14 @@ export default async function WorkoutLibraryPage(
       />
 
       {userWorkouts.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           {hasActiveFilters ? (
             <>
               No workouts match these filters.{" "}
-              <Link href="/workouts/library" className="underline">
+              <Link
+                href="/workouts/library"
+                className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              >
                 Clear filters
               </Link>
             </>
@@ -92,10 +98,13 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="rounded border border-gray-300 p-5"
+              className="rounded border border-hairline bg-surface-1 p-5"
             >
               <div className="flex items-center gap-2">
-                <Link href={`/workouts/${workout.id}`} className="underline">
+                <Link
+                  href={`/workouts/${workout.id}`}
+                  className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                >
                   {workout.title}
                 </Link>
                 <FavoriteToggle
@@ -103,7 +112,7 @@ export default async function WorkoutLibraryPage(
                   toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
                 />
               </div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-ink-subtle">
                 {workout.primaryType} · {workout.difficulty}
               </p>
               {workout.workoutTags.length > 0 && (

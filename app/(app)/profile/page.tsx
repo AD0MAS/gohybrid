@@ -11,7 +11,7 @@ import PersonalRecordForm from "./PersonalRecordForm";
 import PersonalRecordsList from "./PersonalRecordsList";
 
 const SECTION_CLASSES =
-  "flex flex-col gap-4 rounded-lg border border-gray-200 p-6";
+  "flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6";
 
 /**
  * Profile (GOHYBRID_PLAN.md §5A): Goals, Events, Body Metrics and Personal
@@ -32,10 +32,10 @@ export default async function ProfilePage() {
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Profile</h1>
+          <h1 className="text-xl font-semibold text-ink">Profile</h1>
           <Link
             href="/settings"
-            className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+            className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Settings
           </Link>

@@ -28,7 +28,7 @@ export default async function NextEvent({ userId }: NextEventProps) {
   if (!event) return null;
 
   return (
-    <p className="text-sm text-gray-600">
+    <p className="text-sm text-ink-subtle">
       {event.title} · {formatCountdown(daysUntil(event.eventDate, today))}
     </p>
   );

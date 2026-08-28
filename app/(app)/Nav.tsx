@@ -38,18 +38,20 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
 
   return (
     <>
-      <nav className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-gray-200 bg-white p-4 sm:flex">
-        <span className="mb-6 px-3 text-lg font-semibold">GoHybrid</span>
+      <nav className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-hairline bg-canvas p-4 sm:flex">
+        <span className="mb-6 px-3 text-lg font-semibold text-ink">
+          GoHybrid
+        </span>
 
         <ul className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
             <li key={href}>
               <Link
                 href={href}
-                className={`flex items-center gap-3 rounded px-3 py-2 text-sm ${
+                className={`flex items-center gap-3 rounded px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                   isActive(pathname, href)
-                    ? "bg-black text-white"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-surface-2 text-ink"
+                    : "text-ink-subtle hover:bg-surface-1 hover:text-ink"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -59,14 +61,14 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
           ))}
         </ul>
 
-        <div className="flex flex-col gap-2 border-t border-gray-200 pt-4">
-          <span className="truncate px-3 text-xs text-gray-500">
+        <div className="flex flex-col gap-2 border-t border-hairline pt-4">
+          <span className="truncate px-3 text-xs text-ink-subtle">
             {userEmail}
           </span>
           <form action={signOutAction}>
             <button
               type="submit"
-              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              className="flex items-center gap-2 rounded px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <LogOut className="h-4 w-4" />
               Sign out
@@ -75,13 +77,13 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
         </div>
       </nav>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-gray-200 bg-white sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-hairline bg-canvas sm:hidden">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs ${
-              isActive(pathname, href) ? "text-black" : "text-gray-500"
+            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+              isActive(pathname, href) ? "text-ink" : "text-ink-subtle"
             }`}
           >
             <Icon className="h-5 w-5" />

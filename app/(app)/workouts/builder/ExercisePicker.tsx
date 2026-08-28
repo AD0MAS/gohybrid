@@ -74,12 +74,16 @@ export default function ExercisePicker({
 
   if (selectedExercise) {
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm text-ink">
         <span>
           {selectedExercise.name}
           {selectedExercise.equipment ? ` (${selectedExercise.equipment})` : ""}
         </span>
-        <button type="button" onClick={clearSelection} className="underline">
+        <button
+          type="button"
+          onClick={clearSelection}
+          className="text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
           Change
         </button>
       </div>
@@ -88,9 +92,13 @@ export default function ExercisePicker({
 
   if (customName) {
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm text-ink">
         <span>{customName} (custom)</span>
-        <button type="button" onClick={clearSelection} className="underline">
+        <button
+          type="button"
+          onClick={clearSelection}
+          className="text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
           Change
         </button>
       </div>
@@ -119,7 +127,7 @@ export default function ExercisePicker({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search the catalog…"
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -130,7 +138,7 @@ export default function ExercisePicker({
               <button
                 type="button"
                 onClick={() => selectExercise(exercise.id)}
-                className="underline"
+                className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 {exercise.name}
                 {exercise.equipment ? ` (${exercise.equipment})` : ""}
@@ -141,18 +149,18 @@ export default function ExercisePicker({
       )}
 
       {hiddenCount > 0 && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-ink-subtle">
           Showing {visibleExercises.length} of {filtered.length}
           {trimmedQuery === "" ? " — keep typing to narrow the list." : "."}
         </p>
       )}
 
       {trimmedQuery !== "" && (
-        <div className="border-t border-gray-200 pt-2">
+        <div className="border-t border-hairline pt-2">
           <button
             type="button"
             onClick={() => selectCustomName(trimmedQuery)}
-            className="self-start underline"
+            className="self-start text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Use &quot;{trimmedQuery}&quot; as a custom name
           </button>

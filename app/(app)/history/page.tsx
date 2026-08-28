@@ -14,10 +14,10 @@ export default async function HistoryPage() {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <h1 className="text-xl font-semibold">Training History</h1>
+      <h1 className="text-xl font-semibold text-ink">Training History</h1>
 
       {sessions.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           No completed workouts yet. Finish a workout to see it here.
         </p>
       ) : (
@@ -25,10 +25,10 @@ export default async function HistoryPage() {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded border border-gray-300 p-5"
+              className="rounded border border-hairline bg-surface-1 p-5"
             >
-              <p className="font-medium">{session.workoutTitle}</p>
-              <p className="text-sm text-gray-600">
+              <p className="font-medium text-ink">{session.workoutTitle}</p>
+              <p className="text-sm text-ink-subtle">
                 {session.workoutPrimaryType} ·{" "}
                 {session.completedAt.toLocaleString()}
               </p>

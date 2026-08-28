@@ -40,7 +40,7 @@ export default function ItemEditor({
   dispatch,
 }: ItemEditorProps) {
   return (
-    <li className="flex flex-col gap-2 rounded border border-gray-200 p-5">
+    <li className="flex flex-col gap-2 rounded border border-hairline bg-surface-1 p-5">
       <p className="text-sm font-medium">Item {index + 1}</p>
 
       <ExercisePicker
@@ -69,7 +69,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? 1 : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -86,7 +86,7 @@ export default function ItemEditor({
               value: e.target.value as VolumeType | "",
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {volumeTypeOptions.map((value) => (
@@ -114,7 +114,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -132,7 +132,7 @@ export default function ItemEditor({
               value: e.target.value as TargetPreset | "",
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {targetPresetOptions.map((value) => (
@@ -143,7 +143,7 @@ export default function ItemEditor({
         </select>
       </label>
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-ink-subtle">
         Or set a target type and value instead of a preset:
       </p>
 
@@ -160,7 +160,7 @@ export default function ItemEditor({
               value: e.target.value as TargetType | "",
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">None</option>
           {targetTypeOptions.map((value) => (
@@ -187,7 +187,7 @@ export default function ItemEditor({
                 value: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            className="h-11 rounded border border-gray-300 px-4 text-base"
+            className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -208,7 +208,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -228,7 +228,7 @@ export default function ItemEditor({
               value: e.target.value === "" ? null : Number(e.target.value),
             })
           }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -245,7 +245,7 @@ export default function ItemEditor({
               value: e.target.value,
             })
           }
-          className="rounded border border-gray-300 px-4 py-3 text-base"
+          className="rounded border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -254,7 +254,7 @@ export default function ItemEditor({
         onClick={() =>
           dispatch({ type: "REMOVE_ITEM", blockId, itemId: item.id })
         }
-        className="self-start text-sm text-red-700 underline"
+        className="self-start text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Remove item
       </button>

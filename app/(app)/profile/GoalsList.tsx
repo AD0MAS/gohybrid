@@ -28,7 +28,7 @@ export default async function GoalsList() {
 
   if (allGoals.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-subtle">
         No goals yet. Add one above to start tracking.
       </p>
     );
@@ -49,7 +49,7 @@ export default async function GoalsList() {
   return (
     <div className="flex flex-col gap-4">
       {activeGoals.length === 0 && (
-        <p className="text-sm text-gray-600">No active goals.</p>
+        <p className="text-sm text-ink-subtle">No active goals.</p>
       )}
 
       {activeWithProgress.map(({ goal, progress }) => {
@@ -60,12 +60,12 @@ export default async function GoalsList() {
         return (
           <div
             key={goal.id}
-            className="flex flex-col gap-2 rounded border border-gray-300 p-5"
+            className="flex flex-col gap-2 rounded border border-hairline bg-surface-1 p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-sm font-semibold">{goal.title}</p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-ink-subtle">
                   {GOAL_TYPE_LABELS[goal.goalType].label}
                   {subject ? ` · ${subject}` : ""} ·{" "}
                   {GOAL_PERIOD_LABELS[goal.period].label}
@@ -73,12 +73,12 @@ export default async function GoalsList() {
               </div>
               <div className="flex shrink-0 gap-2">
                 <form action={setGoalArchived.bind(null, goal.id, true)}>
-                  <button type="submit" className="text-sm text-gray-600 underline">
+                  <button type="submit" className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Archive
                   </button>
                 </form>
                 <form action={deleteGoal.bind(null, goal.id)}>
-                  <button type="submit" className="text-sm text-red-700 underline">
+                  <button type="submit" className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Delete
                   </button>
                 </form>
@@ -90,9 +90,9 @@ export default async function GoalsList() {
               {targetDisplay.value} {targetDisplay.unit}
             </p>
 
-            <div className="h-2 w-full rounded bg-gray-200">
+            <div className="h-2 w-full rounded bg-surface-2">
               <div
-                className="h-2 rounded bg-black"
+                className="h-2 rounded bg-accent"
                 style={{ width: `${progress.percent}%` }}
               />
             </div>
@@ -101,8 +101,8 @@ export default async function GoalsList() {
       })}
 
       {archivedGoals.length > 0 && (
-        <details className="rounded border border-gray-200">
-          <summary className="cursor-pointer p-3 text-sm text-gray-600">
+        <details className="rounded border border-hairline">
+          <summary className="cursor-pointer p-3 text-sm text-ink-subtle">
             Archived goals ({archivedGoals.length})
           </summary>
           <div className="flex flex-col gap-2 p-3 pt-0">
@@ -113,11 +113,11 @@ export default async function GoalsList() {
               return (
                 <div
                   key={goal.id}
-                  className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
+                  className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
                 >
                   <div>
                     <p className="text-sm">{goal.title}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-ink-subtle">
                       {GOAL_TYPE_LABELS[goal.goalType].label}
                       {subject ? ` · ${subject}` : ""} · Target{" "}
                       {targetDisplay.value} {targetDisplay.unit}
@@ -127,7 +127,7 @@ export default async function GoalsList() {
                     <form action={setGoalArchived.bind(null, goal.id, false)}>
                       <button
                         type="submit"
-                        className="text-sm text-gray-600 underline"
+                        className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         Unarchive
                       </button>
@@ -135,7 +135,7 @@ export default async function GoalsList() {
                     <form action={deleteGoal.bind(null, goal.id)}>
                       <button
                         type="submit"
-                        className="text-sm text-red-700 underline"
+                        className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         Delete
                       </button>

@@ -21,10 +21,10 @@ export default async function RecentActivity() {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Recent activity</h2>
+      <h2 className="text-lg font-semibold text-ink">Recent activity</h2>
 
       {sessions.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           No completed workouts yet. Finish a workout to see it here.
         </p>
       ) : (
@@ -32,10 +32,10 @@ export default async function RecentActivity() {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded border border-gray-300 p-5"
+              className="rounded border border-hairline bg-surface-1 p-5"
             >
-              <p className="font-medium">{session.workoutTitle}</p>
-              <p className="text-sm text-gray-600">
+              <p className="font-medium text-ink">{session.workoutTitle}</p>
+              <p className="text-sm text-ink-subtle">
                 {session.workoutPrimaryType} ·{" "}
                 {session.completedAt.toLocaleDateString()}
               </p>
@@ -44,7 +44,7 @@ export default async function RecentActivity() {
         </ul>
       )}
 
-      <Link href="/history" className="self-end text-sm underline">
+      <Link href="/history" className="self-end text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         Full history
       </Link>
     </section>

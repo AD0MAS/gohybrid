@@ -49,13 +49,22 @@ export default async function WorkoutDetailPage(
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <div className="flex items-center gap-4">
-        <Link href="/workouts/library" className="text-sm underline">
+        <Link
+          href="/workouts/library"
+          className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
           Back to workouts
         </Link>
-        <Link href={`/workouts/${workout.id}/edit`} className="text-sm underline">
+        <Link
+          href={`/workouts/${workout.id}/edit`}
+          className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
           Edit
         </Link>
-        <Link href={`/workouts/${workout.id}/start`} className="text-sm underline">
+        <Link
+          href={`/workouts/${workout.id}/start`}
+          className="text-sm text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
           Start Workout
         </Link>
         <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
@@ -63,16 +72,16 @@ export default async function WorkoutDetailPage(
 
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">{workout.title}</h1>
+          <h1 className="text-xl font-semibold text-ink">{workout.title}</h1>
           <FavoriteToggle
             isFavorite={workout.isFavorite}
             toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
           />
         </div>
         {workout.description && (
-          <p className="text-sm text-gray-600">{workout.description}</p>
+          <p className="text-sm text-ink-subtle">{workout.description}</p>
         )}
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           {[
             workout.primaryType,
             workout.difficulty,
@@ -99,7 +108,7 @@ export default async function WorkoutDetailPage(
       <ScheduleWorkoutForm scheduleAction={scheduleWorkout.bind(null, workout.id)} />
 
       {workout.blocks.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           This workout has no blocks yet.
         </p>
       ) : (
@@ -118,18 +127,18 @@ export default async function WorkoutDetailPage(
             return (
               <li
                 key={block.id}
-                className="rounded border border-gray-300 p-5"
+                className="rounded border border-hairline bg-surface-1 p-5"
               >
-                <p className="font-medium">
+                <p className="font-medium text-ink">
                   {block.title ? `${block.title} — ` : ""}
                   {block.blockType}
                 </p>
                 {timing.length > 0 && (
-                  <p className="text-sm text-gray-600">{timing.join(" · ")}</p>
+                  <p className="text-sm text-ink-subtle">{timing.join(" · ")}</p>
                 )}
 
                 {block.items.length === 0 ? (
-                  <p className="mt-2 text-sm text-gray-600">No items yet.</p>
+                  <p className="mt-2 text-sm text-ink-subtle">No items yet.</p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-2">
                     {block.items.map((item) => {
@@ -182,14 +191,14 @@ export default async function WorkoutDetailPage(
                       return (
                         <li
                           key={item.id}
-                          className="border-t border-gray-200 pt-2"
+                          className="border-t border-hairline pt-2"
                         >
-                          <p className="text-sm font-medium">{name}</p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm font-medium text-ink">{name}</p>
+                          <p className="text-sm text-ink-subtle">
                             {details.join(" · ")}
                           </p>
                           {item.notes && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-ink-subtle">
                               Notes: {item.notes}
                             </p>
                           )}

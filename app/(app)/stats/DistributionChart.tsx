@@ -48,12 +48,12 @@ export default async function DistributionChart({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-gray-700">
+      <h2 className="text-sm font-medium text-ink">
         Training mix — last {WEEKS} weeks
       </h2>
 
       {rows.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           No sessions in the last {WEEKS} weeks.
         </p>
       ) : (
@@ -75,7 +75,7 @@ export default async function DistributionChart({
                   x={MARGIN}
                   y={yCenter + 4}
                   fontSize={11}
-                  fill="#374151"
+                  fill="var(--color-ink-muted)"
                 >
                   {row.primaryType}
                 </text>
@@ -86,14 +86,14 @@ export default async function DistributionChart({
                     width={barWidth}
                     height={BAR_HEIGHT}
                     rx={2}
-                    fill="#6b7280"
+                    fill="var(--color-accent)"
                   />
                 )}
                 <text
                   x={barX + barWidth + 6}
                   y={yCenter + 4}
                   fontSize={11}
-                  fill="#374151"
+                  fill="var(--color-ink-muted)"
                 >
                   {row.count}
                 </text>

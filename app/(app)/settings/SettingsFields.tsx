@@ -64,7 +64,7 @@ export default function SettingsFields({
           key={currentTimezone}
           name="timezone"
           defaultValue={currentTimezone}
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {timezones.map((zone) => (
             <option key={zone} value={zone}>
@@ -80,7 +80,7 @@ export default function SettingsFields({
           key={currentUnitSystem}
           name="unitSystem"
           defaultValue={currentUnitSystem}
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {unitSystemEnum.enumValues.map((value) => (
             <option key={value} value={value}>
@@ -90,11 +90,11 @@ export default function SettingsFields({
         </select>
       </label>
 
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
+      {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
       <button
         type="submit"
-        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+        className="flex h-11 items-center justify-center rounded bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

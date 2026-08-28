@@ -16,16 +16,16 @@ const MOBILE_WEEKS = 26;
 
 /**
  * Shading step for a day's session count: 0 sessions, 1, 2, or 3+ — four
- * levels, plain grays until the final UI pass picks a real palette. Hex
- * values are Tailwind's gray-100/300/500/700 — SVG `fill` doesn't take
- * Tailwind classes, so the same scale is carried over as literal colors,
+ * levels stepping from surface-1 up through accent (DESIGN.md tokens), so
+ * more sessions reads as more lavender. SVG `fill` doesn't take Tailwind
+ * classes, so the same scale is carried over as CSS variable references,
  * matching WeeklyChart/DistributionChart's convention.
  */
 function fillForCount(count: number): string {
-  if (count === 0) return "#f3f4f6";
-  if (count === 1) return "#d1d5db";
-  if (count === 2) return "#6b7280";
-  return "#374151";
+  if (count === 0) return "var(--color-surface-1)";
+  if (count === 1) return "var(--color-heat-low)";
+  if (count === 2) return "var(--color-heat-mid)";
+  return "var(--color-accent)";
 }
 
 /** Total sessions across a set of columns, treating a null cell as 0. */
@@ -81,7 +81,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
             y={yCenter + 3}
             textAnchor="end"
             fontSize={9}
-            fill="#6b7280"
+            fill="var(--color-ink-subtle)"
           >
             {initial}
           </text>
@@ -105,7 +105,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
               height={CELL}
               rx={2}
               fill={fillForCount(cell.count)}
-              stroke={isToday ? "#000000" : "none"}
+              stroke={isToday ? "var(--color-accent)" : "none"}
               strokeWidth={isToday ? 1.25 : 0}
             >
               <title>
@@ -127,7 +127,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
             y={GRID_HEIGHT + MONTH_LABEL_HEIGHT / 2 + 3}
             textAnchor="start"
             fontSize={9}
-            fill="#6b7280"
+            fill="var(--color-ink-subtle)"
           >
             {column.monthLabel}
           </text>
@@ -169,8 +169,8 @@ export default async function ActivityHeatmap({
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="text-sm font-medium text-gray-700">Activity</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className="text-sm font-medium text-ink">Activity</h2>
+        <p className="text-sm text-ink-subtle">
           <span className="hidden md:inline">
             {yearTotal} session{yearTotal === 1 ? "" : "s"} in the last year
           </span>

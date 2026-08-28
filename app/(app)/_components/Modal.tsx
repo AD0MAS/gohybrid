@@ -51,15 +51,15 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose();
       }}
-      className="fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg rounded-lg p-0 backdrop:bg-black/50"
+      className="fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg rounded-lg border border-hairline bg-surface-1 p-0 text-ink backdrop:bg-black/50"
     >
-      <div className="flex items-center justify-between border-b border-gray-200 p-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="flex items-center justify-between border-b border-hairline p-4">
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="rounded p-1 text-gray-500 hover:bg-gray-100"
+          className="rounded p-1 text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <X className="h-5 w-5" />
         </button>

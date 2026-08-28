@@ -9,11 +9,14 @@ export type TagColor = (typeof tagColorEnum.enumValues)[number];
  * builder's tag selector, the workout detail page, and the workouts list
  * all render the same tag with the same colour.
  */
+const NEUTRAL_TAG_CLASSES =
+  "bg-surface-2 text-ink-muted border-hairline rounded-full";
+
 export const TAG_COLOR_CLASSES: Record<TagColor, string> = {
-  red: "bg-red-100 text-red-700 border-red-300",
-  orange: "bg-orange-100 text-orange-700 border-orange-300",
-  green: "bg-green-100 text-green-700 border-green-300",
-  blue: "bg-blue-100 text-blue-700 border-blue-300",
-  purple: "bg-purple-100 text-purple-700 border-purple-300",
-  gray: "bg-gray-100 text-gray-700 border-gray-300",
+  red: NEUTRAL_TAG_CLASSES,
+  orange: NEUTRAL_TAG_CLASSES,
+  green: NEUTRAL_TAG_CLASSES,
+  blue: NEUTRAL_TAG_CLASSES,
+  purple: NEUTRAL_TAG_CLASSES,
+  gray: NEUTRAL_TAG_CLASSES,
 };

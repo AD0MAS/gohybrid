@@ -31,8 +31,8 @@ export default function ProgressChart({ series }: ProgressChartProps) {
   if (series.length === 0) {
     return (
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-gray-700">Progress</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className="text-sm font-medium text-ink">Progress</h2>
+        <p className="text-sm text-ink-subtle">
           No personal records or body metrics logged yet.
         </p>
       </section>
@@ -44,11 +44,11 @@ export default function ProgressChart({ series }: ProgressChartProps) {
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium text-gray-700">Progress</h2>
+        <h2 className="text-sm font-medium text-ink">Progress</h2>
         <select
           value={selected.key}
           onChange={(e) => setSelectedKey(e.target.value)}
-          className="h-11 rounded border border-gray-300 px-4 text-base"
+          className="h-11 rounded border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {series.map((s) => (
             <option key={s.key} value={s.key}>
@@ -59,7 +59,7 @@ export default function ProgressChart({ series }: ProgressChartProps) {
       </div>
 
       {selected.points.length < 2 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           Only one data point for {selected.label} so far — log another to
           see a trend.
         </p>
@@ -67,23 +67,23 @@ export default function ProgressChart({ series }: ProgressChartProps) {
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={selected.points}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-hairline)" />
               <XAxis
                 dataKey="date"
                 tickFormatter={(date: string) => formatDayMonthShort(date)}
                 fontSize={11}
-                stroke="#6b7280"
+                stroke="var(--color-ink-subtle)"
               />
               <YAxis
                 width={48}
                 fontSize={11}
-                stroke="#6b7280"
+                stroke="var(--color-ink-subtle)"
                 label={{
                   value: selected.unit,
                   angle: -90,
                   position: "insideLeft",
                   fontSize: 11,
-                  fill: "#6b7280",
+                  fill: "var(--color-ink-subtle)",
                 }}
               />
               <Tooltip
@@ -91,11 +91,19 @@ export default function ProgressChart({ series }: ProgressChartProps) {
                   typeof date === "string" ? formatDayMonthShort(date) : date
                 }
                 formatter={(value) => [`${value} ${selected.unit}`, selected.label]}
+                contentStyle={{
+                  backgroundColor: "var(--color-surface-1)",
+                  border: "1px solid var(--color-hairline)",
+                  borderRadius: 8,
+                  color: "var(--color-ink)",
+                }}
+                labelStyle={{ color: "var(--color-ink-subtle)" }}
+                itemStyle={{ color: "var(--color-ink)" }}
               />
               <Line
                 type="monotone"
                 dataKey="value"
-                stroke="#6b7280"
+                stroke="var(--color-accent)"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />

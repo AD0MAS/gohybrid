@@ -30,25 +30,25 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Upcoming</h2>
+      <h2 className="text-lg font-semibold text-ink">Upcoming</h2>
 
       {upcoming.length === 0 ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           Nothing scheduled yet. Schedule a workout from its detail page.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
           {upcoming.map((entry) => (
-            <li key={entry.id} className="rounded border border-gray-300 p-5">
+            <li key={entry.id} className="rounded border border-hairline bg-surface-1 p-5">
               <Link
                 href={`/workouts/${entry.workout.id}`}
-                className="font-medium underline"
+                className="font-medium text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 {entry.workout.title}
               </Link>
-              <p className="text-sm text-gray-600">{entry.scheduledDate}</p>
+              <p className="text-sm text-ink-subtle">{entry.scheduledDate}</p>
               {entry.notes && (
-                <p className="text-sm text-gray-600">Notes: {entry.notes}</p>
+                <p className="text-sm text-ink-subtle">Notes: {entry.notes}</p>
               )}
 
               {entry.workout.workoutTags.length > 0 && (
@@ -68,14 +68,17 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
                 <form
                   action={markScheduledWorkoutSkipped.bind(null, entry.id, true)}
                 >
-                  <button type="submit" className="text-sm underline">
+                  <button
+                    type="submit"
+                    className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
                     Mark skipped
                   </button>
                 </form>
                 <form action={unscheduleWorkout.bind(null, entry.id)}>
                   <button
                     type="submit"
-                    className="text-sm text-red-700 underline"
+                    className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     Remove
                   </button>

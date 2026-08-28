@@ -23,22 +23,22 @@ export default async function SettingsPage() {
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Settings</h1>
+          <h1 className="text-xl font-semibold text-ink">Settings</h1>
           <Link
             href="/profile"
-            className="flex h-11 items-center justify-center rounded border border-gray-300 px-4 text-base"
+            className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Profile
           </Link>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold">Account</h2>
-          <p className="text-sm text-gray-600">{user.email}</p>
+        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6">
+          <h2 className="text-lg font-semibold text-ink">Account</h2>
+          <p className="text-sm text-ink-subtle">{user.email}</p>
           <form action={signOut}>
             <button
               type="submit"
-              className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+              className="flex h-11 items-center justify-center rounded border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               Sign out
             </button>

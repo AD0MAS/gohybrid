@@ -65,15 +65,15 @@ export default async function WeekStrip({
         <Link
           href={weekHref(-1)}
           aria-label="Previous week"
-          className="px-2 text-sm underline"
+          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           ←
         </Link>
-        <h2 className="text-sm font-medium">{formatWeekHeading(view)}</h2>
+        <h2 className="text-sm font-medium text-ink">{formatWeekHeading(view)}</h2>
         <Link
           href={weekHref(1)}
           aria-label="Next week"
-          className="px-2 text-sm underline"
+          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           →
         </Link>
@@ -88,21 +88,21 @@ export default async function WeekStrip({
             <Link
               key={date}
               href={dayHref(date)}
-              className="flex flex-col items-center gap-1 rounded p-1 text-sm"
+              className="flex flex-col items-center gap-1 rounded p-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-ink-subtle">
                 {WEEKDAY_INITIALS[i]}
               </span>
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                  isSelected ? "bg-black text-white" : ""
+                  isSelected ? "bg-surface-2 text-ink" : "text-ink"
                 }`}
               >
                 {getDayNumber(date)}
               </span>
               <span
                 className={`h-1 w-1 rounded-full ${
-                  hasScheduled ? "bg-black" : ""
+                  hasScheduled ? "bg-accent" : ""
                 }`}
               />
             </Link>
@@ -111,17 +111,17 @@ export default async function WeekStrip({
       </div>
 
       {view.selectedDate === null ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-subtle">
           Pick a day above to see what&apos;s scheduled.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-medium">
+          <h3 className="text-sm font-medium text-ink">
             {formatDayHeading(view.selectedDate)}
           </h3>
 
           {selectedEntries.length === 0 ? (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-ink-subtle">
               Nothing scheduled on this day.
             </p>
           ) : (
@@ -133,20 +133,20 @@ export default async function WeekStrip({
                     ? "Skipped"
                     : "Planned";
                 const statusClass = entry.sessionId
-                  ? "text-green-700"
+                  ? "text-success"
                   : entry.isSkipped
-                    ? "text-gray-400"
-                    : "text-gray-600";
+                    ? "text-ink-tertiary"
+                    : "text-ink-subtle";
 
                 return (
                   <li
                     key={entry.id}
-                    className="rounded border border-gray-300 p-5"
+                    className="rounded border border-hairline bg-surface-1 p-5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Link
                         href={`/workouts/${entry.workout.id}`}
-                        className="font-medium underline"
+                        className="font-medium text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         {entry.workout.title}
                       </Link>
@@ -156,7 +156,7 @@ export default async function WeekStrip({
                     </div>
 
                     {entry.workout.description && (
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-ink-subtle">
                         {truncate(
                           entry.workout.description,
                           DESCRIPTION_TRUNCATE_LENGTH
@@ -164,7 +164,7 @@ export default async function WeekStrip({
                       </p>
                     )}
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-ink-subtle">
                       {[
                         entry.workout.primaryType,
                         entry.workout.difficulty,

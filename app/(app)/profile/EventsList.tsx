@@ -29,7 +29,7 @@ export default async function EventsList() {
 
   if (upcoming.length === 0 && past.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-subtle">
         No events yet. Add one above to start tracking.
       </p>
     );
@@ -38,29 +38,29 @@ export default async function EventsList() {
   return (
     <div className="flex flex-col gap-4">
       {upcoming.length === 0 ? (
-        <p className="text-sm text-gray-600">No upcoming events.</p>
+        <p className="text-sm text-ink-subtle">No upcoming events.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {upcoming.map((event) => (
             <li
               key={event.id}
-              className="flex items-center justify-between gap-2 rounded border border-gray-300 p-5"
+              className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
             >
               <div>
                 <p className="text-sm font-semibold">
                   {event.title} · {formatCountdown(daysUntil(event.eventDate, today))}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-ink-subtle">
                   {EVENT_TYPE_LABELS[event.eventType].label}
                   {event.location ? ` · ${event.location}` : ""} ·{" "}
                   {event.eventDate}
                 </p>
                 {event.notes && (
-                  <p className="text-sm text-gray-600">{event.notes}</p>
+                  <p className="text-sm text-ink-subtle">{event.notes}</p>
                 )}
               </div>
               <form action={deleteEvent.bind(null, event.id)}>
-                <button type="submit" className="text-sm text-red-700 underline">
+                <button type="submit" className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                   Delete
                 </button>
               </form>
@@ -70,31 +70,31 @@ export default async function EventsList() {
       )}
 
       {past.length > 0 && (
-        <details className="rounded border border-gray-200">
-          <summary className="cursor-pointer p-3 text-sm text-gray-600">
+        <details className="rounded border border-hairline">
+          <summary className="cursor-pointer p-3 text-sm text-ink-subtle">
             Past events ({past.length})
           </summary>
           <ul className="flex flex-col gap-2 p-3 pt-0">
             {past.map((event) => (
               <li
                 key={event.id}
-                className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
+                className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
               >
                 <div>
                   <p className="text-sm">{event.title}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-ink-subtle">
                     {EVENT_TYPE_LABELS[event.eventType].label}
                     {event.location ? ` · ${event.location}` : ""} ·{" "}
                     {event.eventDate}
                   </p>
                   {event.notes && (
-                    <p className="text-sm text-gray-600">{event.notes}</p>
+                    <p className="text-sm text-ink-subtle">{event.notes}</p>
                   )}
                 </div>
                 <form action={deleteEvent.bind(null, event.id)}>
                   <button
                     type="submit"
-                    className="text-sm text-red-700 underline"
+                    className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     Delete
                   </button>

@@ -26,7 +26,7 @@ export default async function BodyMetricsList() {
 
   if (metrics.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-subtle">
         No measurements yet. Add one above to start tracking.
       </p>
     );
@@ -53,20 +53,20 @@ export default async function BodyMetricsList() {
                 return (
                   <li
                     key={entry.id}
-                    className="flex items-center justify-between gap-2 rounded border border-gray-300 p-5"
+                    className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
                   >
                     <div>
                       <p className="text-sm">
                         {display.value} {display.unit} · {entry.measuredAt}
                       </p>
                       {entry.notes && (
-                        <p className="text-sm text-gray-600">{entry.notes}</p>
+                        <p className="text-sm text-ink-subtle">{entry.notes}</p>
                       )}
                     </div>
                     <form action={deleteBodyMetric.bind(null, entry.id)}>
                       <button
                         type="submit"
-                        className="text-sm text-red-700 underline"
+                        className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         Delete
                       </button>

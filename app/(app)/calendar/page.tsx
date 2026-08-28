@@ -56,29 +56,29 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <h1 className="text-xl font-semibold">Calendar</h1>
+      <h1 className="text-xl font-semibold text-ink">Calendar</h1>
 
       <div className="flex items-center justify-between">
         <Link
           href={monthHref(addMonths(view.month, -1))}
           aria-label="Previous month"
-          className="px-2 text-sm underline"
+          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           ←
         </Link>
-        <h2 className="text-sm font-medium">
+        <h2 className="text-sm font-medium text-ink">
           {formatMonthYearHeading(getFirstDayOfMonth(view.month))}
         </h2>
         <Link
           href={monthHref(addMonths(view.month, 1))}
           aria-label="Next month"
-          className="px-2 text-sm underline"
+          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           →
         </Link>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-x-auto text-center text-xs text-gray-500">
+      <div className="grid grid-cols-7 gap-px overflow-x-auto text-center text-xs text-ink-subtle">
         {WEEKDAY_INITIALS.map((initial, i) => (
           <span key={i}>{initial}</span>
         ))}
@@ -96,13 +96,13 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
             <Link
               key={date}
               href={inMonth ? weekStripHref(date) : monthHref(getMonthString(date))}
-              className={`flex min-h-20 flex-col gap-0.5 border border-gray-200 p-1 text-xs ${
-                inMonth ? "" : "text-gray-400"
+              className={`flex min-h-20 flex-col gap-0.5 border border-hairline p-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+                inMonth ? "text-ink" : "text-ink-tertiary"
               }`}
             >
               <span
                 className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                  isToday ? "bg-black text-white" : ""
+                  isToday ? "bg-surface-2 text-ink outline outline-1 outline-accent" : ""
                 }`}
               >
                 {getDayNumber(date)}
@@ -110,12 +110,12 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
               {visibleEntries.map((entry) => {
                 const statusClass = entry.sessionId
-                  ? "text-green-700"
+                  ? "text-success"
                   : entry.isSkipped
-                    ? "text-gray-400 line-through"
+                    ? "text-ink-tertiary line-through"
                     : inMonth
-                      ? "text-gray-700"
-                      : "text-gray-400";
+                      ? "text-ink-muted"
+                      : "text-ink-tertiary";
 
                 return (
                   <span key={entry.id} className={`truncate ${statusClass}`}>
@@ -125,7 +125,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
               })}
 
               {hiddenCount > 0 && (
-                <span className="text-gray-500">+{hiddenCount} more</span>
+                <span className="text-ink-subtle">+{hiddenCount} more</span>
               )}
             </Link>
           );

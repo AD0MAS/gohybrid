@@ -28,7 +28,7 @@ export default async function PersonalRecordsList() {
 
   if (records.length === 0) {
     return (
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-ink-subtle">
         No personal records yet. Add one above to start tracking.
       </p>
     );
@@ -52,18 +52,18 @@ export default async function PersonalRecordsList() {
           <div key={group.subjectKey} className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">{group.subjectLabel}</h3>
 
-            <div className="flex items-center justify-between gap-2 rounded border border-gray-300 bg-gray-50 p-5">
+            <div className="flex items-center justify-between gap-2 rounded border border-hairline-strong bg-surface-2 p-5">
               <div>
                 <p className="text-sm font-semibold">
                   Best: {bestDisplay.value} {bestDisplay.unit} ·{" "}
                   {group.best.achievedAt}
                 </p>
                 {group.best.notes && (
-                  <p className="text-sm text-gray-600">{group.best.notes}</p>
+                  <p className="text-sm text-ink-subtle">{group.best.notes}</p>
                 )}
               </div>
               <form action={deletePersonalRecord.bind(null, group.best.id)}>
-                <button type="submit" className="text-sm text-red-700 underline">
+                <button type="submit" className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                   Delete
                 </button>
               </form>
@@ -82,20 +82,20 @@ export default async function PersonalRecordsList() {
                   return (
                     <li
                       key={entry.id}
-                      className="flex items-center justify-between gap-2 rounded border border-gray-200 p-5"
+                      className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
                     >
                       <div>
                         <p className="text-sm">
                           {display.value} {display.unit} · {entry.achievedAt}
                         </p>
                         {entry.notes && (
-                          <p className="text-sm text-gray-600">{entry.notes}</p>
+                          <p className="text-sm text-ink-subtle">{entry.notes}</p>
                         )}
                       </div>
                       <form action={deletePersonalRecord.bind(null, entry.id)}>
                         <button
                           type="submit"
-                          className="text-sm text-red-700 underline"
+                          className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                         >
                           Delete
                         </button>
