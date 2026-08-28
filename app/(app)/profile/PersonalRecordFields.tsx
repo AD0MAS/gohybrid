@@ -1,8 +1,10 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
 import { formatPersonalRecordValue, resolveDistanceInputUnit } from "@/lib/units";
+import Modal from "../_components/Modal";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
   addPersonalRecord,
@@ -15,7 +17,7 @@ type PersonalRecordFieldsProps = {
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
 };
 
-const initialState: PersonalRecordFormState = { error: null };
+const initialState: PersonalRecordFormState = { status: "idle" };
 
 /**
  * The whole add-record form as a client component — merges what were two
@@ -38,16 +40,38 @@ const initialState: PersonalRecordFormState = { error: null };
  * (personal-records-actions.ts) does the actual imperial→metric
  * conversion server-side — this component only ever displays a unit,
  * never converts a value.
+ *
+ * The form itself lives inside a Modal, opened by the button rendered
+ * alongside it: `open` is local state, closed only once addPersonalRecord's
+ * state actually reaches "success" — an error leaves it open so the user
+ * can fix and resubmit without retyping. That close is done during render
+ * (comparing the state object's identity against prevState), not in a
+ * useEffect, since setState in an effect just to react to another piece
+ * of React state is the pattern React's own docs steer away from in
+ * favour of adjusting state directly while rendering. The comparison uses
+ * `state !== prevState` — object identity, not `state.status !==
+ * prevStatus` — because addPersonalRecord returns a fresh object literal
+ * on every call: comparing only the `.status` string would miss two
+ * consecutive identical statuses (e.g. a second successful submission
+ * right after the first), since "success" === "success" leaves the check
+ * unable to tell "still the old result" from "a new result that happens
+ * to match."
  */
 export default function PersonalRecordFields({
   catalog,
   today,
   unitSystem,
 }: PersonalRecordFieldsProps) {
+  const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(addPersonalRecord, initialState);
   const [exerciseId, setExerciseId] = useState("");
   const [recordType, setRecordType] =
     useState<(typeof personalRecordTypeEnum.enumValues)[number]>("weight");
+  const [prevState, setPrevState] = useState(state);
+  if (state !== prevState) {
+    setPrevState(state);
+    if (state.status === "success") setOpen(false);
+  }
 
   const isHyroxStation =
     catalog.find((exercise) => exercise.id === exerciseId)?.isHyroxStation ??
@@ -60,81 +84,96 @@ export default function PersonalRecordFields({
           .unit;
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
-      <select
-        name="exerciseId"
-        value={exerciseId}
-        onChange={(e) => setExerciseId(e.target.value)}
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      >
-        <option value="">Custom…</option>
-        {catalog.map((exercise) => (
-          <option key={exercise.id} value={exercise.id}>
-            {exercise.name}
-          </option>
-        ))}
-      </select>
-
-      {exerciseId === "" && (
-        <input
-          type="text"
-          name="customName"
-          placeholder="Custom name"
-          className="h-11 rounded border border-gray-300 px-4 text-base"
-        />
-      )}
-
-      <select
-        name="recordType"
-        value={recordType}
-        onChange={(e) =>
-          setRecordType(
-            e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
-          )
-        }
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      >
-        {personalRecordTypeEnum.enumValues.map((type) => (
-          <option key={type} value={type}>
-            {PERSONAL_RECORD_LABELS[type].label}
-          </option>
-        ))}
-      </select>
-
-      <input
-        type="number"
-        name="value"
-        step="0.01"
-        min="0"
-        required
-        placeholder={`Value (${unit})`}
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      />
-
-      <input
-        type="date"
-        name="achievedAt"
-        defaultValue={today}
-        max={today}
-        required
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      />
-
-      <input
-        type="text"
-        name="notes"
-        placeholder="Notes (optional)"
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      />
-
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
-
+    <>
       <button
-        type="submit"
-        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-11 items-center gap-2 rounded bg-black px-4 text-base text-white"
       >
+        <Plus className="h-4 w-4" />
         Add record
       </button>
-    </form>
+
+      <Modal open={open} onClose={() => setOpen(false)} title="Add record">
+        <form action={formAction} className="flex flex-col gap-3">
+          <select
+            name="exerciseId"
+            value={exerciseId}
+            onChange={(e) => setExerciseId(e.target.value)}
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          >
+            <option value="">Custom…</option>
+            {catalog.map((exercise) => (
+              <option key={exercise.id} value={exercise.id}>
+                {exercise.name}
+              </option>
+            ))}
+          </select>
+
+          {exerciseId === "" && (
+            <input
+              type="text"
+              name="customName"
+              placeholder="Custom name"
+              className="h-11 rounded border border-gray-300 px-4 text-base"
+            />
+          )}
+
+          <select
+            name="recordType"
+            value={recordType}
+            onChange={(e) =>
+              setRecordType(
+                e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+              )
+            }
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          >
+            {personalRecordTypeEnum.enumValues.map((type) => (
+              <option key={type} value={type}>
+                {PERSONAL_RECORD_LABELS[type].label}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="number"
+            name="value"
+            step="0.01"
+            min="0"
+            required
+            placeholder={`Value (${unit})`}
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          />
+
+          <input
+            type="date"
+            name="achievedAt"
+            defaultValue={today}
+            max={today}
+            required
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          />
+
+          <input
+            type="text"
+            name="notes"
+            placeholder="Notes (optional)"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          />
+
+          {state.status === "error" && (
+            <p className="text-sm text-red-700">{state.error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+          >
+            Add record
+          </button>
+        </form>
+      </Modal>
+    </>
   );
 }

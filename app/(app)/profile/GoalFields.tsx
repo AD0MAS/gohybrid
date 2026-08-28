@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { Plus } from "lucide-react";
 import {
   bodyMetricTypeEnum,
   goalDirectionEnum,
@@ -11,6 +12,7 @@ import {
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
 import { formatBodyMetricValue, formatPersonalRecordValue, resolveDistanceInputUnit } from "@/lib/units";
+import Modal from "../_components/Modal";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
@@ -21,7 +23,7 @@ type GoalFieldsProps = {
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
 };
 
-const initialState: GoalFormState = { error: null };
+const initialState: GoalFormState = { status: "idle" };
 
 // session_count and streak goals are always "increase" (validateGoalInput
 // rejects "decrease" for either — fewer sessions or a shorter streak is
@@ -54,9 +56,30 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * current value). addGoal (goals-actions.ts) does the actual
  * imperial→metric conversion server-side — this component only ever
  * displays a unit, never converts a value.
+ *
+ * The form itself lives inside a Modal, opened by the button rendered
+ * alongside it: `open` is local state, closed only once addGoal's state
+ * actually reaches "success" — an error leaves it open so the user can
+ * fix and resubmit without retyping. That close is done during render
+ * (comparing the state object's identity against prevState), not in a
+ * useEffect, since setState in an effect just to react to another piece
+ * of React state is the pattern React's own docs steer away from in
+ * favour of adjusting state directly while rendering. The comparison uses
+ * `state !== prevState` — object identity, not `state.status !==
+ * prevStatus` — because addGoal returns a fresh object literal on every
+ * call: comparing only the `.status` string would miss two consecutive
+ * identical statuses (e.g. a second successful submission right after the
+ * first), since "success" === "success" leaves the check unable to tell
+ * "still the old result" from "a new result that happens to match."
  */
 export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
+  const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(addGoal, initialState);
+  const [prevState, setPrevState] = useState(state);
+  if (state !== prevState) {
+    setPrevState(state);
+    if (state.status === "success") setOpen(false);
+  }
   const [goalType, setGoalType] =
     useState<(typeof goalTypeEnum.enumValues)[number]>("session_count");
   const [direction, setDirection] =
@@ -111,173 +134,188 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
-      <input
-        type="text"
-        name="title"
-        placeholder="Goal title"
-        required
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      />
-
-      <select
-        name="goalType"
-        value={goalType}
-        onChange={(e) =>
-          handleGoalTypeChange(
-            e.target.value as (typeof goalTypeEnum.enumValues)[number]
-          )
-        }
-        className="h-11 rounded border border-gray-300 px-4 text-base"
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex h-11 items-center gap-2 rounded bg-black px-4 text-base text-white"
       >
-        {goalTypeEnum.enumValues.map((type) => (
-          <option key={type} value={type}>
-            {GOAL_TYPE_LABELS[type].label}
-          </option>
-        ))}
-      </select>
+        <Plus className="h-4 w-4" />
+        Add goal
+      </button>
 
-      {goalType === "session_count" && (
-        <select
-          name="targetPrimaryType"
-          defaultValue=""
-          className="h-11 rounded border border-gray-300 px-4 text-base"
-        >
-          <option value="">Any type</option>
-          {workoutPrimaryTypeEnum.enumValues.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {goalType === "body_metric" && (
-        <select
-          name="targetMetricType"
-          value={targetMetricType}
-          onChange={(e) =>
-            setTargetMetricType(
-              e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
-            )
-          }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
-        >
-          {bodyMetricTypeEnum.enumValues.map((type) => (
-            <option key={type} value={type}>
-              {BODY_METRIC_LABELS[type].label}
-            </option>
-          ))}
-        </select>
-      )}
-
-      {goalType === "personal_record" && (
-        <>
-          <select
-            name="targetExerciseId"
-            value={exerciseId}
-            onChange={(e) => setExerciseId(e.target.value)}
+      <Modal open={open} onClose={() => setOpen(false)} title="Add goal">
+        <form action={formAction} className="flex flex-col gap-3">
+          <input
+            type="text"
+            name="title"
+            placeholder="Goal title"
+            required
             className="h-11 rounded border border-gray-300 px-4 text-base"
-          >
-            <option value="">Custom…</option>
-            {catalog.map((exercise) => (
-              <option key={exercise.id} value={exercise.id}>
-                {exercise.name}
-              </option>
-            ))}
-          </select>
-
-          {exerciseId === "" && (
-            <input
-              type="text"
-              name="targetCustomName"
-              placeholder="Custom name"
-              className="h-11 rounded border border-gray-300 px-4 text-base"
-            />
-          )}
+          />
 
           <select
-            name="targetRecordType"
-            value={targetRecordType}
+            name="goalType"
+            value={goalType}
             onChange={(e) =>
-              setTargetRecordType(
-                e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+              handleGoalTypeChange(
+                e.target.value as (typeof goalTypeEnum.enumValues)[number]
               )
             }
             className="h-11 rounded border border-gray-300 px-4 text-base"
           >
-            {personalRecordTypeEnum.enumValues.map((type) => (
+            {goalTypeEnum.enumValues.map((type) => (
               <option key={type} value={type}>
-                {PERSONAL_RECORD_LABELS[type].label}
+                {GOAL_TYPE_LABELS[type].label}
               </option>
             ))}
           </select>
-        </>
-      )}
 
-      {showDirectionChoice ? (
-        <select
-          name="direction"
-          value={direction}
-          onChange={(e) =>
-            setDirection(
-              e.target.value as (typeof goalDirectionEnum.enumValues)[number]
-            )
-          }
-          className="h-11 rounded border border-gray-300 px-4 text-base"
-        >
-          {goalDirectionEnum.enumValues.map((value) => (
-            <option key={value} value={value}>
-              {value === "increase" ? "Increase" : "Decrease"}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input type="hidden" name="direction" value="increase" />
-      )}
+          {goalType === "session_count" && (
+            <select
+              name="targetPrimaryType"
+              defaultValue=""
+              className="h-11 rounded border border-gray-300 px-4 text-base"
+            >
+              <option value="">Any type</option>
+              {workoutPrimaryTypeEnum.enumValues.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          )}
 
-      <select
-        name="period"
-        defaultValue="week"
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      >
-        {goalPeriodEnum.enumValues.map((period) => (
-          <option key={period} value={period}>
-            {GOAL_PERIOD_LABELS[period].label}
-          </option>
-        ))}
-      </select>
+          {goalType === "body_metric" && (
+            <select
+              name="targetMetricType"
+              value={targetMetricType}
+              onChange={(e) =>
+                setTargetMetricType(
+                  e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+                )
+              }
+              className="h-11 rounded border border-gray-300 px-4 text-base"
+            >
+              {bodyMetricTypeEnum.enumValues.map((type) => (
+                <option key={type} value={type}>
+                  {BODY_METRIC_LABELS[type].label}
+                </option>
+              ))}
+            </select>
+          )}
 
-      {direction === "decrease" && (
-        <input
-          type="number"
-          name="startValue"
-          step="0.01"
-          min="0"
-          required
-          placeholder={`Starting value (${valueUnit})`}
-          className="h-11 rounded border border-gray-300 px-4 text-base"
-        />
-      )}
+          {goalType === "personal_record" && (
+            <>
+              <select
+                name="targetExerciseId"
+                value={exerciseId}
+                onChange={(e) => setExerciseId(e.target.value)}
+                className="h-11 rounded border border-gray-300 px-4 text-base"
+              >
+                <option value="">Custom…</option>
+                {catalog.map((exercise) => (
+                  <option key={exercise.id} value={exercise.id}>
+                    {exercise.name}
+                  </option>
+                ))}
+              </select>
 
-      <input
-        type="number"
-        name="targetValue"
-        step="0.01"
-        min="0"
-        required
-        placeholder={`Target value (${valueUnit})`}
-        className="h-11 rounded border border-gray-300 px-4 text-base"
-      />
+              {exerciseId === "" && (
+                <input
+                  type="text"
+                  name="targetCustomName"
+                  placeholder="Custom name"
+                  className="h-11 rounded border border-gray-300 px-4 text-base"
+                />
+              )}
 
-      {state.error && <p className="text-sm text-red-700">{state.error}</p>}
+              <select
+                name="targetRecordType"
+                value={targetRecordType}
+                onChange={(e) =>
+                  setTargetRecordType(
+                    e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+                  )
+                }
+                className="h-11 rounded border border-gray-300 px-4 text-base"
+              >
+                {personalRecordTypeEnum.enumValues.map((type) => (
+                  <option key={type} value={type}>
+                    {PERSONAL_RECORD_LABELS[type].label}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
 
-      <button
-        type="submit"
-        className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
-      >
-        Add goal
-      </button>
-    </form>
+          {showDirectionChoice ? (
+            <select
+              name="direction"
+              value={direction}
+              onChange={(e) =>
+                setDirection(
+                  e.target.value as (typeof goalDirectionEnum.enumValues)[number]
+                )
+              }
+              className="h-11 rounded border border-gray-300 px-4 text-base"
+            >
+              {goalDirectionEnum.enumValues.map((value) => (
+                <option key={value} value={value}>
+                  {value === "increase" ? "Increase" : "Decrease"}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input type="hidden" name="direction" value="increase" />
+          )}
+
+          <select
+            name="period"
+            defaultValue="week"
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          >
+            {goalPeriodEnum.enumValues.map((period) => (
+              <option key={period} value={period}>
+                {GOAL_PERIOD_LABELS[period].label}
+              </option>
+            ))}
+          </select>
+
+          {direction === "decrease" && (
+            <input
+              type="number"
+              name="startValue"
+              step="0.01"
+              min="0"
+              required
+              placeholder={`Starting value (${valueUnit})`}
+              className="h-11 rounded border border-gray-300 px-4 text-base"
+            />
+          )}
+
+          <input
+            type="number"
+            name="targetValue"
+            step="0.01"
+            min="0"
+            required
+            placeholder={`Target value (${valueUnit})`}
+            className="h-11 rounded border border-gray-300 px-4 text-base"
+          />
+
+          {state.status === "error" && (
+            <p className="text-sm text-red-700">{state.error}</p>
+          )}
+
+          <button
+            type="submit"
+            className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+          >
+            Add goal
+          </button>
+        </form>
+      </Modal>
+    </>
   );
 }

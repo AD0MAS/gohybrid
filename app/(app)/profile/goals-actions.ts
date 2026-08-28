@@ -12,15 +12,21 @@ import { validateGoalInput } from "@/lib/goals-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 
-export type GoalFormState = { error: string | null };
+export type GoalFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | { status: "success" };
 
 /**
  * Creates a new goal for the authenticated user. Passed to useActionState
  * in GoalFields, so a validation failure is an expected outcome of a form
- * submission — it returns { error } for the form to render, rather than
- * throwing (which would hit app/error.tsx and replace the whole page).
- * Genuine unexpected failures (e.g. a DB error from createGoalForUser)
- * still throw and belong to the error boundary.
+ * submission — it returns { status: "error", error } for the form to
+ * render, rather than throwing (which would hit app/error.tsx and replace
+ * the whole page). { status: "success" } lets the add-goal modal tell
+ * "nothing has happened yet" apart from "saved", closing itself only once
+ * a save actually went through. Genuine unexpected failures (e.g. a DB
+ * error from createGoalForUser) still throw and belong to the error
+ * boundary.
  *
  * Under imperial, a body_metric weight goal's targetValue/startValue was
  * typed in lb, and a personal_record goal's in lb (weight) or ft/m
@@ -87,13 +93,13 @@ export async function addGoal(
   });
 
   if (!result.success) {
-    return { error: result.error };
+    return { status: "error", error: result.error };
   }
 
   await createGoalForUser(user.id, result.data);
 
   revalidatePath("/profile");
-  return { error: null };
+  return { status: "success" };
 }
 
 /**

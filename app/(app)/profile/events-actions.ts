@@ -5,16 +5,22 @@ import { requireUser } from "@/lib/auth";
 import { createEventForUser, deleteEventForUser } from "@/lib/events";
 import { validateEventInput } from "@/lib/events-validation";
 
-export type EventFormState = { error: string | null };
+export type EventFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | { status: "success" };
 
 /**
  * Creates a new event for the authenticated user. Passed to useActionState
  * in EventForm, so a validation failure is an expected outcome of a form
- * submission — it returns { error } for the form to render, rather than
- * throwing (which would hit app/error.tsx and replace the whole page).
- * Genuine unexpected failures (e.g. a DB error from createEventForUser)
- * still throw and belong to the error boundary. Revalidates /profile (the
- * Events section) and / (Home's next-event line) on success.
+ * submission — it returns { status: "error", error } for the form to
+ * render, rather than throwing (which would hit app/error.tsx and replace
+ * the whole page). { status: "success" } lets the add-event modal tell
+ * "nothing has happened yet" apart from "saved", closing itself only once
+ * a save actually went through. Genuine unexpected failures (e.g. a DB
+ * error from createEventForUser) still throw and belong to the error
+ * boundary. Revalidates /profile (the Events section) and / (Home's
+ * next-event line) on success.
  */
 export async function addEvent(
   _prevState: EventFormState,
@@ -31,14 +37,14 @@ export async function addEvent(
   });
 
   if (!result.success) {
-    return { error: result.error };
+    return { status: "error", error: result.error };
   }
 
   await createEventForUser(user.id, result.data);
 
   revalidatePath("/profile");
   revalidatePath("/");
-  return { error: null };
+  return { status: "success" };
 }
 
 /**

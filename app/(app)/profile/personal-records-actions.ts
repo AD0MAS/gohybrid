@@ -11,16 +11,22 @@ import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 
-export type PersonalRecordFormState = { error: string | null };
+export type PersonalRecordFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | { status: "success" };
 
 /**
  * Records a new personal record for the authenticated user. Passed to
  * useActionState in PersonalRecordFields, so a validation failure is an
- * expected outcome of a form submission — it returns { error } for the
- * form to render, rather than throwing (which would hit app/error.tsx and
- * replace the whole page). Genuine unexpected failures (e.g. a DB error
- * from createPersonalRecordForUser) still throw and belong to the error
- * boundary. `today` for the "not in the future" check comes from
+ * expected outcome of a form submission — it returns { status: "error",
+ * error } for the form to render, rather than throwing (which would hit
+ * app/error.tsx and replace the whole page). { status: "success" } lets
+ * the add-record modal tell "nothing has happened yet" apart from "saved",
+ * closing itself only once a save actually went through. Genuine
+ * unexpected failures (e.g. a DB error from createPersonalRecordForUser)
+ * still throw and belong to the error boundary. `today` for the "not in
+ * the future" check comes from
  * getUserContext — the user's own calendar day, not the database's UTC
  * `current_date` — same ground truth used everywhere else date validity is
  * judged against "today".
@@ -74,13 +80,13 @@ export async function addPersonalRecord(
   );
 
   if (!result.success) {
-    return { error: result.error };
+    return { status: "error", error: result.error };
   }
 
   await createPersonalRecordForUser(user.id, result.data);
 
   revalidatePath("/profile");
-  return { error: null };
+  return { status: "success" };
 }
 
 /**

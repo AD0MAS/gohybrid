@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { signOut } from "@/app/(auth)/actions";
 import { requireUser } from "@/lib/auth";
 import { getUserSettings } from "@/lib/user-settings";
 import SettingsFields from "./SettingsFields";
 
 /**
- * Settings (GOHYBRID_PLAN.md §5 Layer 4): timezone and unit system, reached
- * from the Profile page's corner button. getUserSettings falls back to
+ * Settings (GOHYBRID_PLAN.md §5 Layer 4): account details + sign-out (moved
+ * here from /profile), then timezone and unit system, reached from the
+ * Profile page's corner button. getUserSettings falls back to
  * DEFAULT_USER_SETTINGS for a user who hasn't saved anything yet, so this
  * page renders sensible defaults with no row in user_settings. The
  * timezone options come from Intl.supportedValuesOf("timeZone") — computed
@@ -29,6 +31,19 @@ export default async function SettingsPage() {
             Profile
           </Link>
         </div>
+
+        <section className="flex flex-col gap-4 rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold">Account</h2>
+          <p className="text-sm text-gray-600">{user.email}</p>
+          <form action={signOut}>
+            <button
+              type="submit"
+              className="flex h-11 items-center justify-center rounded bg-black px-4 text-base text-white"
+            >
+              Sign out
+            </button>
+          </form>
+        </section>
 
         <SettingsFields
           timezones={timezones}

@@ -10,17 +10,22 @@ import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
 import { convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 
-export type BodyMetricFormState = { error: string | null };
+export type BodyMetricFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | { status: "success" };
 
 /**
  * Records a new body metric measurement for the authenticated user. Passed
  * to useActionState in BodyMetricFields, so a validation failure is an
- * expected outcome of a form submission — it returns { error } for the
- * form to render, rather than throwing (which would hit app/error.tsx and
- * replace the whole page). Genuine unexpected failures (e.g. a DB error
- * from createBodyMetricForUser) still throw and belong to the error
- * boundary. `today` for the "not in the future" check comes from
- * getUserContext — the user's own calendar day, not the database's UTC
+ * expected outcome of a form submission — it returns { status: "error",
+ * error } for the form to render, rather than throwing (which would hit
+ * app/error.tsx and replace the whole page). { status: "success" } lets
+ * the add-measurement modal tell "nothing has happened yet" apart from
+ * "saved", closing itself only once a save actually went through. Genuine
+ * unexpected failures (e.g. a DB error from createBodyMetricForUser) still
+ * throw and belong to the error boundary. `today` for the "not in the
+ * future" check comes from getUserContext — the user's own calendar day, not the database's UTC
  * `current_date` — same ground truth used everywhere else date validity is
  * judged against "today".
  *
@@ -59,13 +64,13 @@ export async function addBodyMetric(
   );
 
   if (!result.success) {
-    return { error: result.error };
+    return { status: "error", error: result.error };
   }
 
   await createBodyMetricForUser(user.id, result.data);
 
   revalidatePath("/profile");
-  return { error: null };
+  return { status: "success" };
 }
 
 /**
