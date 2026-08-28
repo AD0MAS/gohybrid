@@ -58,8 +58,8 @@ export default function BlockEditor({
       : "";
 
   return (
-    <fieldset className="flex flex-col gap-3 rounded border border-hairline bg-surface-1 p-5">
-      <legend className="text-sm font-medium">Block {index + 1}</legend>
+    <div className="flex flex-col gap-3 rounded border border-hairline bg-surface-1 p-5">
+      <p className="text-sm font-medium">Block {index + 1}</p>
 
       <label className="flex flex-col gap-1 text-sm">
         Title (optional)
@@ -254,6 +254,6 @@ export default function BlockEditor({
       >
         Remove block
       </button>
-    </fieldset>
+    </div>
   );
 }
