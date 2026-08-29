@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Modal from "./Modal";
 
 type ConfirmModalProps = {
-  triggerLabel: string;
+  trigger: ReactNode;
   triggerClassName: string;
+  triggerAriaLabel?: string;
   title: string;
   description: string;
   confirmLabel: string;
@@ -13,21 +14,25 @@ type ConfirmModalProps = {
 };
 
 /**
- * A quiet trigger button that opens a Modal (see ./Modal.tsx) asking the
- * user to confirm a destructive action, with a filled-danger confirm
- * button and a quiet-secondary cancel. `action` is a Server Action already
- * bound to whatever id it needs (e.g. `deleteSession.bind(null, id)`) —
- * this component only wires it to a <form>, the same convention as every
- * other delete button in the app (BodyMetricsList, PersonalRecordsList).
- * Extracted here rather than repeated inline because /history's delete
- * confirmation is the second place needing this exact trigger+confirm+
- * cancel shape (after the hand-rolled DeleteWorkoutModal), and unlike that
- * one, this uses the native-<dialog>-based Modal — see GOHYBRID_PLAN.md
- * step 32.11.
+ * A quiet trigger that opens a Modal (see ./Modal.tsx) asking the user to
+ * confirm a destructive action, with a filled-danger confirm button and a
+ * quiet-secondary cancel. `action` is a Server Action already bound to
+ * whatever id it needs (e.g. `deleteSession.bind(null, id)`) — this
+ * component only wires it to a <form>, the same convention as every other
+ * delete button in the app (BodyMetricsList, PersonalRecordsList).
+ * `trigger` accepts arbitrary content (a label, an icon) rather than a
+ * label string, since callers now open this from an icon-only delete
+ * button as well as from text triggers — pass `triggerAriaLabel` whenever
+ * `trigger` carries no visible text of its own. Extracted here rather than
+ * repeated inline because /history's delete confirmation is the second
+ * place needing this exact trigger+confirm+cancel shape (after the
+ * hand-rolled DeleteWorkoutModal), and unlike that one, this uses the
+ * native-<dialog>-based Modal — see GOHYBRID_PLAN.md step 32.11.
  */
 export default function ConfirmModal({
-  triggerLabel,
+  trigger,
   triggerClassName,
+  triggerAriaLabel,
   title,
   description,
   confirmLabel,
@@ -37,8 +42,13 @@ export default function ConfirmModal({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={triggerClassName}>
-        {triggerLabel}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={triggerClassName}
+        aria-label={triggerAriaLabel}
+      >
+        {trigger}
       </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={title}>

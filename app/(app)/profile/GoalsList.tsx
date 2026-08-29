@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
 import { getUserContext } from "@/lib/user-settings";
@@ -71,15 +72,22 @@ export default async function GoalsList() {
                   {GOAL_PERIOD_LABELS[goal.period].label}
                 </p>
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <form action={setGoalArchived.bind(null, goal.id, true)}>
-                  <button type="submit" className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                  <button
+                    type="submit"
+                    className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
                     Archive
                   </button>
                 </form>
                 <form action={deleteGoal.bind(null, goal.id)}>
-                  <button type="submit" className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-                    Delete
+                  <button
+                    type="submit"
+                    aria-label="Delete"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </form>
               </div>
@@ -123,11 +131,11 @@ export default async function GoalsList() {
                       {targetDisplay.value} {targetDisplay.unit}
                     </p>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <form action={setGoalArchived.bind(null, goal.id, false)}>
                       <button
                         type="submit"
-                        className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         Unarchive
                       </button>
@@ -135,9 +143,10 @@ export default async function GoalsList() {
                     <form action={deleteGoal.bind(null, goal.id)}>
                       <button
                         type="submit"
-                        className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        aria-label="Delete"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
-                        Delete
+                        <X className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </form>
                   </div>

@@ -254,7 +254,7 @@ export default function ItemEditor({
         onClick={() =>
           dispatch({ type: "REMOVE_ITEM", blockId, itemId: item.id })
         }
-        className="self-start text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-9 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Remove item
       </button>

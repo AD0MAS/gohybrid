@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getSessionsForUser } from "@/lib/sessions";
 import ConfirmModal from "../_components/ConfirmModal";
@@ -38,8 +39,9 @@ export default async function HistoryPage() {
               </div>
 
               <ConfirmModal
-                triggerLabel="Delete"
-                triggerClassName="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                trigger={<X className="h-4 w-4" aria-hidden="true" />}
+                triggerClassName="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                triggerAriaLabel="Delete"
                 title="Delete session"
                 description="Deleting this session removes it from training history and from all stats. If it completed a scheduled workout, that workout goes back to Planned."
                 confirmLabel="Delete"

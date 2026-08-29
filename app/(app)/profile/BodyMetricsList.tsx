@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { bodyMetricTypeEnum } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
@@ -66,9 +67,10 @@ export default async function BodyMetricsList() {
                     <form action={deleteBodyMetric.bind(null, entry.id)}>
                       <button
                         type="submit"
-                        className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        aria-label="Delete"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
-                        Delete
+                        <X className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </form>
                   </li>
