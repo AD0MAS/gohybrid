@@ -1,0 +1,70 @@
+"use client";
+
+import { useState } from "react";
+import Modal from "./Modal";
+
+type ConfirmModalProps = {
+  triggerLabel: string;
+  triggerClassName: string;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  action: () => Promise<void>;
+};
+
+/**
+ * A quiet trigger button that opens a Modal (see ./Modal.tsx) asking the
+ * user to confirm a destructive action, with a filled-danger confirm
+ * button and a quiet-secondary cancel. `action` is a Server Action already
+ * bound to whatever id it needs (e.g. `deleteSession.bind(null, id)`) —
+ * this component only wires it to a <form>, the same convention as every
+ * other delete button in the app (BodyMetricsList, PersonalRecordsList).
+ * Extracted here rather than repeated inline because /history's delete
+ * confirmation is the second place needing this exact trigger+confirm+
+ * cancel shape (after the hand-rolled DeleteWorkoutModal), and unlike that
+ * one, this uses the native-<dialog>-based Modal — see GOHYBRID_PLAN.md
+ * step 32.11.
+ */
+export default function ConfirmModal({
+  triggerLabel,
+  triggerClassName,
+  title,
+  description,
+  confirmLabel,
+  action,
+}: ConfirmModalProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={triggerClassName}>
+        {triggerLabel}
+      </button>
+
+      <Modal open={open} onClose={() => setOpen(false)} title={title}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-ink">{description}</p>
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              Cancel
+            </button>
+
+            <form action={action}>
+              <button
+                type="submit"
+                className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              >
+                {confirmLabel}
+              </button>
+            </form>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+}

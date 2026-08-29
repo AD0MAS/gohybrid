@@ -88,3 +88,25 @@ export async function getRecentSessionsForUser(userId: string, limit: number) {
     .orderBy(desc(workoutSessions.completedAt))
     .limit(limit);
 }
+
+/**
+ * Deletes a workout session owned by `userId`, returning true if a row was
+ * deleted and false otherwise — whether because the id doesn't exist or
+ * because it belongs to a different user. Ownership is enforced in the
+ * WHERE clause, same pattern as deleteBodyMetricForUser/
+ * deletePersonalRecordForUser. No cleanup of scheduled_workouts is needed
+ * here: scheduled_workouts.session_id is ON DELETE SET NULL (see
+ * GOHYBRID_PLAN.md §6A), so a scheduled workout that pointed at this
+ * session automatically goes back to Planned.
+ */
+export async function deleteSessionForUser(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  const deleted = await db
+    .delete(workoutSessions)
+    .where(and(eq(workoutSessions.id, id), eq(workoutSessions.userId, userId)))
+    .returning({ id: workoutSessions.id });
+
+  return deleted.length > 0;
+}

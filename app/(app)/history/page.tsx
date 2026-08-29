@@ -1,5 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { getSessionsForUser } from "@/lib/sessions";
+import ConfirmModal from "../_components/ConfirmModal";
+import { deleteSession } from "./actions";
 
 /**
  * Training History: a chronological list of the authenticated user's
@@ -25,13 +27,24 @@ export default async function HistoryPage() {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded border border-hairline bg-surface-1 p-5"
+              className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
             >
-              <p className="font-medium text-ink">{session.workoutTitle}</p>
-              <p className="text-sm text-ink-subtle">
-                {session.workoutPrimaryType} ·{" "}
-                {session.completedAt.toLocaleString()}
-              </p>
+              <div>
+                <p className="font-medium text-ink">{session.workoutTitle}</p>
+                <p className="text-sm text-ink-subtle">
+                  {session.workoutPrimaryType} ·{" "}
+                  {session.completedAt.toLocaleString()}
+                </p>
+              </div>
+
+              <ConfirmModal
+                triggerLabel="Delete"
+                triggerClassName="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                title="Delete session"
+                description="Deleting this session removes it from training history and from all stats. If it completed a scheduled workout, that workout goes back to Planned."
+                confirmLabel="Delete"
+                action={deleteSession.bind(null, session.id)}
+              />
             </li>
           ))}
         </ul>
