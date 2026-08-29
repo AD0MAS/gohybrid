@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
@@ -39,10 +40,13 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
       ) : (
         <ul className="flex flex-col gap-3">
           {upcoming.map((entry) => (
-            <li key={entry.id} className="rounded border border-hairline bg-surface-1 p-5">
+            <li
+              key={entry.id}
+              className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+            >
               <Link
                 href={`/workouts/${entry.workout.id}`}
-                className="font-medium text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 {entry.workout.title}
               </Link>
@@ -64,13 +68,13 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
                 </div>
               )}
 
-              <div className="mt-2 flex gap-4">
+              <div className="relative z-10 mt-2 flex gap-4">
                 <form
                   action={markScheduledWorkoutSkipped.bind(null, entry.id, true)}
                 >
                   <button
                     type="submit"
-                    className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                    className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     Mark skipped
                   </button>
@@ -78,12 +82,13 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
                 <form action={unscheduleWorkout.bind(null, entry.id)}>
                   <button
                     type="submit"
-                    className="text-sm text-ink-subtle underline hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                    className="text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     Remove
                   </button>
                 </form>
               </div>
+              <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />
             </li>
           ))}
         </ul>

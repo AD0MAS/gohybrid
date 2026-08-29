@@ -100,7 +100,7 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="relative cursor-pointer rounded border border-hairline bg-surface-1 p-5 hover:bg-surface-2"
+              className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
             >
               <div className="flex items-center gap-2">
                 <Link
@@ -118,7 +118,6 @@ export default async function WorkoutLibraryPage(
                     )}
                   />
                 </div>
-                <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-ink-subtle" />
               </div>
               <p className="text-sm text-ink-subtle">
                 {workout.primaryType} · {workout.difficulty}
@@ -135,6 +134,7 @@ export default async function WorkoutLibraryPage(
                   ))}
                 </div>
               )}
+              <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />
             </li>
           ))}
         </ul>

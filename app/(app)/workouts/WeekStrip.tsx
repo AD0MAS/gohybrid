@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
   formatDayHeading,
@@ -143,12 +144,12 @@ export default async function WeekStrip({
                 return (
                   <li
                     key={entry.id}
-                    className="rounded border border-hairline bg-surface-1 p-5"
+                    className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <Link
                         href={`/workouts/${entry.workout.id}`}
-                        className="font-medium text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         {entry.workout.title}
                       </Link>
@@ -191,6 +192,7 @@ export default async function WeekStrip({
                         ))}
                       </div>
                     )}
+                    <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />
                   </li>
                 );
               })}
