@@ -48,36 +48,28 @@ export default async function WorkoutDetailPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/workouts/library"
-          className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          Back to workouts
-        </Link>
-        <Link
-          href={`/workouts/${workout.id}/edit`}
-          className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          Edit
-        </Link>
-        <Link
-          href={`/workouts/${workout.id}/start`}
-          className="text-sm text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          Start Workout
-        </Link>
-        <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
-      </div>
-
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold text-ink">{workout.title}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-xl font-semibold text-ink">
+            {workout.title}
+          </h1>
           <FavoriteToggle
             isFavorite={workout.isFavorite}
             toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
           />
         </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/workouts/${workout.id}/edit`}
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            Edit
+          </Link>
+          <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
+        </div>
+      </div>
+
+      <div>
         {workout.description && (
           <p className="text-sm text-ink-subtle">{workout.description}</p>
         )}
@@ -105,7 +97,17 @@ export default async function WorkoutDetailPage(
         )}
       </div>
 
-      <ScheduleWorkoutForm scheduleAction={scheduleWorkout.bind(null, workout.id)} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          href={`/workouts/${workout.id}/start`}
+          className="flex h-12 items-center justify-center rounded-md bg-accent px-6 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Start Workout
+        </Link>
+        <ScheduleWorkoutForm
+          scheduleAction={scheduleWorkout.bind(null, workout.id)}
+        />
+      </div>
 
       {workout.blocks.length === 0 ? (
         <p className="text-sm text-ink-subtle">

@@ -91,7 +91,26 @@ export async function toggleFavorite(id: string) {
  * /workouts and / (Home) — the pages that render UpcomingList — on
  * success, no redirect, since this is used inline on the detail page.
  */
-export async function scheduleWorkout(workoutId: string, formData: FormData) {
+export type ScheduleFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string }
+  | { status: "success" };
+
+/**
+ * Schedules a workout for the authenticated user, bound with the workout id
+ * via .bind(null, id) from the workout detail page. Passed to useActionState
+ * in ScheduleWorkoutForm, so a validation failure is an expected outcome of
+ * a form submission — it returns { status: "error", error } for the form to
+ * render, rather than throwing (which would hit app/error.tsx). { status:
+ * "success" } lets the schedule modal tell "nothing has happened yet" apart
+ * from "saved", closing itself only once a save actually went through, same
+ * pattern as the /profile *Fields components.
+ */
+export async function scheduleWorkout(
+  workoutId: string,
+  _prevState: ScheduleFormState,
+  formData: FormData
+): Promise<ScheduleFormState> {
   const user = await requireUser();
 
   const result = validateScheduleInput({
@@ -102,7 +121,7 @@ export async function scheduleWorkout(workoutId: string, formData: FormData) {
   });
 
   if (!result.success) {
-    throw new Error(result.error);
+    return { status: "error", error: result.error };
   }
 
   const created = await scheduleWorkoutForUser(
@@ -114,10 +133,11 @@ export async function scheduleWorkout(workoutId: string, formData: FormData) {
   );
 
   if (!created) {
-    throw new Error("Workout not found.");
+    return { status: "error", error: "Workout not found." };
   }
 
   revalidatePath(`/workouts/${workoutId}`);
   revalidatePath("/workouts");
   revalidatePath("/");
+  return { status: "success" };
 }
