@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { formatRelativeDay } from "@/lib/dates";
 import { getSessionsForUser } from "@/lib/sessions";
+import { toCalendarDayInTimezone, toClockTimeInTimezone } from "@/lib/timezone";
+import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
 import { deleteSession } from "./actions";
 
@@ -13,6 +16,7 @@ import { deleteSession } from "./actions";
  */
 export default async function HistoryPage() {
   const user = await requireUser();
+  const { today, timezone } = await getUserContext(user.id);
   const sessions = await getSessionsForUser(user.id);
 
   return (
@@ -34,7 +38,11 @@ export default async function HistoryPage() {
                 <p className="font-medium text-ink">{session.workoutTitle}</p>
                 <p className="text-sm text-ink-subtle">
                   {session.workoutPrimaryType} ·{" "}
-                  {session.completedAt.toLocaleString()}
+                  {formatRelativeDay(
+                    toCalendarDayInTimezone(session.completedAt, timezone),
+                    today
+                  )}{" "}
+                  · {toClockTimeInTimezone(session.completedAt, timezone)}
                 </p>
               </div>
 

@@ -139,6 +139,22 @@ export function diffInDays(from: string, to: string): number {
   );
 }
 
+/**
+ * Formats a YYYY-MM-DD `date` relative to `today` (both YYYY-MM-DD): "Today",
+ * "Tomorrow", "Yesterday", or `formatDayHeading(date)` for anything further
+ * out. Built on diffInDays rather than any new date handling, same
+ * Date.UTC-string-math style as the rest of this module (GOHYBRID_PLAN.md
+ * §7). `today` must come from the caller's own resolved calendar day (see
+ * getUserContext in lib/user-settings.ts), never a client-side `new Date()`.
+ */
+export function formatRelativeDay(date: string, today: string): string {
+  const diff = diffInDays(date, today);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff === -1) return "Tomorrow";
+  return formatDayHeading(date);
+}
+
 /** Extracts the YYYY-MM prefix from a YYYY-MM-DD date string. */
 export function getMonthString(date: string): string {
   return date.slice(0, 7);

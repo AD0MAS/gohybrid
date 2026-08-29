@@ -1,7 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { formatRelativeDay } from "@/lib/dates";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
+import { getUserContext } from "@/lib/user-settings";
 import { TAG_COLOR_CLASSES } from "./workouts/tag-colors";
 import { markScheduledWorkoutSkipped, unscheduleWorkout } from "./upcoming-actions";
 
@@ -27,6 +29,7 @@ type UpcomingListProps = {
  */
 export default async function UpcomingList({ limit }: UpcomingListProps) {
   const user = await requireUser();
+  const { today } = await getUserContext(user.id);
   const upcoming = await getUpcomingForUser(user.id, limit);
 
   return (
@@ -50,7 +53,9 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
               >
                 {entry.workout.title}
               </Link>
-              <p className="text-sm text-ink-subtle">{entry.scheduledDate}</p>
+              <p className="text-sm text-ink-subtle">
+                {formatRelativeDay(entry.scheduledDate, today)}
+              </p>
               {entry.notes && (
                 <p className="text-sm text-ink-subtle">Notes: {entry.notes}</p>
               )}

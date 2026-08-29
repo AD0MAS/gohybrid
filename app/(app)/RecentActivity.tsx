@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { formatRelativeDay } from "@/lib/dates";
 import { getRecentSessionsForUser } from "@/lib/sessions";
+import { toCalendarDayInTimezone } from "@/lib/timezone";
+import { getUserContext } from "@/lib/user-settings";
 
 const RECENT_ACTIVITY_LIMIT = 5;
 
@@ -14,6 +17,7 @@ const RECENT_ACTIVITY_LIMIT = 5;
  */
 export default async function RecentActivity() {
   const user = await requireUser();
+  const { today, timezone } = await getUserContext(user.id);
   const sessions = await getRecentSessionsForUser(
     user.id,
     RECENT_ACTIVITY_LIMIT
@@ -37,7 +41,10 @@ export default async function RecentActivity() {
               <p className="font-medium text-ink">{session.workoutTitle}</p>
               <p className="text-sm text-ink-subtle">
                 {session.workoutPrimaryType} ·{" "}
-                {session.completedAt.toLocaleDateString()}
+                {formatRelativeDay(
+                  toCalendarDayInTimezone(session.completedAt, timezone),
+                  today
+                )}
               </p>
             </li>
           ))}

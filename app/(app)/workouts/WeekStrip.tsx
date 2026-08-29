@@ -12,6 +12,16 @@ import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
+/** Text colour per scheduled-entry status, all on the same surface-2 pill
+ * background — see the tag pills' NEUTRAL_TAG_CLASSES in tag-colors.ts for
+ * the sibling it's deliberately distinguishable from (no border, its own
+ * colour per status rather than one neutral tone for every value). */
+const STATUS_PILL_TEXT_CLASSES = {
+  Completed: "text-success",
+  Skipped: "text-ink-tertiary",
+  Planned: "text-ink-subtle",
+} as const;
+
 function truncate(text: string, maxLength: number): string {
   return text.length > maxLength
     ? `${text.slice(0, maxLength).trimEnd()}…`
@@ -135,28 +145,18 @@ export default async function WeekStrip({
                   : entry.isSkipped
                     ? "Skipped"
                     : "Planned";
-                const statusClass = entry.sessionId
-                  ? "text-success"
-                  : entry.isSkipped
-                    ? "text-ink-tertiary"
-                    : "text-ink-subtle";
 
                 return (
                   <li
                     key={entry.id}
                     className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <Link
-                        href={`/workouts/${entry.workout.id}`}
-                        className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                      >
-                        {entry.workout.title}
-                      </Link>
-                      <span className={`text-xs ${statusClass}`}>
-                        {status}
-                      </span>
-                    </div>
+                    <Link
+                      href={`/workouts/${entry.workout.id}`}
+                      className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                    >
+                      {entry.workout.title}
+                    </Link>
 
                     {entry.workout.description && (
                       <p className="text-sm text-ink-subtle">
@@ -167,7 +167,12 @@ export default async function WeekStrip({
                       </p>
                     )}
 
-                    <p className="text-sm text-ink-subtle">
+                    <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
+                      <span
+                        className={`shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs ${STATUS_PILL_TEXT_CLASSES[status]}`}
+                      >
+                        {status}
+                      </span>
                       {[
                         entry.workout.primaryType,
                         entry.workout.difficulty,

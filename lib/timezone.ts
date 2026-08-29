@@ -34,3 +34,56 @@ export async function getCurrentDateString(timezone: string): Promise<string> {
   );
   return row.today;
 }
+
+/**
+ * Converts an already-fetched `timestamptz` instant (e.g. a session's
+ * completedAt) to the YYYY-MM-DD calendar day it falls on in `timezone`,
+ * entirely in JavaScript via Intl — not `AT TIME ZONE`. The other functions
+ * in this file convert inside SQL because they're computing over rows still
+ * in the database; here the instant is already an in-memory JS Date from a
+ * list the caller fetched for display, and issuing one query per row to
+ * re-derive its day would be an N+1 query for what's otherwise a plain
+ * render. `Intl.DateTimeFormat`'s IANA timezone database gives the same
+ * result Postgres's `AT TIME ZONE` would for the same zone name.
+ * `formatToParts` is used instead of a locale-string trick (e.g. "en-CA"
+ * happening to format as YYYY-MM-DD) so the result's shape doesn't depend on
+ * locale formatting conventions.
+ */
+export function toCalendarDayInTimezone(instant: Date, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(instant);
+
+  const part = (type: "year" | "month" | "day") =>
+    parts.find((p) => p.type === type)?.value;
+
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+/**
+ * Converts an already-fetched `timestamptz` instant to an "HH:MM" clock time
+ * in `timezone`, same reasoning and formatToParts approach as
+ * toCalendarDayInTimezone — a session's completedAt rendered with
+ * `.toLocaleTimeString()` would use the server's local timezone (correct in
+ * dev, wrong on Vercel's UTC), splitting the day (already timezone-correct
+ * via toCalendarDayInTimezone) from the time into two different frames.
+ * `hour12: false` so the output shape doesn't depend on the server locale
+ * either.
+ */
+export function toClockTimeInTimezone(instant: Date, timezone: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    hourCycle: "h23",
+  }).formatToParts(instant);
+
+  const part = (type: "hour" | "minute") =>
+    parts.find((p) => p.type === type)?.value;
+
+  return `${part("hour")}:${part("minute")}`;
+}
