@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getUserContext } from "@/lib/user-settings";
@@ -40,13 +39,6 @@ export default async function StartWorkoutPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-        <Link
-          href={`/workouts/${workout.id}`}
-          className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          Back to workout
-        </Link>
-
         <div>
           <h1 className="text-xl font-semibold text-ink">{workout.title}</h1>
           <p className="text-sm text-ink-subtle">

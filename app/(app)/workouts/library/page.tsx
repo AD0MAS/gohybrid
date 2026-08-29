@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
@@ -99,19 +100,25 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="rounded border border-hairline bg-surface-1 p-5"
+              className="relative cursor-pointer rounded border border-hairline bg-surface-1 p-5 hover:bg-surface-2"
             >
               <div className="flex items-center gap-2">
                 <Link
                   href={`/workouts/${workout.id}`}
-                  className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  className="text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 >
                   {workout.title}
                 </Link>
-                <FavoriteToggle
-                  isFavorite={workout.isFavorite}
-                  toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
-                />
+                <div className="relative z-10">
+                  <FavoriteToggle
+                    isFavorite={workout.isFavorite}
+                    toggleFavoriteAction={toggleFavorite.bind(
+                      null,
+                      workout.id
+                    )}
+                  />
+                </div>
+                <ChevronRight className="ml-auto h-5 w-5 shrink-0 text-ink-subtle" />
               </div>
               <p className="text-sm text-ink-subtle">
                 {workout.primaryType} · {workout.difficulty}

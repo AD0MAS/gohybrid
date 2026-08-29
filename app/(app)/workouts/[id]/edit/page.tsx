@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   blockTypeEnum,
@@ -47,10 +46,6 @@ export default async function EditWorkoutPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-        <Link href={`/workouts/${workout.id}`} className="text-sm underline">
-          Back to workout
-        </Link>
-
         <h1 className="text-xl font-semibold">Edit workout</h1>
 
         <WorkoutBuilder
