@@ -89,6 +89,45 @@ export async function createPersonalRecordForUser(
 }
 
 /**
+ * Updates a personal record owned by `userId`, returning the updated
+ * PersonalRecord or null if nothing matched — whether because the id
+ * doesn't exist or because it belongs to a different user. Ownership is
+ * enforced in the WHERE clause, same pattern as deletePersonalRecordForUser.
+ * `input` is already validated — an update has the same rules as a create
+ * (see validatePersonalRecordInput), and the write shape mirrors
+ * createPersonalRecordForUser's exactly.
+ */
+export async function updatePersonalRecordForUser(
+  id: string,
+  userId: string,
+  input: ValidatedPersonalRecordInput
+): Promise<PersonalRecord | null> {
+  const [updated] = await db
+    .update(personalRecords)
+    .set({
+      exerciseId: input.exerciseId,
+      customName: input.customName,
+      recordType: input.recordType,
+      value: String(input.value),
+      achievedAt: input.achievedAt,
+      notes: input.notes,
+    })
+    .where(and(eq(personalRecords.id, id), eq(personalRecords.userId, userId)))
+    .returning();
+
+  if (!updated) return null;
+
+  const exercise = input.exerciseId
+    ? await db.query.exercises.findFirst({
+        where: (exercises, { eq }) => eq(exercises.id, input.exerciseId!),
+        columns: { id: true, name: true, isHyroxStation: true },
+      })
+    : null;
+
+  return toPersonalRecord({ ...updated, exercise: exercise ?? null });
+}
+
+/**
  * Deletes a personal record owned by `userId`, returning true if a row was
  * deleted and false otherwise — whether because the id doesn't exist or
  * because it belongs to a different user. Ownership is enforced in the

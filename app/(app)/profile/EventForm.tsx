@@ -1,13 +1,21 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
+import type { Event } from "@/lib/events";
 import Modal from "../_components/Modal";
 import { EVENT_TYPE_LABELS } from "./event-labels";
-import { addEvent, type EventFormState } from "./events-actions";
+import { addEvent, updateEvent, type EventFormState } from "./events-actions";
 
 const initialState: EventFormState = { status: "idle" };
+
+type EventFormProps = {
+  /** Absent renders the Add-event button + form; present renders a Pencil
+   * edit trigger + the same form pre-filled from this event, submitting to
+   * updateEvent instead of addEvent. */
+  entry?: Event;
+};
 
 /**
  * The add-event form as a client component, needed for useActionState: a
@@ -34,10 +42,20 @@ const initialState: EventFormState = { status: "idle" };
  * identical statuses (e.g. a second successful submission right after the
  * first), since "success" === "success" leaves the check unable to tell
  * "still the old result" from "a new result that happens to match."
+ *
+ * When `entry` is present, this same component renders as EventsList's
+ * per-row edit trigger instead of the section's Add button: a Pencil
+ * icon-button in place of the Plus button, "Edit event"/"Save" copy, every
+ * field's defaultValue seeded from `entry`, and `updateEvent.bind(null,
+ * entry.id)` as the form action in place of addEvent — the bound function
+ * still matches useActionState's (prevState, formData) signature. No unit
+ * conversion is needed here (unlike Goal/BodyMetric/PersonalRecord
+ * editing) since an event carries no numeric, unit-bearing field.
  */
-export default function EventForm() {
+export default function EventForm({ entry }: EventFormProps) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(addEvent, initialState);
+  const action = entry ? updateEvent.bind(null, entry.id) : addEvent;
+  const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
     setPrevState(state);
@@ -46,28 +64,40 @@ export default function EventForm() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        <Plus className="h-4 w-4" />
-        Add event
-      </button>
+      {entry ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Edit"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Plus className="h-4 w-4" />
+          Add event
+        </button>
+      )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add event">
+      <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit event" : "Add event"}>
         <form action={formAction} className="flex flex-col gap-3">
           <input
             type="text"
             name="title"
             placeholder="Event title"
+            defaultValue={entry?.title}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <select
             name="eventType"
-            defaultValue="race"
+            defaultValue={entry?.eventType ?? "race"}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {eventTypeEnum.enumValues.map((type) => (
@@ -80,6 +110,7 @@ export default function EventForm() {
           <input
             type="date"
             name="eventDate"
+            defaultValue={entry?.eventDate}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -88,6 +119,7 @@ export default function EventForm() {
             type="text"
             name="location"
             placeholder="Location (optional)"
+            defaultValue={entry?.location ?? ""}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -95,6 +127,7 @@ export default function EventForm() {
             type="text"
             name="notes"
             placeholder="Notes (optional)"
+            defaultValue={entry?.notes ?? ""}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -106,7 +139,7 @@ export default function EventForm() {
             type="submit"
             className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Add event
+            {entry ? "Save" : "Add event"}
           </button>
         </form>
       </Modal>

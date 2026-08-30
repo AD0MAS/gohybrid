@@ -73,6 +73,34 @@ export async function createBodyMetricForUser(
 }
 
 /**
+ * Updates a body metric owned by `userId`, returning the updated
+ * BodyMetric or null if nothing matched — whether because the id doesn't
+ * exist or because it belongs to a different user. Ownership is enforced
+ * in the WHERE clause, same pattern as deleteBodyMetricForUser. `input` is
+ * already validated — an update has the same rules as a create (see
+ * validateBodyMetricInput), and the write shape mirrors
+ * createBodyMetricForUser's exactly.
+ */
+export async function updateBodyMetricForUser(
+  id: string,
+  userId: string,
+  input: ValidatedBodyMetricInput
+): Promise<BodyMetric | null> {
+  const [updated] = await db
+    .update(bodyMetrics)
+    .set({
+      metricType: input.metricType,
+      value: String(input.value),
+      measuredAt: input.measuredAt,
+      notes: input.notes,
+    })
+    .where(and(eq(bodyMetrics.id, id), eq(bodyMetrics.userId, userId)))
+    .returning();
+
+  return updated ? toBodyMetric(updated) : null;
+}
+
+/**
  * Deletes a body metric owned by `userId`, returning true if a row was
  * deleted and false otherwise — whether because the id doesn't exist or
  * because it belongs to a different user. Ownership is enforced in the

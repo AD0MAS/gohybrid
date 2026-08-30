@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import {
   bodyMetricTypeEnum,
   goalDirectionEnum,
@@ -11,16 +11,27 @@ import {
   unitSystemEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
-import { formatBodyMetricValue, formatPersonalRecordValue, resolveDistanceInputUnit } from "@/lib/units";
+import type { Goal } from "@/lib/goals";
+import {
+  formatBodyMetricValue,
+  formatPersonalRecordValue,
+  resolveDistanceInputUnit,
+  toDistanceInputValue,
+} from "@/lib/units";
 import Modal from "../_components/Modal";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
-import { GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
-import { addGoal, type GoalFormState } from "./goals-actions";
+import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
+import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
 
 type GoalFieldsProps = {
   catalog: { id: string; name: string; isHyroxStation: boolean }[];
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  /** Absent renders the Add-goal button + form; present renders a Pencil
+   * edit trigger + the same form pre-filled from this goal, submitting to
+   * updateGoal instead of addGoal. See the file-level doc comment below for
+   * how the two modes share every field. */
+  entry?: Goal;
 };
 
 const initialState: GoalFormState = { status: "idle" };
@@ -71,28 +82,69 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * identical statuses (e.g. a second successful submission right after the
  * first), since "success" === "success" leaves the check unable to tell
  * "still the old result" from "a new result that happens to match."
+ *
+ * When `entry` is present, this same component renders as GoalsList's
+ * per-row edit trigger instead of the section's Add button: a Pencil
+ * icon-button in place of the Plus button, "Edit goal"/"Save" copy, and
+ * every field's local state seeded from `entry` instead of the create
+ * defaults. `updateGoal.bind(null, entry.id)` is used as the form action
+ * in place of addGoal — the bound function still matches useActionState's
+ * (prevState, formData) signature. targetValue/startValue are seeded via
+ * formatGoalValue (goal-labels.ts) for every goal_type except one: a
+ * personal_record goal targeting "distance" must seed from
+ * toDistanceInputValue instead (lib/units.ts), because formatGoalValue
+ * delegates to formatPersonalRecordValue's DISPLAY unit (ft/mi, chosen per
+ * value) while the input always reads back in the INPUT unit (always ft,
+ * or m for a HYROX station — see resolveDistanceInputUnit). Seeding with
+ * the display value under the input's unit label would silently corrupt
+ * it on save. Every other goal_type has display and input agree (a weight
+ * is always lb under imperial either way), so formatGoalValue is correct
+ * for those.
  */
-export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
+export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsProps) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(addGoal, initialState);
+  const action = entry ? updateGoal.bind(null, entry.id) : addGoal;
+  const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
   }
   const [goalType, setGoalType] =
-    useState<(typeof goalTypeEnum.enumValues)[number]>("session_count");
+    useState<(typeof goalTypeEnum.enumValues)[number]>(
+      entry?.goalType ?? "session_count"
+    );
   const [direction, setDirection] =
-    useState<(typeof goalDirectionEnum.enumValues)[number]>("increase");
-  const [exerciseId, setExerciseId] = useState("");
+    useState<(typeof goalDirectionEnum.enumValues)[number]>(
+      entry?.direction ?? "increase"
+    );
+  const [exerciseId, setExerciseId] = useState(entry?.targetExerciseId ?? "");
   const [targetMetricType, setTargetMetricType] =
     useState<(typeof bodyMetricTypeEnum.enumValues)[number]>(
-      bodyMetricTypeEnum.enumValues[0]
+      entry?.targetMetricType ?? bodyMetricTypeEnum.enumValues[0]
     );
   const [targetRecordType, setTargetRecordType] =
     useState<(typeof personalRecordTypeEnum.enumValues)[number]>(
-      personalRecordTypeEnum.enumValues[0]
+      entry?.targetRecordType ?? personalRecordTypeEnum.enumValues[0]
     );
+
+  const isHyroxStation =
+    catalog.find((exercise) => exercise.id === exerciseId)?.isHyroxStation ??
+    false;
+  const entryIsDistanceRecord =
+    entry?.goalType === "personal_record" && entry.targetRecordType === "distance";
+
+  const defaultTargetValue = entry
+    ? entryIsDistanceRecord
+      ? toDistanceInputValue(entry.targetValue, unitSystem, isHyroxStation)
+      : formatGoalValue(entry, entry.targetValue, unitSystem).value
+    : undefined;
+  const defaultStartValue =
+    entry?.startValue != null
+      ? entryIsDistanceRecord
+        ? toDistanceInputValue(entry.startValue, unitSystem, isHyroxStation)
+        : formatGoalValue(entry, entry.startValue, unitSystem).value
+      : undefined;
 
   const showDirectionChoice = DIRECTION_CHOICE_TYPES.has(goalType);
 
@@ -117,9 +169,6 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
       valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
       break;
     case "personal_record": {
-      const isHyroxStation =
-        catalog.find((exercise) => exercise.id === exerciseId)
-          ?.isHyroxStation ?? false;
       valueUnit =
         targetRecordType === "distance"
           ? resolveDistanceInputUnit(unitSystem, isHyroxStation)
@@ -135,21 +184,33 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        <Plus className="h-4 w-4" />
-        Add goal
-      </button>
+      {entry ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Edit"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Plus className="h-4 w-4" />
+          Add goal
+        </button>
+      )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add goal">
+      <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit goal" : "Add goal"}>
         <form action={formAction} className="flex flex-col gap-3">
           <input
             type="text"
             name="title"
             placeholder="Goal title"
+            defaultValue={entry?.title}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -174,7 +235,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
           {goalType === "session_count" && (
             <select
               name="targetPrimaryType"
-              defaultValue=""
+              defaultValue={entry?.targetPrimaryType ?? ""}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <option value="">Any type</option>
@@ -226,6 +287,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
                   type="text"
                   name="targetCustomName"
                   placeholder="Custom name"
+                  defaultValue={entry?.targetCustomName ?? ""}
                   className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 />
               )}
@@ -272,7 +334,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
 
           <select
             name="period"
-            defaultValue="week"
+            defaultValue={entry?.period ?? "week"}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {goalPeriodEnum.enumValues.map((period) => (
@@ -289,6 +351,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
               step="0.01"
               min="0"
               required
+              defaultValue={defaultStartValue}
               placeholder={`Starting value (${valueUnit})`}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
@@ -300,6 +363,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
             step="0.01"
             min="0"
             required
+            defaultValue={defaultTargetValue}
             placeholder={`Target value (${valueUnit})`}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -312,7 +376,7 @@ export default function GoalFields({ catalog, unitSystem }: GoalFieldsProps) {
             type="submit"
             className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Add goal
+            {entry ? "Save" : "Add goal"}
           </button>
         </form>
       </Modal>

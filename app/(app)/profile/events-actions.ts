@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { createEventForUser, deleteEventForUser } from "@/lib/events";
+import {
+  createEventForUser,
+  deleteEventForUser,
+  updateEventForUser,
+} from "@/lib/events";
 import { validateEventInput } from "@/lib/events-validation";
 
 export type EventFormState =
@@ -41,6 +45,45 @@ export async function addEvent(
   }
 
   await createEventForUser(user.id, result.data);
+
+  revalidatePath("/profile");
+  revalidatePath("/");
+  return { status: "success" };
+}
+
+/**
+ * Updates one of the authenticated user's events, bound with the id via
+ * .bind(null, id) so the resulting function matches useActionState's
+ * (prevState, formData) signature exactly — same validation as addEvent
+ * (an update has the same rules as a create), against EventForm's
+ * entry-populated form instead of an empty one. Ownership is enforced by
+ * updateEventForUser's WHERE clause; a null result (wrong id or another
+ * user's row) throws, same as deleteEvent, since a forged id can't
+ * silently no-op. Revalidates /profile and / on success.
+ */
+export async function updateEvent(
+  id: string,
+  _prevState: EventFormState,
+  formData: FormData
+): Promise<EventFormState> {
+  const user = await requireUser();
+
+  const result = validateEventInput({
+    title: formData.get("title"),
+    eventDate: formData.get("eventDate"),
+    eventType: formData.get("eventType"),
+    location: formData.get("location"),
+    notes: formData.get("notes"),
+  });
+
+  if (!result.success) {
+    return { status: "error", error: result.error };
+  }
+
+  const updated = await updateEventForUser(id, user.id, result.data);
+  if (!updated) {
+    throw new Error("Event not found.");
+  }
 
   revalidatePath("/profile");
   revalidatePath("/");

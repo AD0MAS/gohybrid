@@ -7,6 +7,7 @@ import {
   getUpcomingEventsForUser,
 } from "@/lib/events";
 import { getUserContext } from "@/lib/user-settings";
+import EventForm from "./EventForm";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { deleteEvent } from "./events-actions";
 
@@ -18,7 +19,10 @@ import { deleteEvent } from "./events-actions";
  * same self-fetching convention as GoalsList/PersonalRecordsList. The
  * countdown is computed from getUserContext()'s `today` (cached, shared
  * with GoalsList/BodyMetricForm/PersonalRecordForm), not a client-side
- * `new Date()` — see daysUntil in lib/events.ts.
+ * `new Date()` — see daysUntil in lib/events.ts. Each row's Edit trigger
+ * embeds an EventForm instance directly (entry={event}) — same one-modal-
+ * per-row wiring as GoalsList, since EventForm already owns its own
+ * open/close state and useActionState call.
  */
 export default async function EventsList() {
   const user = await requireUser();
@@ -60,15 +64,18 @@ export default async function EventsList() {
                   <p className="text-sm text-ink-subtle">{event.notes}</p>
                 )}
               </div>
-              <form action={deleteEvent.bind(null, event.id)}>
-                <button
-                  type="submit"
-                  aria-label="Delete"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </form>
+              <div className="flex shrink-0 items-center gap-2">
+                <EventForm entry={event} />
+                <form action={deleteEvent.bind(null, event.id)}>
+                  <button
+                    type="submit"
+                    aria-label="Delete"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </form>
+              </div>
             </li>
           ))}
         </ul>
@@ -96,15 +103,18 @@ export default async function EventsList() {
                     <p className="text-sm text-ink-subtle">{event.notes}</p>
                   )}
                 </div>
-                <form action={deleteEvent.bind(null, event.id)}>
-                  <button
-                    type="submit"
-                    aria-label="Delete"
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                </form>
+                <div className="flex shrink-0 items-center gap-2">
+                  <EventForm entry={event} />
+                  <form action={deleteEvent.bind(null, event.id)}>
+                    <button
+                      type="submit"
+                      aria-label="Delete"
+                      className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

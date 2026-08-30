@@ -7,6 +7,7 @@ import {
   createGoalForUser,
   deleteGoalForUser,
   setGoalArchivedForUser,
+  updateGoalForUser,
 } from "@/lib/goals";
 import { validateGoalInput } from "@/lib/goals-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
@@ -97,6 +98,85 @@ export async function addGoal(
   }
 
   await createGoalForUser(user.id, result.data);
+
+  revalidatePath("/profile");
+  return { status: "success" };
+}
+
+/**
+ * Updates one of the authenticated user's goals, bound with the id via
+ * .bind(null, id) so the resulting function matches useActionState's
+ * (prevState, formData) signature exactly — same conversion and validation
+ * as addGoal (an update has the same rules as a create), against
+ * GoalFields' entry-populated form instead of an empty one. Ownership is
+ * enforced by updateGoalForUser's WHERE clause; a null result (wrong id or
+ * another user's row) throws, same as deleteGoal/setGoalArchived, since a
+ * forged id can't silently no-op. Revalidates /profile on success.
+ */
+export async function updateGoal(
+  id: string,
+  _prevState: GoalFormState,
+  formData: FormData
+): Promise<GoalFormState> {
+  const user = await requireUser();
+  const { unitSystem } = await getUserContext(user.id);
+
+  const goalType = formData.get("goalType");
+  const targetMetricType = formData.get("targetMetricType");
+  const targetRecordType = formData.get("targetRecordType");
+  const targetExerciseId = formData.get("targetExerciseId");
+
+  let isHyroxStation = false;
+  if (
+    goalType === "personal_record" &&
+    typeof targetExerciseId === "string" &&
+    targetExerciseId !== ""
+  ) {
+    const exercise = await getExerciseById(targetExerciseId);
+    isHyroxStation = exercise?.isHyroxStation ?? false;
+  }
+
+  function convertGoalValue(raw: FormDataEntryValue | null): unknown {
+    if (typeof raw !== "string" || raw === "") return raw;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed)) return raw;
+
+    if (goalType === "body_metric" && targetMetricType === "weight") {
+      return convertWeightInputToKg(parsed, unitSystem);
+    }
+    if (goalType === "personal_record") {
+      if (targetRecordType === "weight") {
+        return convertWeightInputToKg(parsed, unitSystem);
+      }
+      if (targetRecordType === "distance") {
+        return convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      }
+    }
+    return parsed;
+  }
+
+  const result = validateGoalInput({
+    title: formData.get("title"),
+    goalType,
+    direction: formData.get("direction"),
+    period: formData.get("period"),
+    targetValue: convertGoalValue(formData.get("targetValue")),
+    startValue: convertGoalValue(formData.get("startValue")),
+    targetPrimaryType: formData.get("targetPrimaryType"),
+    targetMetricType,
+    targetExerciseId,
+    targetCustomName: formData.get("targetCustomName"),
+    targetRecordType,
+  });
+
+  if (!result.success) {
+    return { status: "error", error: result.error };
+  }
+
+  const updated = await updateGoalForUser(id, user.id, result.data);
+  if (!updated) {
+    throw new Error("Goal not found.");
+  }
 
   revalidatePath("/profile");
   return { status: "success" };

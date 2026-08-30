@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
+import BodyMetricFields from "./BodyMetricFields";
 import { deleteBodyMetric } from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 
@@ -16,11 +17,16 @@ import { BODY_METRIC_LABELS } from "./body-metric-labels";
  * newest-measured-first, so grouping here doesn't need to re-sort. Each
  * entry's value is converted for display via formatBodyMetricValue and
  * the viewing user's unitSystem (getUserContext) — the stored value stays
- * kg/%/bpm regardless.
+ * kg/%/bpm regardless. Each row's Edit trigger embeds a BodyMetricFields
+ * instance directly (entry={entry}) — same one-modal-per-row wiring as
+ * GoalsList/EventsList, since BodyMetricFields already owns its own
+ * open/close state and useActionState call. `today` is fetched here too
+ * (not just in BodyMetricForm) so every row's embedded BodyMetricFields
+ * has the same max-date bound on its measuredAt input as the create form.
  */
 export default async function BodyMetricsList() {
   const user = await requireUser();
-  const [metrics, { unitSystem }] = await Promise.all([
+  const [metrics, { today, unitSystem }] = await Promise.all([
     getBodyMetricsForUser(user.id),
     getUserContext(user.id),
   ]);
@@ -64,15 +70,18 @@ export default async function BodyMetricsList() {
                         <p className="text-sm text-ink-subtle">{entry.notes}</p>
                       )}
                     </div>
-                    <form action={deleteBodyMetric.bind(null, entry.id)}>
-                      <button
-                        type="submit"
-                        aria-label="Delete"
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </form>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <BodyMetricFields today={today} unitSystem={unitSystem} entry={entry} />
+                      <form action={deleteBodyMetric.bind(null, entry.id)}>
+                        <button
+                          type="submit"
+                          aria-label="Delete"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        >
+                          <X className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 );
               })}

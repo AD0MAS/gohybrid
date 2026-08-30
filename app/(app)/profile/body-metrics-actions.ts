@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import {
   createBodyMetricForUser,
   deleteBodyMetricForUser,
+  updateBodyMetricForUser,
 } from "@/lib/body-metrics";
 import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
 import { convertWeightInputToKg } from "@/lib/units";
@@ -68,6 +69,59 @@ export async function addBodyMetric(
   }
 
   await createBodyMetricForUser(user.id, result.data);
+
+  revalidatePath("/profile");
+  return { status: "success" };
+}
+
+/**
+ * Updates one of the authenticated user's body metrics, bound with the id
+ * via .bind(null, id) so the resulting function matches useActionState's
+ * (prevState, formData) signature exactly — same imperial→metric
+ * conversion and validation as addBodyMetric (an update has the same
+ * rules as a create), against BodyMetricFields' entry-populated form
+ * instead of an empty one. Ownership is enforced by
+ * updateBodyMetricForUser's WHERE clause; a null result (wrong id or
+ * another user's row) throws, same as deleteBodyMetric, since a forged id
+ * can't silently no-op. Revalidates /profile on success.
+ */
+export async function updateBodyMetric(
+  id: string,
+  _prevState: BodyMetricFormState,
+  formData: FormData
+): Promise<BodyMetricFormState> {
+  const user = await requireUser();
+  const { today, unitSystem } = await getUserContext(user.id);
+
+  const metricType = formData.get("metricType");
+  const rawValue = formData.get("value");
+
+  let value: unknown = rawValue;
+  if (metricType === "weight" && typeof rawValue === "string" && rawValue !== "") {
+    const parsed = Number(rawValue);
+    if (Number.isFinite(parsed)) {
+      value = convertWeightInputToKg(parsed, unitSystem);
+    }
+  }
+
+  const result = validateBodyMetricInput(
+    {
+      metricType,
+      value,
+      measuredAt: formData.get("measuredAt"),
+      notes: formData.get("notes"),
+    },
+    today
+  );
+
+  if (!result.success) {
+    return { status: "error", error: result.error };
+  }
+
+  const updated = await updateBodyMetricForUser(id, user.id, result.data);
+  if (!updated) {
+    throw new Error("Body metric not found.");
+  }
 
   revalidatePath("/profile");
   return { status: "success" };

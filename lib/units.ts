@@ -47,6 +47,10 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export type DisplayValue = {
   value: number;
   unit: string;
@@ -180,4 +184,32 @@ export function convertDistanceInputToMetres(
   return resolveDistanceInputUnit(unitSystem, isHyroxStation) === "ft"
     ? feetToMetres(value)
     : value;
+}
+
+/**
+ * The read-side counterpart to convertDistanceInputToMetres: converts a
+ * stored metric value into whatever unit resolveDistanceInputUnit reports
+ * for the same unitSystem/isHyroxStation pair, for seeding a distance
+ * input's value when editing an existing record/goal.
+ *
+ * This is deliberately NOT formatDistanceMetres. Display and input units
+ * are different concepts for distance: formatDistanceMetres picks ft vs.
+ * mi per value (a 1000 m threshold), because that's what reads naturally
+ * on a list; resolveDistanceInputUnit is threshold-free (always ft, or m
+ * for a HYROX station), because a value typed into an input is converted
+ * with that same fixed unit on submit — see convertDistanceInputToMetres.
+ * Seeding an input's value with the display unit but labelling it with the
+ * input unit silently corrupts the value on save (e.g. a stored 4877 m
+ * displays as "3 mi", but re-submitting "3" under the input's "ft" label
+ * converts to ~0.9 m). Anything seeding a distance form field must use
+ * this function, never formatDistanceMetres.
+ */
+export function toDistanceInputValue(
+  metres: number,
+  unitSystem: UnitSystem,
+  isHyroxStation: boolean
+): number {
+  return resolveDistanceInputUnit(unitSystem, isHyroxStation) === "ft"
+    ? round2(metresToFeet(metres))
+    : round2(metres);
 }

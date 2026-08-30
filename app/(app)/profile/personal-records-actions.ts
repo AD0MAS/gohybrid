@@ -6,6 +6,7 @@ import { getExerciseById } from "@/lib/exercises";
 import {
   createPersonalRecordForUser,
   deletePersonalRecordForUser,
+  updatePersonalRecordForUser,
 } from "@/lib/personal-records";
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
@@ -84,6 +85,72 @@ export async function addPersonalRecord(
   }
 
   await createPersonalRecordForUser(user.id, result.data);
+
+  revalidatePath("/profile");
+  return { status: "success" };
+}
+
+/**
+ * Updates one of the authenticated user's personal records, bound with the
+ * id via .bind(null, id) so the resulting function matches
+ * useActionState's (prevState, formData) signature exactly — same
+ * imperial→metric conversion and validation as addPersonalRecord (an
+ * update has the same rules as a create), against PersonalRecordFields'
+ * entry-populated form instead of an empty one. Ownership is enforced by
+ * updatePersonalRecordForUser's WHERE clause; a null result (wrong id or
+ * another user's row) throws, same as deletePersonalRecord, since a
+ * forged id can't silently no-op. Revalidates /profile on success.
+ */
+export async function updatePersonalRecord(
+  id: string,
+  _prevState: PersonalRecordFormState,
+  formData: FormData
+): Promise<PersonalRecordFormState> {
+  const user = await requireUser();
+  const { today, unitSystem } = await getUserContext(user.id);
+
+  const exerciseId = formData.get("exerciseId");
+  const recordType = formData.get("recordType");
+  const rawValue = formData.get("value");
+
+  let isHyroxStation = false;
+  if (typeof exerciseId === "string" && exerciseId !== "") {
+    const exercise = await getExerciseById(exerciseId);
+    isHyroxStation = exercise?.isHyroxStation ?? false;
+  }
+
+  let value: unknown = rawValue;
+  if (typeof rawValue === "string" && rawValue !== "") {
+    const parsed = Number(rawValue);
+    if (Number.isFinite(parsed)) {
+      if (recordType === "weight") {
+        value = convertWeightInputToKg(parsed, unitSystem);
+      } else if (recordType === "distance") {
+        value = convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      }
+    }
+  }
+
+  const result = validatePersonalRecordInput(
+    {
+      exerciseId,
+      customName: formData.get("customName"),
+      recordType,
+      value,
+      achievedAt: formData.get("achievedAt"),
+      notes: formData.get("notes"),
+    },
+    today
+  );
+
+  if (!result.success) {
+    return { status: "error", error: result.error };
+  }
+
+  const updated = await updatePersonalRecordForUser(id, user.id, result.data);
+  if (!updated) {
+    throw new Error("Personal record not found.");
+  }
 
   revalidatePath("/profile");
   return { status: "success" };

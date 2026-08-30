@@ -97,6 +97,34 @@ export async function createEventForUser(
 }
 
 /**
+ * Updates an event owned by `userId`, returning the updated Event or null if
+ * nothing matched — whether because the id doesn't exist or because it
+ * belongs to a different user. Ownership is enforced in the WHERE clause,
+ * same pattern as deleteEventForUser. `input` is already validated — an
+ * update has the same rules as a create (see validateEventInput), and the
+ * write shape mirrors createEventForUser's exactly.
+ */
+export async function updateEventForUser(
+  id: string,
+  userId: string,
+  input: ValidatedEventInput
+): Promise<Event | null> {
+  const [updated] = await db
+    .update(events)
+    .set({
+      title: input.title,
+      eventDate: input.eventDate,
+      eventType: input.eventType,
+      location: input.location,
+      notes: input.notes,
+    })
+    .where(and(eq(events.id, id), eq(events.userId, userId)))
+    .returning();
+
+  return updated ?? null;
+}
+
+/**
  * Deletes an event owned by `userId`, returning true if a row was deleted
  * and false otherwise — whether because the id doesn't exist or because it
  * belongs to a different user. Ownership is enforced in the WHERE clause,

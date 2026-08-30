@@ -1,16 +1,25 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
+import type { BodyMetric } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
 import Modal from "../_components/Modal";
-import { addBodyMetric, type BodyMetricFormState } from "./body-metrics-actions";
+import {
+  addBodyMetric,
+  updateBodyMetric,
+  type BodyMetricFormState,
+} from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 
 type BodyMetricFieldsProps = {
   today: string;
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  /** Absent renders the Add-measurement button + form; present renders a
+   * Pencil edit trigger + the same form pre-filled from this entry,
+   * submitting to updateBodyMetric instead of addBodyMetric. */
+  entry?: BodyMetric;
 };
 
 const initialState: BodyMetricFormState = { status: "idle" };
@@ -45,15 +54,31 @@ const initialState: BodyMetricFormState = { status: "idle" };
  * right after the first), since "success" === "success" leaves the check
  * unable to tell "still the old result" from "a new result that happens
  * to match."
+ *
+ * When `entry` is present, this same component renders as BodyMetricsList's
+ * per-row edit trigger instead of the section's Add button: a Pencil
+ * icon-button in place of the Plus button, "Edit measurement"/"Save"
+ * copy, and every field's local state/defaultValue seeded from `entry`.
+ * `updateBodyMetric.bind(null, entry.id)` is used as the form action in
+ * place of addBodyMetric — the bound function still matches
+ * useActionState's (prevState, formData) signature. The value input is
+ * pre-filled via formatBodyMetricValue(entry.metricType, entry.value,
+ * unitSystem) — the same display conversion the list renders each entry
+ * through — so an imperial user editing a weight sees (and can resubmit)
+ * the value in lb, not the raw stored kg.
  */
 export default function BodyMetricFields({
   today,
   unitSystem,
+  entry,
 }: BodyMetricFieldsProps) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(addBodyMetric, initialState);
+  const action = entry ? updateBodyMetric.bind(null, entry.id) : addBodyMetric;
+  const [state, formAction] = useActionState(action, initialState);
   const [metricType, setMetricType] =
-    useState<(typeof bodyMetricTypeEnum.enumValues)[number]>("weight");
+    useState<(typeof bodyMetricTypeEnum.enumValues)[number]>(
+      entry?.metricType ?? "weight"
+    );
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
     setPrevState(state);
@@ -61,19 +86,33 @@ export default function BodyMetricFields({
   }
 
   const { unit } = formatBodyMetricValue(metricType, 0, unitSystem);
+  const defaultValue = entry
+    ? formatBodyMetricValue(entry.metricType, entry.value, unitSystem).value
+    : undefined;
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        <Plus className="h-4 w-4" />
-        Add measurement
-      </button>
+      {entry ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Edit"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Plus className="h-4 w-4" />
+          Add measurement
+        </button>
+      )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add measurement">
+      <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit measurement" : "Add measurement"}>
         <form action={formAction} className="flex flex-col gap-3">
           <select
             name="metricType"
@@ -98,6 +137,7 @@ export default function BodyMetricFields({
             step="0.01"
             min="0"
             required
+            defaultValue={defaultValue}
             placeholder={`Value (${unit})`}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -105,7 +145,7 @@ export default function BodyMetricFields({
           <input
             type="date"
             name="measuredAt"
-            defaultValue={today}
+            defaultValue={entry?.measuredAt ?? today}
             max={today}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -115,6 +155,7 @@ export default function BodyMetricFields({
             type="text"
             name="notes"
             placeholder="Notes (optional)"
+            defaultValue={entry?.notes ?? ""}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -126,7 +167,7 @@ export default function BodyMetricFields({
             type="submit"
             className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Add measurement
+            {entry ? "Save" : "Add measurement"}
           </button>
         </form>
       </Modal>

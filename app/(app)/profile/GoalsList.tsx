@@ -1,7 +1,9 @@
 import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { getExerciseCatalog } from "@/lib/exercises";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
 import { getUserContext } from "@/lib/user-settings";
+import GoalFields from "./GoalFields";
 import { formatGoalValue, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
@@ -15,12 +17,20 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  * by default and their progress isn't the point once archived. Both
  * "today" and the source queries' timezone come from getUserContext
  * (cached, so this and EventsList/BodyMetricForm/PersonalRecordForm share
- * one pair of queries per request).
+ * one pair of queries per request). Each row's Edit trigger embeds a
+ * GoalFields instance directly (entry={goal}) rather than lifting a single
+ * shared modal's state up into a client wrapper — GoalFields already owns
+ * its own open/close state and useActionState call, so one instance per
+ * row needs no coordination between rows and keeps this list a plain
+ * Server Component. `catalog` is fetched here (not just in GoalForm) so
+ * every row's embedded GoalFields has what it needs for personal_record
+ * goals, same as GoalForm's own fetch.
  */
 export default async function GoalsList() {
   const user = await requireUser();
-  const [allGoals, { today, timezone, unitSystem }] = await Promise.all([
+  const [allGoals, catalog, { today, timezone, unitSystem }] = await Promise.all([
     getGoalsForUser(user.id, true),
+    getExerciseCatalog(),
     getUserContext(user.id),
   ]);
 
@@ -81,6 +91,7 @@ export default async function GoalsList() {
                     Archive
                   </button>
                 </form>
+                <GoalFields catalog={catalog} unitSystem={unitSystem} entry={goal} />
                 <form action={deleteGoal.bind(null, goal.id)}>
                   <button
                     type="submit"

@@ -127,6 +127,49 @@ export async function createGoalForUser(
 }
 
 /**
+ * Updates a goal owned by `userId`, returning the updated Goal or null if
+ * nothing matched — whether because the id doesn't exist or because it
+ * belongs to a different user. Ownership is enforced in the WHERE clause,
+ * same pattern as deleteGoalForUser. `input` is already validated — an
+ * update has the same rules as a create (see validateGoalInput), and the
+ * write shape mirrors createGoalForUser's exactly.
+ */
+export async function updateGoalForUser(
+  id: string,
+  userId: string,
+  input: ValidatedGoalInput
+): Promise<Goal | null> {
+  const [updated] = await db
+    .update(goals)
+    .set({
+      title: input.title,
+      goalType: input.goalType,
+      direction: input.direction,
+      period: input.period,
+      targetValue: String(input.targetValue),
+      startValue: input.startValue === null ? null : String(input.startValue),
+      targetPrimaryType: input.targetPrimaryType,
+      targetMetricType: input.targetMetricType,
+      targetExerciseId: input.targetExerciseId,
+      targetCustomName: input.targetCustomName,
+      targetRecordType: input.targetRecordType,
+    })
+    .where(and(eq(goals.id, id), eq(goals.userId, userId)))
+    .returning();
+
+  if (!updated) return null;
+
+  const exercise = input.targetExerciseId
+    ? await db.query.exercises.findFirst({
+        where: (exercises, { eq }) => eq(exercises.id, input.targetExerciseId!),
+        columns: { id: true, name: true, isHyroxStation: true },
+      })
+    : null;
+
+  return toGoal({ ...updated, exercise: exercise ?? null });
+}
+
+/**
  * Deletes a goal owned by `userId`, returning true if a row was deleted and
  * false otherwise — whether because the id doesn't exist or because it
  * belongs to a different user. Ownership is enforced in the WHERE clause,

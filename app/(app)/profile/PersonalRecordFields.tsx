@@ -1,13 +1,19 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
-import { formatPersonalRecordValue, resolveDistanceInputUnit } from "@/lib/units";
+import type { PersonalRecord } from "@/lib/personal-records";
+import {
+  formatPersonalRecordValue,
+  resolveDistanceInputUnit,
+  toDistanceInputValue,
+} from "@/lib/units";
 import Modal from "../_components/Modal";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
   addPersonalRecord,
+  updatePersonalRecord,
   type PersonalRecordFormState,
 } from "./personal-records-actions";
 
@@ -15,6 +21,10 @@ type PersonalRecordFieldsProps = {
   catalog: { id: string; name: string; isHyroxStation: boolean }[];
   today: string;
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  /** Absent renders the Add-record button + form; present renders a Pencil
+   * edit trigger + the same form pre-filled from this entry, submitting to
+   * updatePersonalRecord instead of addPersonalRecord. */
+  entry?: PersonalRecord;
 };
 
 const initialState: PersonalRecordFormState = { status: "idle" };
@@ -56,17 +66,41 @@ const initialState: PersonalRecordFormState = { status: "idle" };
  * right after the first), since "success" === "success" leaves the check
  * unable to tell "still the old result" from "a new result that happens
  * to match."
+ *
+ * When `entry` is present, this same component renders as
+ * PersonalRecordsList's per-row edit trigger instead of the section's Add
+ * button: a Pencil icon-button in place of the Plus button, "Edit
+ * record"/"Save" copy, and every field's local state/defaultValue seeded
+ * from `entry`. `updatePersonalRecord.bind(null, entry.id)` is used as the
+ * form action in place of addPersonalRecord — the bound function still
+ * matches useActionState's (prevState, formData) signature. The value
+ * input's pre-fill must use the INPUT unit (what recordType/unitSystem
+ * actually reads the resubmitted number as), not the display unit shown
+ * on the list — those two disagree for distance (see toDistanceInputValue
+ * in lib/units.ts): a weight pre-fills via formatPersonalRecordValue
+ * (display and input agree — both are always lb under imperial), but a
+ * distance pre-fills via toDistanceInputValue, since formatPersonalRecordValue
+ * picks ft/mi per value while the input is always ft (or m for a HYROX
+ * station) regardless of the stored value's size. Seeding a distance input
+ * with the display value under its input-unit label would silently
+ * corrupt it on save.
  */
 export default function PersonalRecordFields({
   catalog,
   today,
   unitSystem,
+  entry,
 }: PersonalRecordFieldsProps) {
   const [open, setOpen] = useState(false);
-  const [state, formAction] = useActionState(addPersonalRecord, initialState);
-  const [exerciseId, setExerciseId] = useState("");
+  const action = entry
+    ? updatePersonalRecord.bind(null, entry.id)
+    : addPersonalRecord;
+  const [state, formAction] = useActionState(action, initialState);
+  const [exerciseId, setExerciseId] = useState(entry?.exerciseId ?? "");
   const [recordType, setRecordType] =
-    useState<(typeof personalRecordTypeEnum.enumValues)[number]>("weight");
+    useState<(typeof personalRecordTypeEnum.enumValues)[number]>(
+      entry?.recordType ?? "weight"
+    );
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
     setPrevState(state);
@@ -83,18 +117,40 @@ export default function PersonalRecordFields({
       : formatPersonalRecordValue(recordType, 0, unitSystem, isHyroxStation)
           .unit;
 
+  const defaultValue = entry
+    ? entry.recordType === "distance"
+      ? toDistanceInputValue(entry.value, unitSystem, isHyroxStation)
+      : formatPersonalRecordValue(
+          entry.recordType,
+          entry.value,
+          unitSystem,
+          isHyroxStation
+        ).value
+    : undefined;
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        <Plus className="h-4 w-4" />
-        Add record
-      </button>
+      {entry ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Edit"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Plus className="h-4 w-4" />
+          Add record
+        </button>
+      )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title="Add record">
+      <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit record" : "Add record"}>
         <form action={formAction} className="flex flex-col gap-3">
           <select
             name="exerciseId"
@@ -115,6 +171,7 @@ export default function PersonalRecordFields({
               type="text"
               name="customName"
               placeholder="Custom name"
+              defaultValue={entry?.customName ?? ""}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}
@@ -142,6 +199,7 @@ export default function PersonalRecordFields({
             step="0.01"
             min="0"
             required
+            defaultValue={defaultValue}
             placeholder={`Value (${unit})`}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -149,7 +207,7 @@ export default function PersonalRecordFields({
           <input
             type="date"
             name="achievedAt"
-            defaultValue={today}
+            defaultValue={entry?.achievedAt ?? today}
             max={today}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -159,6 +217,7 @@ export default function PersonalRecordFields({
             type="text"
             name="notes"
             placeholder="Notes (optional)"
+            defaultValue={entry?.notes ?? ""}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -170,7 +229,7 @@ export default function PersonalRecordFields({
             type="submit"
             className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Add record
+            {entry ? "Save" : "Add record"}
           </button>
         </form>
       </Modal>

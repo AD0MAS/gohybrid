@@ -12,14 +12,18 @@ import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
-/** Text colour per scheduled-entry status, all on the same surface-2 pill
- * background — see the tag pills' NEUTRAL_TAG_CLASSES in tag-colors.ts for
- * the sibling it's deliberately distinguishable from (no border, its own
- * colour per status rather than one neutral tone for every value). */
-const STATUS_PILL_TEXT_CLASSES = {
-  Completed: "text-success",
-  Skipped: "text-ink-tertiary",
-  Planned: "text-ink-subtle",
+/** Background + text per scheduled-entry status. A shared bg-surface-2 fill
+ * used to carry the pill, but surface-2 sits only one step above this card's
+ * surface-1 background — nearly invisible. Each status now tints its own
+ * colour into the background at low opacity (same `/NN` pattern as the
+ * border-danger/40 error banners elsewhere), so the pill reads as a distinct
+ * surface without needing a border — see the tag pills' NEUTRAL_TAG_CLASSES
+ * in tag-colors.ts for the sibling this is deliberately distinguishable
+ * from (one neutral tone for every tag, vs. its own colour per status). */
+const STATUS_PILL_CLASSES = {
+  Completed: "bg-success/15 text-success",
+  Skipped: "bg-ink-tertiary/15 text-ink-tertiary",
+  Planned: "bg-ink-subtle/15 text-ink-subtle",
 } as const;
 
 function truncate(text: string, maxLength: number): string {
@@ -169,7 +173,7 @@ export default async function WeekStrip({
 
                     <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
                       <span
-                        className={`shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-xs ${STATUS_PILL_TEXT_CLASSES[status]}`}
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-sm ${STATUS_PILL_CLASSES[status]}`}
                       >
                         {status}
                       </span>
