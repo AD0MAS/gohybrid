@@ -19,4 +19,5 @@ export const PERSONAL_RECORD_LABELS: Record<
   time: { label: "Time" },
   reps: { label: "Reps" },
   distance: { label: "Distance" },
+  calories: { label: "Calories" },
 };

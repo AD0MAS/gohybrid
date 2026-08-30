@@ -1,0 +1,1 @@
+ALTER TYPE "public"."personal_record_type" ADD VALUE 'calories';

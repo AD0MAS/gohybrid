@@ -94,6 +94,7 @@ export const personalRecordTypeEnum = pgEnum("personal_record_type", [
   "time",
   "reps",
   "distance",
+  "calories",
 ]);
 
 export const goalTypeEnum = pgEnum("goal_type", [

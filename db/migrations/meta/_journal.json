@@ -85,6 +85,13 @@
       "when": 1787773803196,
       "tag": "0011_needy_risque",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788084050114,
+      "tag": "0012_rare_vertigo",
+      "breakpoints": true
     }
   ]
 }

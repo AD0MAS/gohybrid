@@ -118,9 +118,9 @@ export function formatBodyMetricValue(
  * Formats a personal_records value for display given its record_type.
  * "weight" converts via formatWeightKg; "distance" converts via
  * formatDistanceMetres (so `isHyroxStation` only matters for this branch).
- * "reps" (a count) and "time" (seconds) are unit-system-independent by
- * nature and are returned unchanged on purpose — do not "complete" this
- * mapping by inventing a conversion for either.
+ * "reps" (a count), "time" (seconds) and "calories" (kcal) are
+ * unit-system-independent by nature and are returned unchanged on purpose —
+ * do not "complete" this mapping by inventing a conversion for any of them.
  */
 export function formatPersonalRecordValue(
   recordType: PersonalRecordType,
@@ -133,6 +133,9 @@ export function formatPersonalRecordValue(
   }
   if (recordType === "distance") {
     return formatDistanceMetres(value, unitSystem, isHyroxStation);
+  }
+  if (recordType === "calories") {
+    return { value, unit: "kcal" };
   }
   return { value, unit: recordType === "reps" ? "reps" : "seconds" };
 }
