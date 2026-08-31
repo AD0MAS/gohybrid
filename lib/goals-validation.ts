@@ -4,9 +4,23 @@ import {
   goalPeriodEnum,
   goalTypeEnum,
   personalRecordTypeEnum,
+  unitSystemEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
+import { formatWeightKg } from "./units";
+import {
+  BODY_FAT_DIGIT_LIMIT,
+  BODY_WEIGHT_DIGIT_LIMIT,
+  CALORIES_DIGIT_LIMIT,
+  checkDigitLimit,
+  DISTANCE_DIGIT_LIMIT,
+  LIFTED_WEIGHT_DIGIT_LIMIT,
+  REPS_DIGIT_LIMIT,
+  RESTING_HR_DIGIT_LIMIT,
+} from "./numeric-limits";
 import { isOneOf, isValidUuid } from "./workouts-validation";
+
+type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
 export type ValidatedGoalInput = {
   title: string;
@@ -46,11 +60,59 @@ export type RawGoalInput = {
   targetRecordType?: unknown;
 };
 
-// Must match goals.target_value/start_value's numeric(9,2) in db/schema.ts —
-// the largest value those columns can hold. Kept as a named constant so the
-// two can't drift without someone noticing (same pattern as
-// MAX_PERSONAL_RECORD_VALUE).
+// session_count/streak targetValue has no goal-subject-specific digit
+// limit the way body_metric/personal_record does (see digitLimitFor below)
+// — a session count or a streak length has no natural ceiling worth
+// naming, so this stays their actual bound, narrowed from its old role of
+// gating every goal_type to just these two. It also still matches
+// goals.target_value/start_value's numeric(9,2) ceiling in db/schema.ts,
+// so it doubles as that column's backstop for the goal_types that do go
+// through digitLimitFor (none of whose limits exceed it — see
+// digitLimitFor's comment).
 const MAX_GOAL_VALUE = 9999999.99;
+
+// One digit-limit + display label per body_metric/personal_record target
+// subject, checked by checkDigitLimit (lib/numeric-limits.ts) further down
+// — session_count/streak have no entry here; MAX_GOAL_VALUE above is their
+// bound instead. Every limit here tops out at or under MAX_GOAL_VALUE, so
+// it remains a true backstop for these subjects even though it's no
+// longer the primary check. Weight's label depends on unitSystem (kg/lb);
+// distance is reported in metres regardless of unitSystem, same reasoning
+// as personal-records-validation.ts's digitLimitFor — a distance goal's
+// targetValue has already gone through DistanceInput's own explicit unit
+// <select> and convertDistanceInputToMetres by the time it reaches here.
+function digitLimitFor(
+  goalType: "body_metric" | "personal_record",
+  metricOrRecordType: string,
+  unitSystem: UnitSystem
+): { limit: { maxIntegerDigits: number; maxDecimals: number }; label: string } {
+  if (goalType === "body_metric") {
+    switch (metricOrRecordType) {
+      case "weight":
+        return {
+          limit: BODY_WEIGHT_DIGIT_LIMIT,
+          label: `Target value (${formatWeightKg(0, unitSystem).unit})`,
+        };
+      case "body_fat":
+        return { limit: BODY_FAT_DIGIT_LIMIT, label: "Target value (%)" };
+      default:
+        return { limit: RESTING_HR_DIGIT_LIMIT, label: "Target value (bpm)" };
+    }
+  }
+  switch (metricOrRecordType) {
+    case "weight":
+      return {
+        limit: LIFTED_WEIGHT_DIGIT_LIMIT,
+        label: `Target value (${formatWeightKg(0, unitSystem).unit})`,
+      };
+    case "calories":
+      return { limit: CALORIES_DIGIT_LIMIT, label: "Target value (calories)" };
+    case "distance":
+      return { limit: DISTANCE_DIGIT_LIMIT, label: "Target value (m)" };
+    default:
+      return { limit: REPS_DIGIT_LIMIT, label: "Target value (reps)" };
+  }
+}
 
 function parseOptionalValue(
   raw: unknown
@@ -59,10 +121,10 @@ function parseOptionalValue(
     return { ok: true, value: null };
   }
   const parsed = typeof raw === "number" ? raw : Number(raw);
-  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > MAX_GOAL_VALUE) {
+  if (!Number.isFinite(parsed) || parsed <= 0) {
     return { ok: false };
   }
-  return { ok: true, value: Math.round(parsed * 100) / 100 };
+  return { ok: true, value: parsed };
 }
 
 /**
@@ -98,7 +160,9 @@ function parseDurationValue(
  * today here. Rules, per §5 Layer 4 / the goals schema comment in
  * db/schema.ts:
  *   - title required, trimmed.
- *   - targetValue positive, <= MAX_GOAL_VALUE, rounded to 2 decimals.
+ *   - targetValue positive, within its target subject's digit limit (see
+ *     digitLimitFor above for body_metric/personal_record; MAX_GOAL_VALUE
+ *     for session_count/streak, which have no subject-specific limit).
  *   - startValue is never accepted from input — a decrease goal's starting
  *     value is captured server-side (see addGoal/updateGoal in
  *     goals-actions.ts), including the "must differ from targetValue" check
@@ -119,7 +183,10 @@ function parseDurationValue(
  *     so "decrease" (and the startValue it would otherwise require) makes
  *     no sense for either.
  */
-export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
+export function validateGoalInput(
+  input: RawGoalInput,
+  unitSystem: UnitSystem
+): GoalValidationResult {
   const title = typeof input.title === "string" ? input.title.trim() : "";
   if (!title) {
     return { success: false, error: "Title is required." };
@@ -168,18 +235,17 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       success: false,
       error: isDurationGoal
         ? "Target value must be more than zero."
-        : `Target value must be between 0 and ${MAX_GOAL_VALUE}.`,
+        : "Target value must be greater than 0.",
     };
   }
   if (parsedTarget.value === null) {
-    return {
-      success: false,
-      error: isDurationGoal
-        ? "Target value is required."
-        : `Target value must be between 0 and ${MAX_GOAL_VALUE}.`,
-    };
+    return { success: false, error: "Target value is required." };
   }
-  const targetValue = parsedTarget.value;
+  // Refined further down, per goal_type/target subject: session_count and
+  // streak check it against MAX_GOAL_VALUE, body_metric/personal_record
+  // (except an already-rounded duration "time" value) against
+  // digitLimitFor's per-subject limit — see the switch below.
+  let targetValue = parsedTarget.value;
 
   // Never accepted from input — see ValidatedGoalInput's comment. addGoal/
   // updateGoal (goals-actions.ts) overwrite this with the actual resolved
@@ -273,6 +339,20 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
             "Session count goals only accept an optional workout type.",
         };
       }
+      // A count of sessions or a streak length in days — always a whole
+      // number, same reasoning as Sets/Rounds in workout-builder-validation.ts.
+      if (!Number.isInteger(targetValue)) {
+        return {
+          success: false,
+          error: "Target value must be a whole number.",
+        };
+      }
+      if (targetValue > MAX_GOAL_VALUE) {
+        return {
+          success: false,
+          error: `Target value must be at most ${MAX_GOAL_VALUE}.`,
+        };
+      }
       break;
     }
     case "streak": {
@@ -294,6 +374,20 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
           error: "Streak goals accept none of the target fields.",
         };
       }
+      // A count of sessions or a streak length in days — always a whole
+      // number, same reasoning as Sets/Rounds in workout-builder-validation.ts.
+      if (!Number.isInteger(targetValue)) {
+        return {
+          success: false,
+          error: "Target value must be a whole number.",
+        };
+      }
+      if (targetValue > MAX_GOAL_VALUE) {
+        return {
+          success: false,
+          error: `Target value must be at most ${MAX_GOAL_VALUE}.`,
+        };
+      }
       break;
     }
     case "body_metric": {
@@ -313,6 +407,18 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
           success: false,
           error: "Body metric goals only accept a metric type.",
         };
+      }
+      {
+        const { limit, label } = digitLimitFor(
+          "body_metric",
+          targetMetricType,
+          unitSystem
+        );
+        const digitCheck = checkDigitLimit(targetValue, limit, label);
+        if (!digitCheck.ok) {
+          return { success: false, error: digitCheck.error };
+        }
+        targetValue = digitCheck.value;
       }
       break;
     }
@@ -343,6 +449,24 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
           error:
             "Personal record goals only accept a record type and the exercise/custom-name choice.",
         };
+      }
+      // "time" is already a rounded whole-seconds value from
+      // parseDurationValue above (isDurationGoal), with no meaningful
+      // digit limit to apply — same reasoning as personal-records-validation.ts's
+      // own "time" branch.
+      if (targetRecordType !== "time") {
+        const { limit, label } = digitLimitFor(
+          "personal_record",
+          targetRecordType!,
+          unitSystem
+        );
+        const digitCheck = checkDigitLimit(targetValue, limit, label, {
+          roundInsteadOfReject: targetRecordType === "distance",
+        });
+        if (!digitCheck.ok) {
+          return { success: false, error: digitCheck.error };
+        }
+        targetValue = digitCheck.value;
       }
       break;
     }

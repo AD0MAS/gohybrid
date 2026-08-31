@@ -202,18 +202,21 @@ export async function addGoal(
     return parsed;
   }
 
-  const result = validateGoalInput({
-    title: formData.get("title"),
-    goalType,
-    direction: formData.get("direction"),
-    period: formData.get("period"),
-    targetValue: convertGoalValue(formData.get("targetValue")),
-    targetPrimaryType: formData.get("targetPrimaryType"),
-    targetMetricType,
-    targetExerciseId,
-    targetCustomName: formData.get("targetCustomName"),
-    targetRecordType,
-  });
+  const result = validateGoalInput(
+    {
+      title: formData.get("title"),
+      goalType,
+      direction: formData.get("direction"),
+      period: formData.get("period"),
+      targetValue: convertGoalValue(formData.get("targetValue")),
+      targetPrimaryType: formData.get("targetPrimaryType"),
+      targetMetricType,
+      targetExerciseId,
+      targetCustomName: formData.get("targetCustomName"),
+      targetRecordType,
+    },
+    unitSystem
+  );
 
   if (!result.success) {
     return {
@@ -344,18 +347,21 @@ export async function updateGoal(
     return parsed;
   }
 
-  const result = validateGoalInput({
-    title: formData.get("title"),
-    goalType,
-    direction: formData.get("direction"),
-    period: formData.get("period"),
-    targetValue: convertGoalValue(formData.get("targetValue")),
-    targetPrimaryType: formData.get("targetPrimaryType"),
-    targetMetricType,
-    targetExerciseId,
-    targetCustomName: formData.get("targetCustomName"),
-    targetRecordType,
-  });
+  const result = validateGoalInput(
+    {
+      title: formData.get("title"),
+      goalType,
+      direction: formData.get("direction"),
+      period: formData.get("period"),
+      targetValue: convertGoalValue(formData.get("targetValue")),
+      targetPrimaryType: formData.get("targetPrimaryType"),
+      targetMetricType,
+      targetExerciseId,
+      targetCustomName: formData.get("targetCustomName"),
+      targetRecordType,
+    },
+    unitSystem
+  );
 
   if (!result.success) {
     return {

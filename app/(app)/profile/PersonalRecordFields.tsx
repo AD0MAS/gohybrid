@@ -181,6 +181,10 @@ export default function PersonalRecordFields({
           isHyroxStation
         ).value
       : undefined;
+  // Weight moves in plate increments; reps and calories are whole-number
+  // counts (distance/time route through their own inputs above).
+  const valueStep =
+    recordType === "weight" ? 2.5 : recordType === "calories" ? 10 : 1;
 
   return (
     <>
@@ -269,7 +273,7 @@ export default function PersonalRecordFields({
             <input
               type="number"
               name="value"
-              step="0.01"
+              step={valueStep}
               min="0"
               required
               defaultValue={fieldDefault(

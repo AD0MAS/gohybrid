@@ -1,3 +1,12 @@
+// db/schema.ts is imported type-only below — erased at compile time. This
+// file must have zero RUNTIME imports of db/schema.ts (or drizzle-orm),
+// since it's called directly from the client-side workout builder for
+// immediate feedback. It's kept out of lib/workouts-validation.ts
+// specifically because that module has a *runtime* import of db/schema.ts
+// for validateWorkoutInput — sharing a file with it would drag drizzle-orm
+// into the client bundle the moment the builder imports anything from that
+// module at all. lib/numeric-limits.ts is imported at runtime below, which
+// is safe: it has zero imports of its own (see its own file comment).
 import type {
   blockTypeEnum,
   targetPresetEnum,
@@ -6,14 +15,13 @@ import type {
   workoutDifficultyEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
-
-// Type-only imports — erased at compile time. This file must have zero
-// runtime imports of db/schema.ts (or drizzle-orm), since it's called
-// directly from the client-side workout builder for immediate feedback.
-// It's kept out of lib/workouts-validation.ts specifically because that
-// module has a *runtime* import of db/schema.ts for validateWorkoutInput
-// — sharing a file with it would drag drizzle-orm into the client bundle
-// the moment the builder imports anything from that module at all.
+import {
+  checkDigitLimit,
+  ITEM_CALORIES_DIGIT_LIMIT,
+  ITEM_DISTANCE_DIGIT_LIMIT,
+  LIFTED_WEIGHT_DIGIT_LIMIT,
+  REPS_DIGIT_LIMIT,
+} from "./numeric-limits";
 
 export type ValidatedBuilderItem = {
   exerciseId: string | null;
@@ -214,9 +222,33 @@ function parseBuilderItem(
     return { error: `${context} has an invalid volume type.` };
   }
 
-  const volumeValue = parseOptionalNumber(item.volumeValue);
+  let volumeValue = parseOptionalNumber(item.volumeValue);
   if (volumeValue === INVALID) {
     return { error: `${context} volume value must be a number.` };
+  }
+  // Digit limit per volume_type — "duration" is DurationInput's own
+  // composed whole-seconds count (its own boxes already cap it), so it's
+  // skipped here. "distance" rounds rather than rejects a fractional
+  // value: an imperial mile/foot entry legitimately converts to a
+  // non-integer number of metres (see checkDigitLimit's doc comment in
+  // lib/numeric-limits.ts). These limits are narrower than
+  // personal_records/goals' own — this table's volume_value column is
+  // numeric(6,2), not numeric(9,2) (see lib/numeric-limits.ts's
+  // ITEM_CALORIES_DIGIT_LIMIT/ITEM_DISTANCE_DIGIT_LIMIT comment).
+  if (volumeValue !== null && volumeType !== null && volumeType !== "duration") {
+    const { limit, label } =
+      volumeType === "reps"
+        ? { limit: REPS_DIGIT_LIMIT, label: `${context} volume value (reps)` }
+        : volumeType === "calories"
+          ? { limit: ITEM_CALORIES_DIGIT_LIMIT, label: `${context} volume value (calories)` }
+          : { limit: ITEM_DISTANCE_DIGIT_LIMIT, label: `${context} volume value (m)` };
+    const digitCheck = checkDigitLimit(volumeValue, limit, label, {
+      roundInsteadOfReject: volumeType === "distance",
+    });
+    if (!digitCheck.ok) {
+      return { error: digitCheck.error };
+    }
+    volumeValue = digitCheck.value;
   }
 
   const targetType = parseOptionalEnumValue(
@@ -246,9 +278,23 @@ function parseBuilderItem(
     };
   }
 
-  const weightKg = parseOptionalNumber(item.weightKg);
+  let weightKg = parseOptionalNumber(item.weightKg);
   if (weightKg === INVALID) {
     return { error: `${context} weight must be a number.` };
+  }
+  // Always entered directly in kg (ItemEditor's "Weight in kg" field) —
+  // unlike a personal record/goal's weight, there's no unit system to
+  // phrase the message in.
+  if (weightKg !== null) {
+    const digitCheck = checkDigitLimit(
+      weightKg,
+      LIFTED_WEIGHT_DIGIT_LIMIT,
+      `${context} weight (kg)`
+    );
+    if (!digitCheck.ok) {
+      return { error: digitCheck.error };
+    }
+    weightKg = digitCheck.value;
   }
 
   const restSeconds = parseOptionalNumber(item.restSeconds);
@@ -304,8 +350,8 @@ function parseBuilderBlock(
   }
 
   const rounds = parseOptionalNumber(block.rounds);
-  if (rounds === INVALID) {
-    return { error: `Block ${index + 1} rounds must be a number.` };
+  if (rounds === INVALID || (rounds !== null && !Number.isInteger(rounds))) {
+    return { error: `Block ${index + 1} rounds must be a whole number.` };
   }
 
   const workSeconds = parseOptionalNumber(block.workSeconds);

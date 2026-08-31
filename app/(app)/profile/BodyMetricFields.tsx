@@ -103,6 +103,9 @@ export default function BodyMetricFields({
   const defaultValue = entry
     ? formatBodyMetricValue(entry.metricType, entry.value, unitSystem).value
     : undefined;
+  // A scale reads to 0.1 kg/lb; body fat % follows the same precision;
+  // resting HR is always a whole beats-per-minute reading.
+  const valueStep = metricType === "resting_hr" ? 1 : 0.1;
 
   return (
     <>
@@ -148,7 +151,7 @@ export default function BodyMetricFields({
           <input
             type="number"
             name="value"
-            step="0.01"
+            step={valueStep}
             min="0"
             required
             defaultValue={fieldDefault(

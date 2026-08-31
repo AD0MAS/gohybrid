@@ -220,7 +220,7 @@ export default function WorkoutBuilder({
           <input
             type="number"
             min={1}
-            step={1}
+            step={5}
             value={state.meta.estimatedDurationMinutes ?? ""}
             onChange={(e) =>
               dispatch({

@@ -85,7 +85,8 @@ export async function addPersonalRecord(
       achievedAt: formData.get("achievedAt"),
       notes: formData.get("notes"),
     },
-    today
+    today,
+    unitSystem
   );
 
   if (!result.success) {
@@ -150,7 +151,8 @@ export async function updatePersonalRecord(
       achievedAt: formData.get("achievedAt"),
       notes: formData.get("notes"),
     },
-    today
+    today,
+    unitSystem
   );
 
   if (!result.success) {

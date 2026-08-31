@@ -62,7 +62,8 @@ export async function addBodyMetric(
       measuredAt: formData.get("measuredAt"),
       notes: formData.get("notes"),
     },
-    today
+    today,
+    unitSystem
   );
 
   if (!result.success) {
@@ -116,7 +117,8 @@ export async function updateBodyMetric(
       measuredAt: formData.get("measuredAt"),
       notes: formData.get("notes"),
     },
-    today
+    today,
+    unitSystem
   );
 
   if (!result.success) {

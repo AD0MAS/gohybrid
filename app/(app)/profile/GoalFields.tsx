@@ -243,15 +243,19 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
   }
 
   let valueUnit: string;
+  let valueStep: number;
   switch (goalType) {
     case "session_count":
       valueUnit = "sessions";
+      valueStep = 1;
       break;
     case "streak":
       valueUnit = "days";
+      valueStep = 1;
       break;
     case "body_metric":
       valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
+      valueStep = targetMetricType === "resting_hr" ? 1 : 0.1;
       break;
     case "personal_record": {
       // Unused when targetRecordType is "distance" — that case renders
@@ -262,6 +266,8 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
         unitSystem,
         isHyroxStation
       ).unit;
+      valueStep =
+        targetRecordType === "weight" ? 2.5 : targetRecordType === "calories" ? 10 : 1;
       break;
     }
   }
@@ -459,8 +465,8 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
             <input
               type="number"
               name="targetValue"
-              step="0.01"
-              min="0"
+              step={valueStep}
+              min={goalType === "session_count" || goalType === "streak" ? "1" : "0"}
               required
               defaultValue={fieldDefault(
                 "targetValue",

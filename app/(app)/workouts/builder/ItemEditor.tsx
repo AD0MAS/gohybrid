@@ -149,7 +149,7 @@ export default function ItemEditor({
             <input
               type="number"
               min={0}
-              step="any"
+              step={item.volumeType === "calories" ? 10 : 1}
               value={item.volumeValue ?? ""}
               onChange={(e) =>
                 dispatch({
@@ -244,7 +244,7 @@ export default function ItemEditor({
         <input
           type="number"
           min={0}
-          step="any"
+          step={2.5}
           value={item.weightKg ?? ""}
           onChange={(e) =>
             dispatch({
