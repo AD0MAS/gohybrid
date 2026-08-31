@@ -66,6 +66,14 @@ const initialState: BodyMetricFormState = { status: "idle" };
  * unitSystem) — the same display conversion the list renders each entry
  * through — so an imperial user editing a weight sees (and can resubmit)
  * the value in lb, not the raw stored kg.
+ *
+ * A failed submit restores exactly what the user typed via the same
+ * mechanism as GoalFields (see its doc comment for the full explanation):
+ * `formKey` remounts the `<form>` on every error, which alone fixes the
+ * controlled metricType select (its state was never lost, only its DOM);
+ * `fieldDefault`, reading addBodyMetric/updateBodyMetric's echoed `values`,
+ * restores the plain uncontrolled fields (value, measuredAt, notes) that a
+ * remount alone would otherwise reset back to `entry`'s original value.
  */
 export default function BodyMetricFields({
   today,
@@ -80,9 +88,15 @@ export default function BodyMetricFields({
       entry?.metricType ?? "weight"
     );
   const [prevState, setPrevState] = useState(state);
+  const [formKey, setFormKey] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
+    else if (state.status === "error") setFormKey((key) => key + 1);
+  }
+  const submitted = state.status === "error" ? state.values : null;
+  function fieldDefault(name: string, fallback?: string): string | undefined {
+    return submitted?.[name] ?? fallback;
   }
 
   const { unit } = formatBodyMetricValue(metricType, 0, unitSystem);
@@ -113,7 +127,7 @@ export default function BodyMetricFields({
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit measurement" : "Add measurement"}>
-        <form action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={formAction} className="flex flex-col gap-3">
           <select
             name="metricType"
             value={metricType}
@@ -137,7 +151,10 @@ export default function BodyMetricFields({
             step="0.01"
             min="0"
             required
-            defaultValue={defaultValue}
+            defaultValue={fieldDefault(
+              "value",
+              defaultValue !== undefined ? String(defaultValue) : undefined
+            )}
             placeholder={`Value (${unit})`}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -145,7 +162,7 @@ export default function BodyMetricFields({
           <input
             type="date"
             name="measuredAt"
-            defaultValue={entry?.measuredAt ?? today}
+            defaultValue={fieldDefault("measuredAt", entry?.measuredAt ?? today)}
             max={today}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -155,7 +172,7 @@ export default function BodyMetricFields({
             type="text"
             name="notes"
             placeholder="Notes (optional)"
-            defaultValue={entry?.notes ?? ""}
+            defaultValue={fieldDefault("notes", entry?.notes ?? "")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 

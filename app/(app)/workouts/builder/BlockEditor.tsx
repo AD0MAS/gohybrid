@@ -1,4 +1,5 @@
 import type { Dispatch } from "react";
+import DurationInput from "../../_components/DurationInput";
 import ItemEditor from "./ItemEditor";
 import type {
   BlockType,
@@ -30,9 +31,14 @@ type BlockEditorProps = {
  *   amrap    — duration (required)
  *   emom     — interval seconds, rounds (both required; no duration)
  *   general  — no timing fields
- * Block duration is entered in minutes and converted to/from seconds at
- * this component's input boundary; work, rest, and interval are entered
- * directly in seconds, which is how athletes actually think about them.
+ * Every timing field is entered through DurationInput as h:mm:ss or mm:ss
+ * boxes and stored as seconds either way. Each one is keyed on
+ * block.blockType: switching type resets every timing field to null
+ * (reducer.ts), but a compatible transition (e.g. for_time -> amrap) keeps
+ * the same field visible at the same position in the tree, so without the
+ * key DurationInput's own local box state would survive the reset and
+ * keep showing the stale value. The key forces a fresh instance whenever
+ * that reset happens.
  * Not a "use client" file itself — it's only ever rendered from
  * WorkoutBuilder, which owns the single client boundary for the builder.
  */
@@ -46,17 +52,6 @@ export default function BlockEditor({
   targetPresetOptions,
   dispatch,
 }: BlockEditorProps) {
-  // Rounded rather than divided outright: a loaded workout's
-  // durationSeconds isn't guaranteed to be a multiple of 60 (e.g. seeded
-  // or API-written data), and this input is whole minutes only. Rounding
-  // only affects display — the underlying durationSeconds is left as-is
-  // in state unless this field is actually edited, which re-derives it
-  // as value * 60.
-  const durationMinutes =
-    block.durationSeconds != null
-      ? Math.round(block.durationSeconds / 60)
-      : "";
-
   return (
     <div className="flex flex-col gap-3 rounded border border-hairline bg-surface-1 p-5">
       <p className="text-sm font-medium">Block {index + 1}</p>
@@ -102,24 +97,20 @@ export default function BlockEditor({
 
       {(block.blockType === "for_time" || block.blockType === "amrap") && (
         <label className="flex flex-col gap-1 text-sm">
-          Duration in minutes
+          Duration
           {block.blockType === "for_time" ? " (optional)" : ""}
-          <input
-            type="number"
-            min={1}
-            step={1}
-            required={block.blockType === "amrap"}
-            value={durationMinutes}
-            onChange={(e) =>
+          <DurationInput
+            key={block.blockType}
+            maxUnit="hours"
+            valueSeconds={block.durationSeconds}
+            onChange={(value) =>
               dispatch({
                 type: "UPDATE_BLOCK_FIELD",
                 blockId: block.id,
                 field: "durationSeconds",
-                value:
-                  e.target.value === "" ? null : Number(e.target.value) * 60,
+                value,
               })
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}
@@ -152,42 +143,36 @@ export default function BlockEditor({
       {block.blockType === "on_off" && (
         <>
           <label className="flex flex-col gap-1 text-sm">
-            Work in seconds
-            <input
-              type="number"
-              min={1}
-              step={1}
-              required
-              value={block.workSeconds ?? ""}
-              onChange={(e) =>
+            Work
+            <DurationInput
+              key={block.blockType}
+              maxUnit="minutes"
+              valueSeconds={block.workSeconds}
+              onChange={(value) =>
                 dispatch({
                   type: "UPDATE_BLOCK_FIELD",
                   blockId: block.id,
                   field: "workSeconds",
-                  value: e.target.value === "" ? null : Number(e.target.value),
+                  value,
                 })
               }
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
           <label className="flex flex-col gap-1 text-sm">
-            Rest in seconds
-            <input
-              type="number"
-              min={1}
-              step={1}
-              required
-              value={block.restSeconds ?? ""}
-              onChange={(e) =>
+            Rest
+            <DurationInput
+              key={block.blockType}
+              maxUnit="minutes"
+              valueSeconds={block.restSeconds}
+              onChange={(value) =>
                 dispatch({
                   type: "UPDATE_BLOCK_FIELD",
                   blockId: block.id,
                   field: "restSeconds",
-                  value: e.target.value === "" ? null : Number(e.target.value),
+                  value,
                 })
               }
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
         </>
@@ -195,22 +180,19 @@ export default function BlockEditor({
 
       {block.blockType === "emom" && (
         <label className="flex flex-col gap-1 text-sm">
-          Interval in seconds
-          <input
-            type="number"
-            min={1}
-            step={1}
-            required
-            value={block.intervalSeconds ?? ""}
-            onChange={(e) =>
+          Interval
+          <DurationInput
+            key={block.blockType}
+            maxUnit="minutes"
+            valueSeconds={block.intervalSeconds}
+            onChange={(value) =>
               dispatch({
                 type: "UPDATE_BLOCK_FIELD",
                 blockId: block.id,
                 field: "intervalSeconds",
-                value: e.target.value === "" ? null : Number(e.target.value),
+                value,
               })
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
       )}

@@ -18,6 +18,7 @@ import {
   resolveDistanceInputUnit,
   toDistanceInputValue,
 } from "@/lib/units";
+import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
@@ -51,22 +52,23 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * actual gate server-side. The direction select itself only renders for
  * body_metric/personal_record goals; session_count/streak submit a fixed
  * hidden direction="increase" instead, since the server rejects any other
- * value for them. direction === "decrease" additionally reveals the
- * startValue field — switching goalType away from body_metric/
- * personal_record resets direction back to "increase" so a "decrease"
- * chosen earlier can't linger into a goal_type that forbids it. Mirrors
- * PersonalRecordFields' single-select exercise/custom-name choice for
- * personal_record goals.
+ * value for them. There is no startValue field anywhere in this form — a
+ * decrease goal's starting value is never typed, it's captured server-side
+ * from the goal's own data source at creation/re-target time (see
+ * addGoal/updateGoal in goals-actions.ts and resolveCurrentValueForTarget in
+ * lib/goals.ts). Switching goalType away from body_metric/personal_record
+ * resets direction back to "increase" so a "decrease" chosen earlier can't
+ * linger into a goal_type that forbids it. Mirrors PersonalRecordFields'
+ * single-select exercise/custom-name choice for personal_record goals.
  *
- * targetValue/startValue's placeholders show the unit the user is
- * expected to type — same resolution PersonalRecordFields uses for its
- * own value input (formatBodyMetricValue/formatPersonalRecordValue/
- * resolveDistanceInputUnit from lib/units.ts), which is why
- * targetMetricType and targetRecordType need their own local state here
- * too (previously uncontrolled, since nothing else depended on their
- * current value). addGoal (goals-actions.ts) does the actual
- * imperial→metric conversion server-side — this component only ever
- * displays a unit, never converts a value.
+ * targetValue's placeholder shows the unit the user is expected to type —
+ * same resolution PersonalRecordFields uses for its own value input
+ * (formatBodyMetricValue/formatPersonalRecordValue/resolveDistanceInputUnit
+ * from lib/units.ts), which is why targetMetricType and targetRecordType
+ * need their own local state here too (previously uncontrolled, since
+ * nothing else depended on their current value). addGoal (goals-actions.ts)
+ * does the actual imperial→metric conversion server-side — this component
+ * only ever displays a unit, never converts a value.
  *
  * The form itself lives inside a Modal, opened by the button rendered
  * alongside it: `open` is local state, closed only once addGoal's state
@@ -89,7 +91,7 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * every field's local state seeded from `entry` instead of the create
  * defaults. `updateGoal.bind(null, entry.id)` is used as the form action
  * in place of addGoal — the bound function still matches useActionState's
- * (prevState, formData) signature. targetValue/startValue are seeded via
+ * (prevState, formData) signature. targetValue is seeded via
  * formatGoalValue (goal-labels.ts) for every goal_type except one: a
  * personal_record goal targeting "distance" must seed from
  * toDistanceInputValue instead (lib/units.ts), because formatGoalValue
@@ -100,15 +102,72 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * it on save. Every other goal_type has display and input agree (a weight
  * is always lb under imperial either way), so formatGoalValue is correct
  * for those.
+ *
+ * A FAILED submit must leave every field showing exactly what the user
+ * typed, not what `entry`/the empty-add defaults say — this needed two
+ * fixes together, not one:
+ *
+ * 1. React calls a native `form.reset()` after useActionState's action
+ *    completes, on failure too. That snaps every DOM input back to its
+ *    defaultValue/first-option directly, bypassing React entirely. Since
+ *    the reset didn't go through a state update, and the `value`/
+ *    `defaultValue` PROPS React would re-derive on the next render are
+ *    unchanged from before the submit (nothing the user typed lives in
+ *    React state for these fields), React's host-component diffing sees no
+ *    prop change to apply and never re-writes the DOM — so the reset value
+ *    sticks. This hits controlled elements too (goalType's `<select
+ *    value={goalType}>`, still driven by the untouched `goalType` state):
+ *    the diff still finds `value` unchanged and skips the DOM write, which
+ *    is exactly the "controlled select still shows the wrong option"
+ *    symptom from the bug report. Same root cause as SettingsFields' select
+ *    reset, generalized: unchanged props don't get re-applied, remounted
+ *    elements do.
+ * 2. Fixing (1) via a remount (a `key` that changes on every failed
+ *    submission — `formKey` below, applied to the `<form>`) forces every
+ *    element inside to re-mount fresh from its current props, sidestepping
+ *    the stale-diff problem. That's sufficient on its own for goalType/
+ *    direction/exerciseId/targetMetricType/targetRecordType: they live in
+ *    this component's own useState and were never actually lost, only
+ *    their DOM was — a fresh mount re-reads the correct state immediately.
+ *    But it's NOT sufficient for the plain uncontrolled fields (title,
+ *    targetCustomName, targetPrimaryType, period, targetValue, and
+ *    DurationInput's own internal boxes state) — nothing in this
+ *    component remembers what the user typed into those, so a remount would
+ *    just reapply `entry`'s original value (or blank, when adding). Those
+ *    need the actual submitted strings echoed back: `addGoal`/`updateGoal`
+ *    (goals-actions.ts) attach `values: echoFormValues(formData)` to the
+ *    error state, and `fieldDefault` below reads from it in preference to
+ *    `entry`/the add-time default. DurationInput's hidden input already
+ *    submits its composed value in whole seconds under the field's own
+ *    name, so the echoed string needs no reparsing to become
+ *    `defaultValueSeconds` — and since it's read from what was actually
+ *    submitted (pre-conversion, in the user's own unit system for
+ *    weight/distance), it's correct without adjustment for those too.
  */
 export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateGoal.bind(null, entry.id) : addGoal;
   const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
+  const [formKey, setFormKey] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
+    else if (state.status === "error") setFormKey((key) => key + 1);
+  }
+  const submitted = state.status === "error" ? state.values : null;
+  function fieldDefault(name: string, fallback?: string): string | undefined {
+    return submitted?.[name] ?? fallback;
+  }
+  // DurationInput submits its composed value in whole seconds under the
+  // field's own name — the echoed string is already what
+  // defaultValueSeconds expects, no reparsing needed.
+  function fieldDefaultSeconds(name: string, fallback: number | null): number | null {
+    if (submitted && name in submitted) {
+      const raw = submitted[name];
+      return raw === "" ? null : Number(raw);
+    }
+    return fallback;
   }
   const [goalType, setGoalType] =
     useState<(typeof goalTypeEnum.enumValues)[number]>(
@@ -139,14 +198,10 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
       ? toDistanceInputValue(entry.targetValue, unitSystem, isHyroxStation)
       : formatGoalValue(entry, entry.targetValue, unitSystem).value
     : undefined;
-  const defaultStartValue =
-    entry?.startValue != null
-      ? entryIsDistanceRecord
-        ? toDistanceInputValue(entry.startValue, unitSystem, isHyroxStation)
-        : formatGoalValue(entry, entry.startValue, unitSystem).value
-      : undefined;
 
   const showDirectionChoice = DIRECTION_CHOICE_TYPES.has(goalType);
+  const isTimeRecordGoal =
+    goalType === "personal_record" && targetRecordType === "time";
 
   function handleGoalTypeChange(
     value: (typeof goalTypeEnum.enumValues)[number]
@@ -205,12 +260,12 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit goal" : "Add goal"}>
-        <form action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={formAction} className="flex flex-col gap-3">
           <input
             type="text"
             name="title"
             placeholder="Goal title"
-            defaultValue={entry?.title}
+            defaultValue={fieldDefault("title", entry?.title)}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -235,7 +290,10 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
           {goalType === "session_count" && (
             <select
               name="targetPrimaryType"
-              defaultValue={entry?.targetPrimaryType ?? ""}
+              defaultValue={fieldDefault(
+                "targetPrimaryType",
+                entry?.targetPrimaryType ?? ""
+              )}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <option value="">Any type</option>
@@ -287,7 +345,10 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
                   type="text"
                   name="targetCustomName"
                   placeholder="Custom name"
-                  defaultValue={entry?.targetCustomName ?? ""}
+                  defaultValue={fieldDefault(
+                    "targetCustomName",
+                    entry?.targetCustomName ?? ""
+                  )}
                   className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 />
               )}
@@ -334,7 +395,7 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
 
           <select
             name="period"
-            defaultValue={entry?.period ?? "week"}
+            defaultValue={fieldDefault("period", entry?.period ?? "week")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {goalPeriodEnum.enumValues.map((period) => (
@@ -344,29 +405,32 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
             ))}
           </select>
 
-          {direction === "decrease" && (
+          {isTimeRecordGoal ? (
+            <DurationInput
+              maxUnit="hours"
+              name="targetValue"
+              defaultValueSeconds={fieldDefaultSeconds(
+                "targetValue",
+                defaultTargetValue ?? null
+              )}
+            />
+          ) : (
             <input
               type="number"
-              name="startValue"
+              name="targetValue"
               step="0.01"
               min="0"
               required
-              defaultValue={defaultStartValue}
-              placeholder={`Starting value (${valueUnit})`}
+              defaultValue={fieldDefault(
+                "targetValue",
+                defaultTargetValue !== undefined
+                  ? String(defaultTargetValue)
+                  : undefined
+              )}
+              placeholder={`Target value (${valueUnit})`}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}
-
-          <input
-            type="number"
-            name="targetValue"
-            step="0.01"
-            min="0"
-            required
-            defaultValue={defaultTargetValue}
-            placeholder={`Target value (${valueUnit})`}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
 
           {state.status === "error" && (
             <p className="text-sm text-danger">{state.error}</p>

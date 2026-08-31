@@ -4,7 +4,7 @@ import { getExerciseCatalog } from "@/lib/exercises";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
 import { getUserContext } from "@/lib/user-settings";
 import GoalFields from "./GoalFields";
-import { formatGoalValue, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
+import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
 /**
@@ -14,7 +14,12 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  * `userId` via requireUser(), same self-fetching convention as
  * PersonalRecordsList/BodyMetricsList. Archived goals skip the
  * current-value resolution (and so show no progress bar): they're hidden
- * by default and their progress isn't the point once archived. Both
+ * by default and their progress isn't the point once archived. A
+ * body_metric/personal_record goal whose source has no rows yet resolves to
+ * `null` (see resolveGoalCurrentValue) rather than a fabricated 0 — this
+ * renders as a "no data yet" line with no progress bar, instead of the
+ * misleading 100% a decrease goal's (start - 0) / (start - target) would
+ * otherwise compute. Both
  * "today" and the source queries' timezone come from getUserContext
  * (cached, so this and EventsList/BodyMetricForm/PersonalRecordForm share
  * one pair of queries per request). Each row's Edit trigger embeds a
@@ -53,7 +58,10 @@ export default async function GoalsList() {
         today,
         timezone
       );
-      return { goal, progress: computeGoalProgress(goal, current) };
+      return {
+        goal,
+        progress: current === null ? null : computeGoalProgress(goal, current),
+      };
     })
   );
 
@@ -64,8 +72,6 @@ export default async function GoalsList() {
       )}
 
       {activeWithProgress.map(({ goal, progress }) => {
-        const currentDisplay = formatGoalValue(goal, progress.current, unitSystem);
-        const targetDisplay = formatGoalValue(goal, progress.target, unitSystem);
         const subject = getGoalSubjectLabel(goal);
 
         return (
@@ -104,17 +110,39 @@ export default async function GoalsList() {
               </div>
             </div>
 
-            <p className="text-sm">
-              {currentDisplay.value} {currentDisplay.unit} /{" "}
-              {targetDisplay.value} {targetDisplay.unit}
-            </p>
+            {progress === null ? (
+              <p className="text-sm text-ink-subtle">
+                No data yet for this goal.
+              </p>
+            ) : (
+              <>
+                {(() => {
+                  const roundedPercent = Math.round(progress.percent);
+                  const isComplete = roundedPercent >= 100;
 
-            <div className="h-2 w-full rounded bg-surface-2">
-              <div
-                className="h-2 rounded bg-accent"
-                style={{ width: `${progress.percent}%` }}
-              />
-            </div>
+                  return (
+                    <>
+                      <p className="flex items-baseline justify-between gap-2 text-sm">
+                        <span>
+                          {formatGoalValueText(goal, progress.current, unitSystem)} /{" "}
+                          {formatGoalValueText(goal, progress.target, unitSystem)}
+                        </span>
+                        <span className={isComplete ? "text-success" : "text-ink-subtle"}>
+                          {roundedPercent}%
+                        </span>
+                      </p>
+
+                      <div className="h-2 w-full rounded bg-surface-2">
+                        <div
+                          className={`h-2 rounded ${isComplete ? "bg-success" : "bg-accent"}`}
+                          style={{ width: `${progress.percent}%` }}
+                        />
+                      </div>
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </div>
         );
       })}
@@ -126,7 +154,7 @@ export default async function GoalsList() {
           </summary>
           <div className="flex flex-col gap-2 p-3 pt-0">
             {archivedGoals.map((goal) => {
-              const targetDisplay = formatGoalValue(goal, goal.targetValue, unitSystem);
+              const targetText = formatGoalValueText(goal, goal.targetValue, unitSystem);
               const subject = getGoalSubjectLabel(goal);
 
               return (
@@ -138,8 +166,7 @@ export default async function GoalsList() {
                     <p className="text-sm">{goal.title}</p>
                     <p className="text-sm text-ink-subtle">
                       {GOAL_TYPE_LABELS[goal.goalType].label}
-                      {subject ? ` · ${subject}` : ""} · Target{" "}
-                      {targetDisplay.value} {targetDisplay.unit}
+                      {subject ? ` · ${subject}` : ""} · Target {targetText}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

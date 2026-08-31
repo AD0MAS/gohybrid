@@ -10,10 +10,11 @@ import {
 import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
 import { convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
+import { echoFormValues } from "@/lib/form-state";
 
 export type BodyMetricFormState =
   | { status: "idle" }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; values: Record<string, string> }
   | { status: "success" };
 
 /**
@@ -65,7 +66,11 @@ export async function addBodyMetric(
   );
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   await createBodyMetricForUser(user.id, result.data);
@@ -115,7 +120,11 @@ export async function updateBodyMetric(
   );
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   const updated = await updateBodyMetricForUser(id, user.id, result.data);

@@ -5,7 +5,7 @@ import {
   getPersonalRecordsForUser,
   groupPersonalRecordsBySubject,
 } from "@/lib/personal-records";
-import { formatPersonalRecordValue } from "@/lib/units";
+import { formatPersonalRecordValueText } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import PersonalRecordFields from "./PersonalRecordFields";
 import { deletePersonalRecord } from "./personal-records-actions";
@@ -51,7 +51,7 @@ export default async function PersonalRecordsList() {
       {groups.map((group) => {
         const rest = group.history.filter((r) => r.id !== group.best.id);
         const isHyroxStation = group.best.exercise?.isHyroxStation ?? false;
-        const bestDisplay = formatPersonalRecordValue(
+        const bestText = formatPersonalRecordValueText(
           group.recordType,
           group.best.value,
           unitSystem,
@@ -65,8 +65,7 @@ export default async function PersonalRecordsList() {
             <div className="flex items-center justify-between gap-2 rounded border border-hairline-strong bg-surface-2 p-5">
               <div>
                 <p className="text-sm font-semibold">
-                  Best: {bestDisplay.value} {bestDisplay.unit} ·{" "}
-                  {group.best.achievedAt}
+                  Best: {bestText} · {group.best.achievedAt}
                 </p>
                 {group.best.notes && (
                   <p className="text-sm text-ink-subtle">{group.best.notes}</p>
@@ -94,7 +93,7 @@ export default async function PersonalRecordsList() {
             {rest.length > 0 && (
               <ul className="flex flex-col gap-2 pl-3">
                 {rest.map((entry) => {
-                  const display = formatPersonalRecordValue(
+                  const entryText = formatPersonalRecordValueText(
                     group.recordType,
                     entry.value,
                     unitSystem,
@@ -108,7 +107,7 @@ export default async function PersonalRecordsList() {
                     >
                       <div>
                         <p className="text-sm">
-                          {display.value} {display.unit} · {entry.achievedAt}
+                          {entryText} · {entry.achievedAt}
                         </p>
                         {entry.notes && (
                           <p className="text-sm text-ink-subtle">{entry.notes}</p>

@@ -48,7 +48,7 @@ export function validateBodyMetricInput(
   if (!isOneOf(metricType, bodyMetricTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `metricType must be one of: ${bodyMetricTypeEnum.enumValues.join(
+      error: `Metric type must be one of: ${bodyMetricTypeEnum.enumValues.join(
         ", "
       )}.`,
     };
@@ -63,17 +63,20 @@ export function validateBodyMetricInput(
   ) {
     return {
       success: false,
-      error: `value must be between 0 and ${MAX_BODY_METRIC_VALUE}.`,
+      error: `Value must be between 0 and ${MAX_BODY_METRIC_VALUE}.`,
     };
   }
   const value = Math.round(parsedValue * 100) / 100;
 
   const measuredAt = input.measuredAt;
   if (!isValidDateString(measuredAt)) {
-    return { success: false, error: "measuredAt must be a YYYY-MM-DD date." };
+    return {
+      success: false,
+      error: "Date measured must be a YYYY-MM-DD date.",
+    };
   }
   if (measuredAt > today) {
-    return { success: false, error: "measuredAt can't be in the future." };
+    return { success: false, error: "Date measured can't be in the future." };
   }
 
   const notes =

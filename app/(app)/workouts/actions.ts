@@ -11,6 +11,7 @@ import {
   toggleFavoriteForUser,
 } from "@/lib/workouts";
 import { validateWorkoutInput } from "@/lib/workouts-validation";
+import { echoFormValues } from "@/lib/form-state";
 
 /**
  * Creates a workout for the authenticated user from a /workouts/new form
@@ -93,7 +94,7 @@ export async function toggleFavorite(id: string) {
  */
 export type ScheduleFormState =
   | { status: "idle" }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; values: Record<string, string> }
   | { status: "success" };
 
 /**
@@ -121,7 +122,11 @@ export async function scheduleWorkout(
   });
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   const created = await scheduleWorkoutForUser(
@@ -133,7 +138,11 @@ export async function scheduleWorkout(
   );
 
   if (!created) {
-    return { status: "error", error: "Workout not found." };
+    return {
+      status: "error",
+      error: "Workout not found.",
+      values: echoFormValues(formData),
+    };
   }
 
   revalidatePath(`/workouts/${workoutId}`);

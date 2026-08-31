@@ -11,10 +11,11 @@ import {
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
+import { echoFormValues } from "@/lib/form-state";
 
 export type PersonalRecordFormState =
   | { status: "idle" }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; values: Record<string, string> }
   | { status: "success" };
 
 /**
@@ -81,7 +82,11 @@ export async function addPersonalRecord(
   );
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   await createPersonalRecordForUser(user.id, result.data);
@@ -144,7 +149,11 @@ export async function updatePersonalRecord(
   );
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   const updated = await updatePersonalRecordForUser(id, user.id, result.data);

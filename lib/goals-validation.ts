@@ -14,6 +14,10 @@ export type ValidatedGoalInput = {
   direction: (typeof goalDirectionEnum.enumValues)[number];
   period: (typeof goalPeriodEnum.enumValues)[number];
   targetValue: number;
+  /** Always null here — a decrease goal's starting value is never typed by
+   * the user, it's resolved server-side from the goal's own data source at
+   * creation/re-target time. See addGoal/updateGoal in goals-actions.ts,
+   * which overwrite this field after validation succeeds. */
   startValue: number | null;
   targetPrimaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number] | null;
   targetMetricType: (typeof bodyMetricTypeEnum.enumValues)[number] | null;
@@ -26,14 +30,15 @@ export type GoalValidationResult =
   | { success: true; data: ValidatedGoalInput }
   | { success: false; error: string };
 
-/** Raw, untyped goal input as received from a FormData submission. */
+/** Raw, untyped goal input as received from a FormData submission. No
+ * startValue field — see ValidatedGoalInput's comment on why it's never
+ * part of form input. */
 export type RawGoalInput = {
   title?: unknown;
   goalType?: unknown;
   direction?: unknown;
   period?: unknown;
   targetValue?: unknown;
-  startValue?: unknown;
   targetPrimaryType?: unknown;
   targetMetricType?: unknown;
   targetExerciseId?: unknown;
@@ -61,6 +66,31 @@ function parseOptionalValue(
 }
 
 /**
+ * Same shape as parseOptionalValue, for a targetValue that's actually
+ * DurationInput's composed whole-seconds count rather than a typed number —
+ * a duration has no meaningful upper bound to report (see
+ * validateGoalInput's isDurationGoal branch), just "required" (missing) vs.
+ * "must be more than zero" (present but zero — every DurationInput box left
+ * at 00, which composes to 0, not null).
+ */
+function parseDurationValue(
+  raw: unknown
+): { ok: true; value: number | null } | { ok: false } {
+  if (raw === undefined || raw === null || raw === "") {
+    return { ok: true, value: null };
+  }
+  const parsed = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return { ok: false };
+  }
+  const rounded = Math.round(parsed);
+  if (rounded === 0) {
+    return { ok: false };
+  }
+  return { ok: true, value: rounded };
+}
+
+/**
  * Validates and normalizes goal input, same (input) => result shape as
  * validatePersonalRecordInput/validateBodyMetricInput minus their `today`
  * parameter — unlike a body metric or personal record, a goal carries no
@@ -69,9 +99,12 @@ function parseOptionalValue(
  * db/schema.ts:
  *   - title required, trimmed.
  *   - targetValue positive, <= MAX_GOAL_VALUE, rounded to 2 decimals.
- *   - direction "decrease" requires startValue, and startValue must differ
- *     from targetValue (a zero-length decrease has no meaningful progress
- *     denominator — see computeGoalProgress in lib/goals.ts).
+ *   - startValue is never accepted from input — a decrease goal's starting
+ *     value is captured server-side (see addGoal/updateGoal in
+ *     goals-actions.ts), including the "must differ from targetValue" check
+ *     (a zero-length decrease has no meaningful progress denominator — see
+ *     computeGoalProgress in lib/goals.ts), applied once the actual
+ *     starting value is known.
  *   - goal_type "body_metric" requires targetMetricType and rejects every
  *     other target_* field.
  *   - goal_type "personal_record" requires targetRecordType plus exactly
@@ -96,7 +129,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   if (!isOneOf(goalType, goalTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `goalType must be one of: ${goalTypeEnum.enumValues.join(", ")}.`,
+      error: `Goal type must be one of: ${goalTypeEnum.enumValues.join(", ")}.`,
     };
   }
 
@@ -104,7 +137,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   if (!isOneOf(direction, goalDirectionEnum.enumValues)) {
     return {
       success: false,
-      error: `direction must be one of: ${goalDirectionEnum.enumValues.join(
+      error: `Direction must be one of: ${goalDirectionEnum.enumValues.join(
         ", "
       )}.`,
     };
@@ -114,42 +147,45 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   if (!isOneOf(period, goalPeriodEnum.enumValues)) {
     return {
       success: false,
-      error: `period must be one of: ${goalPeriodEnum.enumValues.join(", ")}.`,
+      error: `Period must be one of: ${goalPeriodEnum.enumValues.join(", ")}.`,
     };
   }
 
-  const parsedTarget = parseOptionalValue(input.targetValue);
-  if (!parsedTarget.ok || parsedTarget.value === null) {
+  // A personal_record goal targeting record_type "time" is the only case
+  // where targetValue is a DurationInput's composed seconds rather than a
+  // genuinely typed number — see the parseDurationValue branch below. Read
+  // as a raw string here rather than after the enum validation further
+  // down: only whether it reads "time" matters for this branch choice, and
+  // an invalid value still gets properly rejected there.
+  const isDurationGoal =
+    goalType === "personal_record" && input.targetRecordType === "time";
+
+  const parsedTarget = isDurationGoal
+    ? parseDurationValue(input.targetValue)
+    : parseOptionalValue(input.targetValue);
+  if (!parsedTarget.ok) {
     return {
       success: false,
-      error: `targetValue must be between 0 and ${MAX_GOAL_VALUE}.`,
+      error: isDurationGoal
+        ? "Target value must be more than zero."
+        : `Target value must be between 0 and ${MAX_GOAL_VALUE}.`,
+    };
+  }
+  if (parsedTarget.value === null) {
+    return {
+      success: false,
+      error: isDurationGoal
+        ? "Target value is required."
+        : `Target value must be between 0 and ${MAX_GOAL_VALUE}.`,
     };
   }
   const targetValue = parsedTarget.value;
 
-  const parsedStart = parseOptionalValue(input.startValue);
-  if (!parsedStart.ok) {
-    return {
-      success: false,
-      error: `startValue must be between 0 and ${MAX_GOAL_VALUE}.`,
-    };
-  }
-  const startValue = parsedStart.value;
-
-  if (direction === "decrease") {
-    if (startValue === null) {
-      return {
-        success: false,
-        error: "startValue is required when direction is decrease.",
-      };
-    }
-    if (startValue === targetValue) {
-      return {
-        success: false,
-        error: "startValue must differ from targetValue.",
-      };
-    }
-  }
+  // Never accepted from input — see ValidatedGoalInput's comment. addGoal/
+  // updateGoal (goals-actions.ts) overwrite this with the actual resolved
+  // starting value once validation succeeds, running the "must differ from
+  // targetValue" check themselves at that point.
+  const startValue: number | null = null;
 
   const rawTargetPrimaryType = input.targetPrimaryType;
   const targetPrimaryType =
@@ -162,7 +198,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   ) {
     return {
       success: false,
-      error: `targetPrimaryType must be one of: ${workoutPrimaryTypeEnum.enumValues.join(
+      error: `Workout type must be one of: ${workoutPrimaryTypeEnum.enumValues.join(
         ", "
       )}.`,
     };
@@ -179,7 +215,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   ) {
     return {
       success: false,
-      error: `targetMetricType must be one of: ${bodyMetricTypeEnum.enumValues.join(
+      error: `Metric type must be one of: ${bodyMetricTypeEnum.enumValues.join(
         ", "
       )}.`,
     };
@@ -191,7 +227,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       ? rawExerciseId.trim()
       : null;
   if (targetExerciseId !== null && !isValidUuid(targetExerciseId)) {
-    return { success: false, error: "targetExerciseId must be a valid id." };
+    return { success: false, error: "Exercise must be a valid selection." };
   }
 
   const rawCustomName = input.targetCustomName;
@@ -211,7 +247,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
   ) {
     return {
       success: false,
-      error: `targetRecordType must be one of: ${personalRecordTypeEnum.enumValues.join(
+      error: `Record type must be one of: ${personalRecordTypeEnum.enumValues.join(
         ", "
       )}.`,
     };
@@ -222,7 +258,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       if (direction !== "increase") {
         return {
           success: false,
-          error: "session_count and streak goals are always increase.",
+          error: "Session count and streak goals are always increase.",
         };
       }
       if (
@@ -234,7 +270,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
         return {
           success: false,
           error:
-            "session_count goals only accept an optional targetPrimaryType.",
+            "Session count goals only accept an optional workout type.",
         };
       }
       break;
@@ -243,7 +279,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       if (direction !== "increase") {
         return {
           success: false,
-          error: "session_count and streak goals are always increase.",
+          error: "Session count and streak goals are always increase.",
         };
       }
       if (
@@ -255,7 +291,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       ) {
         return {
           success: false,
-          error: "streak goals accept none of the target_* fields.",
+          error: "Streak goals accept none of the target fields.",
         };
       }
       break;
@@ -264,7 +300,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       if (targetMetricType === null) {
         return {
           success: false,
-          error: "body_metric goals require targetMetricType.",
+          error: "Body metric goals require a metric type.",
         };
       }
       if (
@@ -275,7 +311,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       ) {
         return {
           success: false,
-          error: "body_metric goals only accept targetMetricType.",
+          error: "Body metric goals only accept a metric type.",
         };
       }
       break;
@@ -284,7 +320,7 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
       if (targetRecordType === null) {
         return {
           success: false,
-          error: "personal_record goals require targetRecordType.",
+          error: "Personal record goals require a record type.",
         };
       }
       if (targetExerciseId !== null && targetCustomName !== null) {
@@ -298,14 +334,14 @@ export function validateGoalInput(input: RawGoalInput): GoalValidationResult {
         return {
           success: false,
           error:
-            "personal_record goals require either targetExerciseId or targetCustomName.",
+            "Personal record goals require either an exercise or a custom name.",
         };
       }
       if (targetPrimaryType !== null || targetMetricType !== null) {
         return {
           success: false,
           error:
-            "personal_record goals only accept targetRecordType and the exercise/custom-name choice.",
+            "Personal record goals only accept a record type and the exercise/custom-name choice.",
         };
       }
       break;

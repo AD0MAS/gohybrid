@@ -1,11 +1,27 @@
 import type { goalPeriodEnum, goalTypeEnum, unitSystemEnum } from "@/db/schema";
-import { formatBodyMetricValue, formatPersonalRecordValue } from "@/lib/units";
+import {
+  formatBodyMetricValue,
+  formatPersonalRecordValue,
+  formatPersonalRecordValueText,
+} from "@/lib/units";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import type { Goal } from "@/lib/goals";
 
 type GoalType = (typeof goalTypeEnum.enumValues)[number];
 type GoalPeriod = (typeof goalPeriodEnum.enumValues)[number];
+
+/**
+ * The subset of a Goal formatGoalValue/formatGoalValueText actually read —
+ * narrower than the full `Goal` row so goals-actions.ts's
+ * checkGoalNotAlreadyMet can format a rejection message from a goal that
+ * doesn't exist as a row yet (creation-time validation), without fabricating
+ * every other Goal field.
+ */
+export type GoalValueContext = Pick<
+  Goal,
+  "goalType" | "targetMetricType" | "targetRecordType" | "exercise"
+>;
 
 /**
  * Display label per goal_type enum value — the goal-type select and the
@@ -43,7 +59,7 @@ export const GOAL_PERIOD_LABELS: Record<GoalPeriod, { label: string }> = {
  * per-value.
  */
 export function formatGoalValue(
-  goal: Goal,
+  goal: GoalValueContext,
   rawValue: number,
   unitSystem: (typeof unitSystemEnum.enumValues)[number]
 ): { value: number; unit: string } {
@@ -62,6 +78,34 @@ export function formatGoalValue(
         goal.exercise?.isHyroxStation ?? false
       );
   }
+}
+
+/**
+ * Text-ready version of formatGoalValue, for GoalsList's current/target
+ * display. Delegates to formatPersonalRecordValueText for a
+ * personal_record goal (the only goal_type whose value can be a duration —
+ * see that function's comment for why "time" gets its own text path), and
+ * to formatGoalValue's plain "value unit" join for the other three, none
+ * of which are ever a duration. formatGoalValue itself is untouched and
+ * keeps returning the raw numeric seconds for a time-record goal — GoalFields
+ * still needs that number to seed DurationInput's defaultValueSeconds when
+ * editing.
+ */
+export function formatGoalValueText(
+  goal: GoalValueContext,
+  rawValue: number,
+  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+): string {
+  if (goal.goalType === "personal_record") {
+    return formatPersonalRecordValueText(
+      goal.targetRecordType!,
+      rawValue,
+      unitSystem,
+      goal.exercise?.isHyroxStation ?? false
+    );
+  }
+  const { value, unit } = formatGoalValue(goal, rawValue, unitSystem);
+  return `${value} ${unit}`;
 }
 
 /**

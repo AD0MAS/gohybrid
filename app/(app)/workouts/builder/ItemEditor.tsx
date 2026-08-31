@@ -1,4 +1,5 @@
 import type { Dispatch } from "react";
+import DurationInput from "../../_components/DurationInput";
 import ExercisePicker from "./ExercisePicker";
 import type {
   BuilderAction,
@@ -100,22 +101,38 @@ export default function ItemEditor({
       {item.volumeType !== "" && (
         <label className="flex flex-col gap-1 text-sm">
           Volume value (leave empty for Open Ended)
-          <input
-            type="number"
-            min={0}
-            step="any"
-            value={item.volumeValue ?? ""}
-            onChange={(e) =>
-              dispatch({
-                type: "UPDATE_ITEM_FIELD",
-                blockId,
-                itemId: item.id,
-                field: "volumeValue",
-                value: e.target.value === "" ? null : Number(e.target.value),
-              })
-            }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          {item.volumeType === "duration" ? (
+            <DurationInput
+              maxUnit="hours"
+              valueSeconds={item.volumeValue}
+              onChange={(value) =>
+                dispatch({
+                  type: "UPDATE_ITEM_FIELD",
+                  blockId,
+                  itemId: item.id,
+                  field: "volumeValue",
+                  value,
+                })
+              }
+            />
+          ) : (
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={item.volumeValue ?? ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "UPDATE_ITEM_FIELD",
+                  blockId,
+                  itemId: item.id,
+                  field: "volumeValue",
+                  value: e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          )}
         </label>
       )}
 
@@ -213,22 +230,19 @@ export default function ItemEditor({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        Rest in seconds
-        <input
-          type="number"
-          min={0}
-          step={1}
-          value={item.restSeconds ?? ""}
-          onChange={(e) =>
+        Rest
+        <DurationInput
+          maxUnit="minutes"
+          valueSeconds={item.restSeconds}
+          onChange={(value) =>
             dispatch({
               type: "UPDATE_ITEM_FIELD",
               blockId,
               itemId: item.id,
               field: "restSeconds",
-              value: e.target.value === "" ? null : Number(e.target.value),
+              value,
             })
           }
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 

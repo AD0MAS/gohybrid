@@ -30,6 +30,13 @@ const initialState: ScheduleFormState = { status: "idle" };
  * useEffect, because scheduleWorkout returns a fresh object literal on
  * every call — comparing `.status` alone would miss two consecutive
  * successful submissions.
+ *
+ * A failed submit restores exactly what the user typed via the same
+ * mechanism as GoalFields (see its doc comment for the full explanation):
+ * `formKey` remounts the `<form>` on every error, and `fieldDefault`,
+ * reading scheduleWorkout's echoed `values`, supplies each plain
+ * uncontrolled field's defaultValue — there's no `entry` here (a schedule
+ * form always starts blank), so the fallback is simply undefined.
  */
 export default function ScheduleWorkoutForm({
   scheduleAction,
@@ -37,9 +44,15 @@ export default function ScheduleWorkoutForm({
   const [open, setOpen] = useState(false);
   const [state, formAction] = useActionState(scheduleAction, initialState);
   const [prevState, setPrevState] = useState(state);
+  const [formKey, setFormKey] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
+    else if (state.status === "error") setFormKey((key) => key + 1);
+  }
+  const submitted = state.status === "error" ? state.values : null;
+  function fieldDefault(name: string): string | undefined {
+    return submitted?.[name];
   }
 
   return (
@@ -57,12 +70,13 @@ export default function ScheduleWorkoutForm({
         onClose={() => setOpen(false)}
         title="Schedule this workout"
       >
-        <form action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={formAction} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
             Date
             <input
               type="date"
               name="scheduledDate"
+              defaultValue={fieldDefault("scheduledDate")}
               required
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
@@ -73,6 +87,7 @@ export default function ScheduleWorkoutForm({
             <input
               type="time"
               name="scheduledTime"
+              defaultValue={fieldDefault("scheduledTime")}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
@@ -82,6 +97,7 @@ export default function ScheduleWorkoutForm({
             <input
               type="text"
               name="notes"
+              defaultValue={fieldDefault("notes")}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>

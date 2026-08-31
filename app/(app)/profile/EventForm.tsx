@@ -51,15 +51,30 @@ type EventFormProps = {
  * still matches useActionState's (prevState, formData) signature. No unit
  * conversion is needed here (unlike Goal/BodyMetric/PersonalRecord
  * editing) since an event carries no numeric, unit-bearing field.
+ *
+ * A failed submit restores exactly what the user typed via the same
+ * mechanism as GoalFields (see its doc comment for the full explanation):
+ * `formKey` remounts the `<form>` on every error — needed here more than
+ * anywhere else, since every field in this form (including eventType,
+ * unlike Goal/PersonalRecord/BodyMetric's controlled selects) is plain
+ * uncontrolled `defaultValue` — and `fieldDefault`, reading
+ * addEvent/updateEvent's echoed `values`, supplies each field's defaultValue
+ * in preference to `entry`'s original value.
  */
 export default function EventForm({ entry }: EventFormProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateEvent.bind(null, entry.id) : addEvent;
   const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
+  const [formKey, setFormKey] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
+    else if (state.status === "error") setFormKey((key) => key + 1);
+  }
+  const submitted = state.status === "error" ? state.values : null;
+  function fieldDefault(name: string, fallback?: string): string | undefined {
+    return submitted?.[name] ?? fallback;
   }
 
   return (
@@ -85,19 +100,19 @@ export default function EventForm({ entry }: EventFormProps) {
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit event" : "Add event"}>
-        <form action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={formAction} className="flex flex-col gap-3">
           <input
             type="text"
             name="title"
             placeholder="Event title"
-            defaultValue={entry?.title}
+            defaultValue={fieldDefault("title", entry?.title)}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
           <select
             name="eventType"
-            defaultValue={entry?.eventType ?? "race"}
+            defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {eventTypeEnum.enumValues.map((type) => (
@@ -110,7 +125,7 @@ export default function EventForm({ entry }: EventFormProps) {
           <input
             type="date"
             name="eventDate"
-            defaultValue={entry?.eventDate}
+            defaultValue={fieldDefault("eventDate", entry?.eventDate)}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
@@ -119,7 +134,7 @@ export default function EventForm({ entry }: EventFormProps) {
             type="text"
             name="location"
             placeholder="Location (optional)"
-            defaultValue={entry?.location ?? ""}
+            defaultValue={fieldDefault("location", entry?.location ?? "")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -127,7 +142,7 @@ export default function EventForm({ entry }: EventFormProps) {
             type="text"
             name="notes"
             placeholder="Notes (optional)"
-            defaultValue={entry?.notes ?? ""}
+            defaultValue={fieldDefault("notes", entry?.notes ?? "")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 

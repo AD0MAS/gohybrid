@@ -325,6 +325,36 @@ function parseBuilderBlock(
     };
   }
 
+  // Per-block-type required timing fields (GOHYBRID_PLAN.md §5): for_time
+  // and general have no required timing fields, so they fall through here
+  // untouched. "Required" also means positive — a zero or negative
+  // duration/interval/work/rest is the same kind of meaningless block as a
+  // missing one.
+  if (blockType === "amrap" && (durationSeconds === null || durationSeconds <= 0)) {
+    return { error: `Block ${index + 1}: an AMRAP block needs a duration.` };
+  }
+
+  if (blockType === "on_off") {
+    if (workSeconds === null || workSeconds <= 0) {
+      return { error: `Block ${index + 1}: an on/off block needs a work time.` };
+    }
+    if (restSeconds === null || restSeconds <= 0) {
+      return { error: `Block ${index + 1}: an on/off block needs a rest time.` };
+    }
+    if (rounds === null || rounds <= 0) {
+      return { error: `Block ${index + 1}: an on/off block needs a number of rounds.` };
+    }
+  }
+
+  if (blockType === "emom") {
+    if (intervalSeconds === null || intervalSeconds <= 0) {
+      return { error: `Block ${index + 1}: an EMOM block needs an interval.` };
+    }
+    if (rounds === null || rounds <= 0) {
+      return { error: `Block ${index + 1}: an EMOM block needs a number of rounds.` };
+    }
+  }
+
   const rawItems = Array.isArray(block.items) ? block.items : [];
   const items: ValidatedBuilderItem[] = [];
   for (const [itemIndex, rawItem] of rawItems.entries()) {
@@ -365,8 +395,13 @@ function parseBuilderBlock(
  *
  * Rules (GOHYBRID_PLAN.md §5): title required and non-empty; primaryType
  * and difficulty must be valid enum values; every block must have a
- * valid blockType; each item must have exactly one of exerciseId or
- * customName (never both, never neither); targetType/targetValue and
+ * valid blockType; a block's required timing fields depend on its type —
+ * amrap needs a positive duration; on_off needs positive work, rest, and
+ * rounds; emom needs a positive interval and rounds; for_time and general
+ * have none (see parseBuilderBlock) — these fields stay nullable at the
+ * DB level (§6) regardless, since this is application-level validation,
+ * not a column constraint. Each item must have exactly one of exerciseId
+ * or customName (never both, never neither); targetType/targetValue and
  * targetPreset are alternatives, never both; at least one item across
  * the whole workout must have volumeValue or weightKg set — the guard
  * against saving an "empty" workout with no real content. A

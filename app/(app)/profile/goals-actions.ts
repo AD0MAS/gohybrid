@@ -1,22 +1,125 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { unitSystemEnum } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { getExerciseById } from "@/lib/exercises";
 import {
   createGoalForUser,
   deleteGoalForUser,
+  getGoalForUser,
+  resolveCurrentValueForTarget,
   setGoalArchivedForUser,
   updateGoalForUser,
+  type GoalTarget,
 } from "@/lib/goals";
-import { validateGoalInput } from "@/lib/goals-validation";
+import { validateGoalInput, type ValidatedGoalInput } from "@/lib/goals-validation";
 import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
+import { echoFormValues } from "@/lib/form-state";
+import { formatGoalValueText } from "./goal-labels";
 
 export type GoalFormState =
   | { status: "idle" }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; values: Record<string, string> }
   | { status: "success" };
+
+/**
+ * Resolves a goal target's current value and rejects one that would already
+ * be complete before it's created or re-targeted — extended from the old
+ * decrease-only "start value must differ from target" rejection to every
+ * goal_type/direction (GOHYBRID_PLAN.md doesn't want a goal that's 100%
+ * done the moment it exists). Folds that old check in as a special case:
+ * a decrease goal whose resolved current value equals targetValue is
+ * "already met" under the current <= target rule below, not a separate
+ * equality check.
+ *
+ * Also doubles as the decrease-direction start_value resolver (its `current`
+ * return, once `ok`, is exactly what a decrease goal's start_value must be
+ * captured as) — one resolveCurrentValueForTarget call serves both purposes
+ * instead of two.
+ *
+ * Shared by addGoal (called unconditionally, for every goal_type, at
+ * creation) and updateGoal's existing re-capture branch (decrease goals
+ * whose target subject changed, or that just became decrease — see
+ * updateGoal's own comment for why that's the only case it re-runs this).
+ *
+ * Exemptions and edge cases:
+ *   - session_count goals with period "week"/"month" are never rejected,
+ *     checked first, before any query runs. The count resets every period,
+ *     so already having hit this week's/month's target is the normal,
+ *     recurring state of the goal, not a sign it's pointless — only
+ *     period "all_time" (and every other goal_type) uses the plain
+ *     already-met rule below.
+ *   - A null current value (no sessions/measurements/records yet) is never
+ *     "already met" for an increase-direction goal — that's exactly what a
+ *     fresh goal is for. For decrease, it's reported through the existing
+ *     "no data yet" rejection below instead, unchanged from before: a
+ *     decrease goal genuinely can't be tracked without a starting point.
+ *   - Otherwise: increase is met at current >= target, decrease at
+ *     current <= target. streak and session_count (period "all_time") are
+ *     always direction "increase" (validateGoalInput enforces this), so
+ *     they fall under the same increase rule with no extra case needed.
+ */
+async function checkGoalNotAlreadyMet(
+  target: GoalTarget,
+  direction: ValidatedGoalInput["direction"],
+  targetValue: number,
+  userId: string,
+  today: string,
+  timezone: string,
+  unitSystem: (typeof unitSystemEnum.enumValues)[number],
+  isHyroxStation: boolean
+): Promise<
+  { ok: true; current: number | null } | { ok: false; error: string }
+> {
+  if (target.goalType === "session_count" && target.period !== "all_time") {
+    return { ok: true, current: null };
+  }
+
+  const current = await resolveCurrentValueForTarget(
+    target,
+    userId,
+    today,
+    timezone
+  );
+
+  if (current === null) {
+    if (direction === "decrease") {
+      return {
+        ok: false,
+        error:
+          target.goalType === "body_metric"
+            ? "Add a measurement for this metric before setting a decrease goal."
+            : "Add a record for this exercise before setting a decrease goal.",
+      };
+    }
+    return { ok: true, current: null };
+  }
+
+  const alreadyMet =
+    direction === "increase" ? current >= targetValue : current <= targetValue;
+  if (alreadyMet) {
+    const formatted = formatGoalValueText(
+      {
+        goalType: target.goalType,
+        targetMetricType: target.targetMetricType,
+        targetRecordType: target.targetRecordType,
+        exercise: isHyroxStation
+          ? { id: "", name: "", isHyroxStation: true }
+          : null,
+      },
+      current,
+      unitSystem
+    );
+    return {
+      ok: false,
+      error: `This goal is already complete — set a target beyond your current ${formatted}.`,
+    };
+  }
+
+  return { ok: true, current };
+}
 
 /**
  * Creates a new goal for the authenticated user. Passed to useActionState
@@ -29,21 +132,27 @@ export type GoalFormState =
  * error from createGoalForUser) still throw and belong to the error
  * boundary.
  *
- * Under imperial, a body_metric weight goal's targetValue/startValue was
- * typed in lb, and a personal_record goal's in lb (weight) or ft/m
- * (distance — see resolveDistanceInputUnit in lib/units.ts, fed by the
- * same isHyroxStation lookup the Personal Records write path uses).
- * session_count and streak goals never convert. Both fields go through
- * convertGoalValue, before validateGoalInput, so the validator (and the
- * database) only ever see metric — same principle as
- * addBodyMetric/addPersonalRecord. Revalidates /profile on success.
+ * Under imperial, a body_metric weight goal's targetValue was typed in lb,
+ * and a personal_record goal's in lb (weight) or ft/m (distance — see
+ * resolveDistanceInputUnit in lib/units.ts, fed by the same isHyroxStation
+ * lookup the Personal Records write path uses). session_count and streak
+ * goals never convert. targetValue goes through convertGoalValue, before
+ * validateGoalInput, so the validator (and the database) only ever see
+ * metric — same principle as addBodyMetric/addPersonalRecord.
+ *
+ * Once validation passes, checkGoalNotAlreadyMet runs unconditionally, for
+ * every goal_type and direction — it both rejects an already-complete goal
+ * outright and, for a decrease-direction goal, resolves the start_value
+ * that's never part of the form itself (see GoalFields' doc comment). Its
+ * rejection (no data yet for a decrease target, or already met) is reported
+ * the same way a validation failure is. Revalidates /profile on success.
  */
 export async function addGoal(
   _prevState: GoalFormState,
   formData: FormData
 ): Promise<GoalFormState> {
   const user = await requireUser();
-  const { unitSystem } = await getUserContext(user.id);
+  const { unitSystem, today, timezone } = await getUserContext(user.id);
 
   const goalType = formData.get("goalType");
   const targetMetricType = formData.get("targetMetricType");
@@ -85,7 +194,6 @@ export async function addGoal(
     direction: formData.get("direction"),
     period: formData.get("period"),
     targetValue: convertGoalValue(formData.get("targetValue")),
-    startValue: convertGoalValue(formData.get("startValue")),
     targetPrimaryType: formData.get("targetPrimaryType"),
     targetMetricType,
     targetExerciseId,
@@ -94,10 +202,33 @@ export async function addGoal(
   });
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
-  await createGoalForUser(user.id, result.data);
+  const checked = await checkGoalNotAlreadyMet(
+    result.data,
+    result.data.direction,
+    result.data.targetValue,
+    user.id,
+    today,
+    timezone,
+    unitSystem,
+    isHyroxStation
+  );
+  if (!checked.ok) {
+    return {
+      status: "error",
+      error: checked.error,
+      values: echoFormValues(formData),
+    };
+  }
+  const startValue = result.data.direction === "decrease" ? checked.current : null;
+
+  await createGoalForUser(user.id, { ...result.data, startValue });
 
   revalidatePath("/profile");
   return { status: "success" };
@@ -108,10 +239,49 @@ export async function addGoal(
  * .bind(null, id) so the resulting function matches useActionState's
  * (prevState, formData) signature exactly — same conversion and validation
  * as addGoal (an update has the same rules as a create), against
- * GoalFields' entry-populated form instead of an empty one. Ownership is
- * enforced by updateGoalForUser's WHERE clause; a null result (wrong id or
- * another user's row) throws, same as deleteGoal/setGoalArchived, since a
- * forged id can't silently no-op. Revalidates /profile on success.
+ * GoalFields' entry-populated form instead of an empty one.
+ *
+ * The existing goal is fetched (also the ownership check — see below) and
+ * compared against the freshly validated input, on two different questions
+ * that used to be conflated into one (see the "already-met goal can be
+ * created by editing" bug this replaced): whether checkGoalNotAlreadyMet
+ * needs to re-run at all, and — a narrower question — whether a decrease
+ * goal's start_value needs to be re-captured. They're kept as two separate
+ * conditions, not one, because they answer different questions:
+ *
+ *   - checkGoalNotAlreadyMet must re-run (alreadyMetInputsChanged) whenever
+ *     the edit changes anything that determines whether the goal is already
+ *     met: the target subject (goalType, targetMetricType, targetExerciseId,
+ *     targetCustomName, targetRecordType — targetSubjectChanged below),
+ *     direction, targetValue, or period. Skipping this whenever none of
+ *     those changed is what keeps an already-completed goal editable —
+ *     renaming it, for instance, must not re-run a check that would now
+ *     reject it.
+ *   - start_value only needs re-capturing (targetSubjectChanged ||
+ *     becameDecrease) when the anchor point itself is stale: the target
+ *     subject changed (the old start_value refers to a different
+ *     metric/record/type entirely), or direction just became "decrease"
+ *     (an increase goal has no start_value to keep — see the final `else`
+ *     below — so switching into "decrease" needs one captured for the first
+ *     time). A targetValue-only or period-only edit leaves the anchor valid
+ *     even though it does need the already-met check re-run against the
+ *     *new* target — that's why this condition is strictly narrower than
+ *     alreadyMetInputsChanged rather than reusing it.
+ *
+ * Both conditions build on the same targetSubjectChanged comparison rather
+ * than duplicating those five field checks. Since targetSubjectChanged and
+ * a direction change are each already folded into alreadyMetInputsChanged,
+ * the narrower start_value condition being true always implies the check
+ * already ran — so its resolved current value is reused as start_value
+ * instead of calling checkGoalNotAlreadyMet a second time. Otherwise, for
+ * an unchanged decrease goal, the existing start_value is carried over as-is.
+ * For an increase goal, start_value is always null, whether or not it just
+ * switched from "decrease".
+ *
+ * Ownership is checked twice: once via getGoalForUser (needed anyway, to
+ * read the pre-edit target) and again in updateGoalForUser's WHERE clause.
+ * Either returning null/not-found throws, same as deleteGoal/setGoalArchived,
+ * since a forged id can't silently no-op. Revalidates /profile on success.
  */
 export async function updateGoal(
   id: string,
@@ -119,7 +289,7 @@ export async function updateGoal(
   formData: FormData
 ): Promise<GoalFormState> {
   const user = await requireUser();
-  const { unitSystem } = await getUserContext(user.id);
+  const { unitSystem, today, timezone } = await getUserContext(user.id);
 
   const goalType = formData.get("goalType");
   const targetMetricType = formData.get("targetMetricType");
@@ -161,7 +331,6 @@ export async function updateGoal(
     direction: formData.get("direction"),
     period: formData.get("period"),
     targetValue: convertGoalValue(formData.get("targetValue")),
-    startValue: convertGoalValue(formData.get("startValue")),
     targetPrimaryType: formData.get("targetPrimaryType"),
     targetMetricType,
     targetExerciseId,
@@ -170,10 +339,75 @@ export async function updateGoal(
   });
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
-  const updated = await updateGoalForUser(id, user.id, result.data);
+  const existing = await getGoalForUser(id, user.id);
+  if (!existing) {
+    throw new Error("Goal not found.");
+  }
+
+  const targetSubjectChanged =
+    existing.goalType !== result.data.goalType ||
+    existing.targetMetricType !== result.data.targetMetricType ||
+    existing.targetExerciseId !== result.data.targetExerciseId ||
+    existing.targetCustomName !== result.data.targetCustomName ||
+    existing.targetRecordType !== result.data.targetRecordType;
+
+  // Whether checkGoalNotAlreadyMet needs to re-run at all — see the doc
+  // comment above for why this is broader than, and built on top of,
+  // targetSubjectChanged rather than a second field-by-field comparison.
+  const alreadyMetInputsChanged =
+    targetSubjectChanged ||
+    existing.direction !== result.data.direction ||
+    existing.targetValue !== result.data.targetValue ||
+    existing.period !== result.data.period;
+
+  let resolvedCurrent: number | null = null;
+  if (alreadyMetInputsChanged) {
+    const checked = await checkGoalNotAlreadyMet(
+      result.data,
+      result.data.direction,
+      result.data.targetValue,
+      user.id,
+      today,
+      timezone,
+      unitSystem,
+      isHyroxStation
+    );
+    if (!checked.ok) {
+      return {
+        status: "error",
+        error: checked.error,
+        values: echoFormValues(formData),
+      };
+    }
+    resolvedCurrent = checked.current;
+  }
+
+  let startValue: number | null;
+  if (result.data.direction === "decrease") {
+    // Narrower than alreadyMetInputsChanged on purpose — see the doc
+    // comment above. True here always implies alreadyMetInputsChanged was
+    // also true, so resolvedCurrent already holds the freshly resolved
+    // value and checkGoalNotAlreadyMet doesn't need a second call.
+    const becameDecrease = existing.direction !== "decrease";
+    startValue =
+      targetSubjectChanged || becameDecrease
+        ? resolvedCurrent
+        : existing.startValue;
+  } else {
+    startValue = null;
+  }
+
+  const updated = await updateGoalForUser(id, user.id, {
+    ...result.data,
+    startValue,
+  });
   if (!updated) {
     throw new Error("Goal not found.");
   }

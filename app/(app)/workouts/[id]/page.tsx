@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { formatDistanceMetres, formatWeightKg } from "@/lib/units";
+import { formatDistanceMetres, formatDurationSeconds, formatWeightKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
@@ -118,12 +118,14 @@ export default async function WorkoutDetailPage(
           {workout.blocks.map((block) => {
             const timing = [
               block.durationSeconds != null &&
-                `Duration: ${block.durationSeconds}s`,
+                `Duration: ${formatDurationSeconds(block.durationSeconds)}`,
               block.rounds != null && `Rounds: ${block.rounds}`,
-              block.workSeconds != null && `Work: ${block.workSeconds}s`,
-              block.restSeconds != null && `Rest: ${block.restSeconds}s`,
+              block.workSeconds != null &&
+                `Work: ${formatDurationSeconds(block.workSeconds)}`,
+              block.restSeconds != null &&
+                `Rest: ${formatDurationSeconds(block.restSeconds)}`,
               block.intervalSeconds != null &&
-                `Interval: ${block.intervalSeconds}s`,
+                `Interval: ${formatDurationSeconds(block.intervalSeconds)}`,
             ].filter(Boolean);
 
             return (
@@ -163,6 +165,10 @@ export default async function WorkoutDetailPage(
                             isHyroxStation
                           );
                           volume = `${d.value} ${d.unit}`;
+                        } else if (item.volumeType === "duration") {
+                          volume = formatDurationSeconds(
+                            Number(item.volumeValue)
+                          );
                         } else {
                           volume = `${item.volumeValue} ${item.volumeType}`;
                         }
@@ -187,7 +193,7 @@ export default async function WorkoutDetailPage(
                         target && `Target: ${target}`,
                         weight && `Weight: ${weight.value} ${weight.unit}`,
                         item.restSeconds != null &&
-                          `Rest: ${item.restSeconds}s`,
+                          `Rest: ${formatDurationSeconds(item.restSeconds)}`,
                       ].filter(Boolean);
 
                       return (

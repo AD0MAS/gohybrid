@@ -55,7 +55,7 @@ export function validatePersonalRecordInput(
       ? rawExerciseId.trim()
       : null;
   if (exerciseId !== null && !isValidUuid(exerciseId)) {
-    return { success: false, error: "exerciseId must be a valid id." };
+    return { success: false, error: "Exercise must be a valid selection." };
   }
 
   const rawCustomName = input.customName;
@@ -74,7 +74,7 @@ export function validatePersonalRecordInput(
   if (exerciseId === null && customName === null) {
     return {
       success: false,
-      error: "Either exerciseId or customName is required.",
+      error: "Either an exercise or a custom name is required.",
     };
   }
 
@@ -82,32 +82,53 @@ export function validatePersonalRecordInput(
   if (!isOneOf(recordType, personalRecordTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `recordType must be one of: ${personalRecordTypeEnum.enumValues.join(
+      error: `Record type must be one of: ${personalRecordTypeEnum.enumValues.join(
         ", "
       )}.`,
     };
   }
 
+  // record_type "time" is entered through DurationInput as composed
+  // whole seconds, not a typed number — no meaningful upper bound to
+  // report, just "required" (missing) vs. "must be more than zero"
+  // (present but every box left at 00, which composes to 0, not blank).
   const rawValue = input.value;
-  const parsedValue = typeof rawValue === "number" ? rawValue : Number(rawValue);
-  if (
-    !Number.isFinite(parsedValue) ||
-    parsedValue <= 0 ||
-    parsedValue > MAX_PERSONAL_RECORD_VALUE
-  ) {
-    return {
-      success: false,
-      error: `value must be between 0 and ${MAX_PERSONAL_RECORD_VALUE}.`,
-    };
+  let value: number;
+  if (recordType === "time") {
+    if (rawValue === undefined || rawValue === null || rawValue === "") {
+      return { success: false, error: "Value is required." };
+    }
+    const parsed = typeof rawValue === "number" ? rawValue : Number(rawValue);
+    const rounded = Math.round(parsed);
+    if (!Number.isFinite(parsed) || rounded <= 0) {
+      return { success: false, error: "Value must be more than zero." };
+    }
+    value = rounded;
+  } else {
+    const parsedValue =
+      typeof rawValue === "number" ? rawValue : Number(rawValue);
+    if (
+      !Number.isFinite(parsedValue) ||
+      parsedValue <= 0 ||
+      parsedValue > MAX_PERSONAL_RECORD_VALUE
+    ) {
+      return {
+        success: false,
+        error: `Value must be between 0 and ${MAX_PERSONAL_RECORD_VALUE}.`,
+      };
+    }
+    value = Math.round(parsedValue * 100) / 100;
   }
-  const value = Math.round(parsedValue * 100) / 100;
 
   const achievedAt = input.achievedAt;
   if (!isValidDateString(achievedAt)) {
-    return { success: false, error: "achievedAt must be a YYYY-MM-DD date." };
+    return {
+      success: false,
+      error: "Date achieved must be a YYYY-MM-DD date.",
+    };
   }
   if (achievedAt > today) {
-    return { success: false, error: "achievedAt can't be in the future." };
+    return { success: false, error: "Date achieved can't be in the future." };
   }
 
   const notes =

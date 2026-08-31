@@ -141,6 +141,58 @@ export function formatPersonalRecordValue(
 }
 
 /**
+ * Formats a number of seconds as a clock string, the read-side
+ * counterpart to DurationInput's seconds-in/seconds-out contract — pure
+ * display, never fed back into a comparison or aggregation. Under a
+ * minute: "0:45" (m:ss, with m literally 0). Under an hour: "23:00" (m:ss,
+ * minutes not zero-padded). An hour or more: "1:30:00" (h:mm:ss).
+ */
+export function formatDurationSeconds(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = String(total % 60).padStart(2, "0");
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${secs}`;
+  }
+  return `${minutes}:${secs}`;
+}
+
+/**
+ * Text-ready version of formatPersonalRecordValue, for display sites that
+ * render a record's value as a string (PersonalRecordsList, and GoalsList
+ * via formatGoalValueText in goal-labels.ts) — never for the forms, which
+ * still need formatPersonalRecordValue's raw numeric `.value` to seed a
+ * number input, or DurationInput's `defaultValueSeconds` for "time"
+ * (PersonalRecordFields, GoalFields). "time" doesn't read naturally as
+ * "<number> <unit>" — nobody writes "1380 seconds" — so it routes through
+ * formatDurationSeconds instead of appending formatPersonalRecordValue's
+ * unit suffix. This is the "add a separate formatter" choice over widening
+ * DisplayValue's `value` to `string | number`: DisplayValue.value is read
+ * as a plain number at every other call site (form pre-fill, chart series
+ * construction in lib/progress.ts), and only "time" ever needs a string —
+ * widening the shared type would push a string-or-number check onto call
+ * sites that can never actually see the string branch.
+ */
+export function formatPersonalRecordValueText(
+  recordType: PersonalRecordType,
+  value: number,
+  unitSystem: UnitSystem,
+  isHyroxStation: boolean
+): string {
+  if (recordType === "time") {
+    return formatDurationSeconds(value);
+  }
+  const display = formatPersonalRecordValue(
+    recordType,
+    value,
+    unitSystem,
+    isHyroxStation
+  );
+  return `${display.value} ${display.unit}`;
+}
+
+/**
  * The unit a distance personal-record INPUT is entered in — deliberately
  * simpler than formatDistanceMetres' three-way display rule (m/ft/mi):
  * the person typing a value doesn't yet know what it'll convert to, so

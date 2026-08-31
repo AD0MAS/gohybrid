@@ -9,6 +9,7 @@ import {
   resolveDistanceInputUnit,
   toDistanceInputValue,
 } from "@/lib/units";
+import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
@@ -84,6 +85,16 @@ const initialState: PersonalRecordFormState = { status: "idle" };
  * station) regardless of the stored value's size. Seeding a distance input
  * with the display value under its input-unit label would silently
  * corrupt it on save.
+ *
+ * A failed submit restores exactly what the user typed via the same
+ * mechanism as GoalFields (see its doc comment for the full explanation):
+ * `formKey` remounts the `<form>` on every error, which alone fixes the
+ * controlled exerciseId/recordType selects (their state was never lost,
+ * only their DOM); `fieldDefault`/`fieldDefaultSeconds`, reading
+ * `addPersonalRecord`/`updatePersonalRecord`'s echoed `values`, restore the
+ * plain uncontrolled fields (customName, achievedAt, notes) and the
+ * value/DurationInput field that a remount alone would otherwise reset back
+ * to `entry`'s original value.
  */
 export default function PersonalRecordFields({
   catalog,
@@ -102,9 +113,22 @@ export default function PersonalRecordFields({
       entry?.recordType ?? "weight"
     );
   const [prevState, setPrevState] = useState(state);
+  const [formKey, setFormKey] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
+    else if (state.status === "error") setFormKey((key) => key + 1);
+  }
+  const submitted = state.status === "error" ? state.values : null;
+  function fieldDefault(name: string, fallback?: string): string | undefined {
+    return submitted?.[name] ?? fallback;
+  }
+  function fieldDefaultSeconds(name: string, fallback: number | null): number | null {
+    if (submitted && name in submitted) {
+      const raw = submitted[name];
+      return raw === "" ? null : Number(raw);
+    }
+    return fallback;
   }
 
   const isHyroxStation =
@@ -151,7 +175,7 @@ export default function PersonalRecordFields({
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit record" : "Add record"}>
-        <form action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={formAction} className="flex flex-col gap-3">
           <select
             name="exerciseId"
             value={exerciseId}
@@ -171,7 +195,7 @@ export default function PersonalRecordFields({
               type="text"
               name="customName"
               placeholder="Custom name"
-              defaultValue={entry?.customName ?? ""}
+              defaultValue={fieldDefault("customName", entry?.customName ?? "")}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}
@@ -193,21 +217,32 @@ export default function PersonalRecordFields({
             ))}
           </select>
 
-          <input
-            type="number"
-            name="value"
-            step="0.01"
-            min="0"
-            required
-            defaultValue={defaultValue}
-            placeholder={`Value (${unit})`}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          {recordType === "time" ? (
+            <DurationInput
+              maxUnit="hours"
+              name="value"
+              defaultValueSeconds={fieldDefaultSeconds("value", defaultValue ?? null)}
+            />
+          ) : (
+            <input
+              type="number"
+              name="value"
+              step="0.01"
+              min="0"
+              required
+              defaultValue={fieldDefault(
+                "value",
+                defaultValue !== undefined ? String(defaultValue) : undefined
+              )}
+              placeholder={`Value (${unit})`}
+              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          )}
 
           <input
             type="date"
             name="achievedAt"
-            defaultValue={entry?.achievedAt ?? today}
+            defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
             max={today}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -217,7 +252,7 @@ export default function PersonalRecordFields({
             type="text"
             name="notes"
             placeholder="Notes (optional)"
-            defaultValue={entry?.notes ?? ""}
+            defaultValue={fieldDefault("notes", entry?.notes ?? "")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 

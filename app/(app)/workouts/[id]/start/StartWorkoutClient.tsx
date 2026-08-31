@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { unitSystemEnum } from "@/db/schema";
 import type { getWorkoutForUser } from "@/lib/workouts";
-import { formatDistanceMetres, formatWeightKg } from "@/lib/units";
+import { formatDistanceMetres, formatDurationSeconds, formatWeightKg } from "@/lib/units";
 import { finishWorkout } from "./actions";
 
 type Workout = NonNullable<Awaited<ReturnType<typeof getWorkoutForUser>>>;
@@ -50,6 +50,8 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
         isHyroxStation
       );
       volume = `${d.value} ${d.unit}`;
+    } else if (item.volumeType === "duration") {
+      volume = formatDurationSeconds(Number(item.volumeValue));
     } else {
       volume = `${item.volumeValue} ${item.volumeType}`;
     }
@@ -73,7 +75,7 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
     volume && `Volume: ${volume}`,
     target && `Target: ${target}`,
     weight && `Weight: ${weight.value} ${weight.unit}`,
-    item.restSeconds != null && `Rest: ${item.restSeconds}s`,
+    item.restSeconds != null && `Rest: ${formatDurationSeconds(item.restSeconds)}`,
   ].filter((part): part is string => Boolean(part));
 }
 
@@ -216,12 +218,14 @@ export default function StartWorkoutClient({
           {workout.blocks.map((block) => {
             const timing = [
               block.durationSeconds != null &&
-                `Duration: ${block.durationSeconds}s`,
+                `Duration: ${formatDurationSeconds(block.durationSeconds)}`,
               block.rounds != null && `Rounds: ${block.rounds}`,
-              block.workSeconds != null && `Work: ${block.workSeconds}s`,
-              block.restSeconds != null && `Rest: ${block.restSeconds}s`,
+              block.workSeconds != null &&
+                `Work: ${formatDurationSeconds(block.workSeconds)}`,
+              block.restSeconds != null &&
+                `Rest: ${formatDurationSeconds(block.restSeconds)}`,
               block.intervalSeconds != null &&
-                `Interval: ${block.intervalSeconds}s`,
+                `Interval: ${formatDurationSeconds(block.intervalSeconds)}`,
             ].filter(Boolean);
 
             return (

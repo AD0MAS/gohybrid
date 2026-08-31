@@ -8,10 +8,11 @@ import {
   updateEventForUser,
 } from "@/lib/events";
 import { validateEventInput } from "@/lib/events-validation";
+import { echoFormValues } from "@/lib/form-state";
 
 export type EventFormState =
   | { status: "idle" }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; values: Record<string, string> }
   | { status: "success" };
 
 /**
@@ -41,7 +42,11 @@ export async function addEvent(
   });
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   await createEventForUser(user.id, result.data);
@@ -77,7 +82,11 @@ export async function updateEvent(
   });
 
   if (!result.success) {
-    return { status: "error", error: result.error };
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
   }
 
   const updated = await updateEventForUser(id, user.id, result.data);
