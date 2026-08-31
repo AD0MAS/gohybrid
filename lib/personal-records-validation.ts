@@ -158,12 +158,7 @@ export function validatePersonalRecordInput(
     if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
       return { success: false, error: `${label} must be greater than 0.` };
     }
-    // Distance rounds rather than rejects a fractional value — see
-    // checkDigitLimit's doc comment for why an imperial mile/foot entry
-    // legitimately converts to a non-integer number of metres.
-    const digitCheck = checkDigitLimit(parsedValue, limit, label, {
-      roundInsteadOfReject: recordType === "distance",
-    });
+    const digitCheck = checkDigitLimit(parsedValue, limit, label);
     if (!digitCheck.ok) {
       return { success: false, error: digitCheck.error };
     }

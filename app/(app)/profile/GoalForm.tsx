@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
+import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import GoalFields from "./GoalFields";
 
@@ -17,14 +18,20 @@ import GoalFields from "./GoalFields";
  * there's no need for today's date here — addGoal (goals-actions.ts)
  * fetches it itself for validation. `unitSystem` only drives the
  * targetValue/startValue placeholders' displayed unit — the actual metric
- * conversion happens server-side in addGoal, never here.
+ * conversion happens server-side in addGoal, never here. `customNames`
+ * (this user's distinct past custom_name values) mirrors
+ * PersonalRecordForm's own fetch, for the same "previously used" group in
+ * GoalFields' personal_record target-exercise <select>.
  */
 export default async function GoalForm() {
   const user = await requireUser();
-  const [catalog, { unitSystem }] = await Promise.all([
+  const [catalog, customNames, { unitSystem }] = await Promise.all([
     getExerciseCatalog(),
+    getDistinctCustomNamesForUser(user.id),
     getUserContext(user.id),
   ]);
 
-  return <GoalFields catalog={catalog} unitSystem={unitSystem} />;
+  return (
+    <GoalFields catalog={catalog} customNames={customNames} unitSystem={unitSystem} />
+  );
 }

@@ -25,6 +25,13 @@ export type ProgressSeries = {
   key: string;
   label: string;
   unit: string;
+  /** True only for a personal-record "time" series — its points are raw
+   * seconds, which ProgressChart must render as durations (formatDurationSeconds)
+   * rather than as a plain "<value> seconds" axis/tooltip. Carried
+   * explicitly here rather than left for ProgressChart to infer from
+   * `unit === "seconds"`, so that inference can't silently break if this
+   * series' unit string ever changes for an unrelated reason. */
+  isDuration: boolean;
   points: ProgressPoint[];
 };
 
@@ -113,6 +120,7 @@ export async function getProgressSeriesForUser(
       key: `metric:${metricType}`,
       label,
       unit: formatted[0]?.unit ?? "",
+      isDuration: false,
       points: formatted.map((p) => ({ date: p.date, value: p.value })),
     });
   }
@@ -160,6 +168,7 @@ export async function getProgressSeriesForUser(
       key: `pr:${group.subjectKey}`,
       label: `${group.subjectLabel} (${PERSONAL_RECORD_LABELS[group.recordType].label})`,
       unit,
+      isDuration: group.recordType === "time",
       points,
     });
   }

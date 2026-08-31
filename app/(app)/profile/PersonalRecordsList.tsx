@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import {
+  getDistinctCustomNamesForUser,
   getPersonalRecordsForUser,
   groupPersonalRecordsBySubject,
 } from "@/lib/personal-records";
@@ -30,9 +31,10 @@ import { deletePersonalRecord } from "./personal-records-actions";
  */
 export default async function PersonalRecordsList() {
   const user = await requireUser();
-  const [records, catalog, { today, unitSystem }] = await Promise.all([
+  const [records, catalog, customNames, { today, unitSystem }] = await Promise.all([
     getPersonalRecordsForUser(user.id),
     getExerciseCatalog(),
+    getDistinctCustomNamesForUser(user.id),
     getUserContext(user.id),
   ]);
 
@@ -74,6 +76,7 @@ export default async function PersonalRecordsList() {
               <div className="flex shrink-0 items-center gap-2">
                 <PersonalRecordFields
                   catalog={catalog}
+                  customNames={customNames}
                   today={today}
                   unitSystem={unitSystem}
                   entry={group.best}
@@ -116,6 +119,7 @@ export default async function PersonalRecordsList() {
                       <div className="flex shrink-0 items-center gap-2">
                         <PersonalRecordFields
                           catalog={catalog}
+                          customNames={customNames}
                           today={today}
                           unitSystem={unitSystem}
                           entry={entry}

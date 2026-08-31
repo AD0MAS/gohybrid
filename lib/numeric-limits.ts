@@ -29,12 +29,20 @@ export const RESTING_HR_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 3, maxDeci
 export const LIFTED_WEIGHT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 1 };
 export const REPS_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
 export const CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 5, maxDecimals: 0 };
-export const DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 7, maxDecimals: 0 };
+// maxDecimals 2, not 0: distance is a converted unit (a typed ft/mi value
+// legitimately becomes a fractional number of metres — see
+// convertDistanceInputToMetres in lib/units.ts), and the column has room
+// for it (numeric(9,2)). 7 integer digits + 2 decimals is exactly that
+// column's capacity, so this stays a true backstop.
+export const DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 7, maxDecimals: 2 };
 // workout_items-only: numeric(6,2) caps the integer part at 4 digits
 // regardless of subject, so an item's calories/distance can't use the
 // wider PR/goal limits above without allowing a value the column rejects.
 export const ITEM_CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
-export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
+// maxDecimals 2 for the same reason as DISTANCE_DIGIT_LIMIT above; 4
+// integer digits + 2 decimals is exactly workout_items.volume_value's
+// numeric(6,2) capacity.
+export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 2 };
 
 /**
  * Rounds `raw` to `limit.maxDecimals` and rejects it if the result needs
@@ -48,28 +56,27 @@ export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxD
  * typed (kg vs lb, or none at all for a count), which only the caller
  * knows.
  *
- * maxDecimals === 0 means "a whole number" — by default that REJECTS a
- * non-integer input rather than silently rounding it (Reps, Calories,
- * Resting HR: there's no legitimate source of a fractional value here, so
- * a decimal is a typo worth surfacing, not silently discarding). Pass
- * `roundInsteadOfReject: true` for a field where a fractional value is a
- * normal, correct intermediate result rather than a mistake — Distance is
- * the one case that needs it: an imperial mile/foot input converts to
- * metres through METRES_PER_MILE/METRES_PER_FOOT (lib/units.ts), neither a
- * whole number, so "1 mile" legitimately becomes 1609.344 m before this
- * check ever sees it. Rejecting that would reject every ordinary
- * mile-based distance entry; rounding to the nearest metre is correct
- * instead.
+ * maxDecimals === 0 means "a whole number" and REJECTS a non-integer input
+ * rather than silently rounding it — Reps, Calories, Resting HR: there's no
+ * legitimate source of a fractional value for any of these, so a decimal is
+ * a typo worth surfacing, not silently discarding. Distance used to need an
+ * escape hatch here (an imperial mile/foot input converts to a non-integer
+ * number of metres through METRES_PER_MILE/METRES_PER_FOOT in lib/units.ts),
+ * but now carries maxDecimals: 2 instead of 0 (DISTANCE_DIGIT_LIMIT/
+ * ITEM_DISTANCE_DIGIT_LIMIT above) — the columns had room for it
+ * (numeric(9,2)/numeric(6,2)) and rounding to whole metres was silently
+ * corrupting a converted value (10 ft stored as 3 m, read back as 9.8 ft).
+ * A fractional distance now just rounds to 2 decimals like any other
+ * maxDecimals > 0 field, so no per-caller opt-out is needed any more.
  */
 export function checkDigitLimit(
   raw: number,
   limit: DigitLimit,
-  label: string,
-  options?: { roundInsteadOfReject?: boolean }
+  label: string
 ): DigitLimitResult {
   const { maxIntegerDigits, maxDecimals } = limit;
 
-  if (maxDecimals === 0 && !Number.isInteger(raw) && !options?.roundInsteadOfReject) {
+  if (maxDecimals === 0 && !Number.isInteger(raw)) {
     return { ok: false, error: `${label} must be a whole number.` };
   }
 

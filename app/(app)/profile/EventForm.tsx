@@ -59,7 +59,25 @@ type EventFormProps = {
  * unlike Goal/PersonalRecord/BodyMetric's controlled selects) is plain
  * uncontrolled `defaultValue` — and `fieldDefault`, reading
  * addEvent/updateEvent's echoed `values`, supplies each field's defaultValue
- * in preference to `entry`'s original value.
+ * in preference to `entry`'s original value. Since every field here is
+ * uncontrolled, this file needs no PersonalRecordFields/GoalFields/
+ * BodyMetricFields-style split into a separately keyed inner component —
+ * remounting the `<form>` itself is enough, there's no controlled
+ * useState-driven select whose value would survive that remount untouched.
+ *
+ * `openFresh` (the trigger buttons' handler) also bumps `formKey`, on top
+ * of the existing error-triggered bump — reopening must show `entry` fresh,
+ * not whatever was last typed and abandoned (Esc, the X, a backdrop click:
+ * none of those submit the form, so nothing about a stale, uncorrected
+ * attempt gets cleared on its own). `errorActive` tracks whether `state`'s
+ * error, if any, still belongs to the session that's open right now, or is
+ * left over from one dismissed without fixing — without it, `submitted`
+ * would still read that stale `state.status === "error"` on reopen and
+ * hand the form its abandoned values instead of `entry`'s. `visibleState`
+ * is the real error while `errorActive`, and `initialState` otherwise, and
+ * every other read below is written against it instead of the raw `state`
+ * from useActionState (which stays untouched, so the sync block above can
+ * still tell success/error apart by identity).
  */
 export default function EventForm({ entry }: EventFormProps) {
   const [open, setOpen] = useState(false);
@@ -67,14 +85,25 @@ export default function EventForm({ entry }: EventFormProps) {
   const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
+  const [errorActive, setErrorActive] = useState(false);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
-    else if (state.status === "error") setFormKey((key) => key + 1);
+    else if (state.status === "error") {
+      setFormKey((key) => key + 1);
+      setErrorActive(true);
+    }
   }
-  const submitted = state.status === "error" ? state.values : null;
+  const visibleState: EventFormState = errorActive ? state : initialState;
+  const submitted = visibleState.status === "error" ? visibleState.values : null;
   function fieldDefault(name: string, fallback?: string): string | undefined {
     return submitted?.[name] ?? fallback;
+  }
+
+  function openFresh() {
+    setFormKey((key) => key + 1);
+    setErrorActive(false);
+    setOpen(true);
   }
 
   return (
@@ -82,7 +111,7 @@ export default function EventForm({ entry }: EventFormProps) {
       {entry ? (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openFresh}
           aria-label="Edit"
           className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
@@ -91,7 +120,7 @@ export default function EventForm({ entry }: EventFormProps) {
       ) : (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openFresh}
           className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Plus className="h-4 w-4" />
@@ -146,8 +175,8 @@ export default function EventForm({ entry }: EventFormProps) {
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
-          {state.status === "error" && (
-            <p className="text-sm text-danger">{state.error}</p>
+          {visibleState.status === "error" && (
+            <p className="text-sm text-danger">{visibleState.error}</p>
           )}
 
           <button

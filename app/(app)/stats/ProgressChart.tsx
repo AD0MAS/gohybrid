@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { formatDayMonthShort } from "@/lib/dates";
 import type { ProgressSeries } from "@/lib/progress";
+import { formatDurationSeconds } from "@/lib/units";
 
 type ProgressChartProps = {
   series: ProgressSeries[];
@@ -23,7 +24,11 @@ type ProgressChartProps = {
  * by the page — switching series re-renders from memory, no navigation and
  * no refetch. The only client component on /stats; a library is warranted
  * here (unlike WeeklyChart/DistributionChart/ActivityHeatmap) because of
- * the time axis and interactive tooltips (§5 Layer 3).
+ * the time axis and interactive tooltips (§5 Layer 3). A series' points
+ * always stay numeric (raw seconds for a duration series, e.g. a marathon
+ * PR) — only the Y-axis ticks and the tooltip value read as a duration
+ * (formatDurationSeconds), driven by `series.isDuration`, never the
+ * underlying data Recharts plots.
  */
 export default function ProgressChart({ series }: ProgressChartProps) {
   const [selectedKey, setSelectedKey] = useState(series[0]?.key ?? "");
@@ -75,22 +80,35 @@ export default function ProgressChart({ series }: ProgressChartProps) {
                 stroke="var(--color-ink-subtle)"
               />
               <YAxis
-                width={48}
+                width={selected.isDuration ? 56 : 48}
                 fontSize={11}
                 stroke="var(--color-ink-subtle)"
-                label={{
-                  value: selected.unit,
-                  angle: -90,
-                  position: "insideLeft",
-                  fontSize: 11,
-                  fill: "var(--color-ink-subtle)",
-                }}
+                tickFormatter={
+                  selected.isDuration
+                    ? (value: number) => formatDurationSeconds(value)
+                    : undefined
+                }
+                label={
+                  selected.isDuration
+                    ? undefined
+                    : {
+                        value: selected.unit,
+                        angle: -90,
+                        position: "insideLeft",
+                        fontSize: 11,
+                        fill: "var(--color-ink-subtle)",
+                      }
+                }
               />
               <Tooltip
                 labelFormatter={(date) =>
                   typeof date === "string" ? formatDayMonthShort(date) : date
                 }
-                formatter={(value) => [`${value} ${selected.unit}`, selected.label]}
+                formatter={(value) =>
+                  selected.isDuration
+                    ? [formatDurationSeconds(Number(value)), selected.label]
+                    : [`${value} ${selected.unit}`, selected.label]
+                }
                 contentStyle={{
                   backgroundColor: "var(--color-surface-1)",
                   border: "1px solid var(--color-hairline)",

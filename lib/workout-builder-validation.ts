@@ -228,13 +228,10 @@ function parseBuilderItem(
   }
   // Digit limit per volume_type — "duration" is DurationInput's own
   // composed whole-seconds count (its own boxes already cap it), so it's
-  // skipped here. "distance" rounds rather than rejects a fractional
-  // value: an imperial mile/foot entry legitimately converts to a
-  // non-integer number of metres (see checkDigitLimit's doc comment in
-  // lib/numeric-limits.ts). These limits are narrower than
-  // personal_records/goals' own — this table's volume_value column is
-  // numeric(6,2), not numeric(9,2) (see lib/numeric-limits.ts's
-  // ITEM_CALORIES_DIGIT_LIMIT/ITEM_DISTANCE_DIGIT_LIMIT comment).
+  // skipped here. These limits are narrower than personal_records/goals'
+  // own — this table's volume_value column is numeric(6,2), not
+  // numeric(9,2) (see lib/numeric-limits.ts's ITEM_CALORIES_DIGIT_LIMIT/
+  // ITEM_DISTANCE_DIGIT_LIMIT comment).
   if (volumeValue !== null && volumeType !== null && volumeType !== "duration") {
     const { limit, label } =
       volumeType === "reps"
@@ -242,9 +239,7 @@ function parseBuilderItem(
         : volumeType === "calories"
           ? { limit: ITEM_CALORIES_DIGIT_LIMIT, label: `${context} volume value (calories)` }
           : { limit: ITEM_DISTANCE_DIGIT_LIMIT, label: `${context} volume value (m)` };
-    const digitCheck = checkDigitLimit(volumeValue, limit, label, {
-      roundInsteadOfReject: volumeType === "distance",
-    });
+    const digitCheck = checkDigitLimit(volumeValue, limit, label);
     if (!digitCheck.ok) {
       return { error: digitCheck.error };
     }

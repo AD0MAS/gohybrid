@@ -13,6 +13,7 @@ import {
   updateGoalForUser,
   type GoalTarget,
 } from "@/lib/goals";
+import { resolveCanonicalCustomName } from "@/lib/personal-records";
 import { validateGoalInput, type ValidatedGoalInput } from "@/lib/goals-validation";
 import {
   convertDistanceInputToMetres,
@@ -147,7 +148,11 @@ async function checkGoalNotAlreadyMet(
  * submitted unit rather than inferring one. session_count and streak goals
  * never convert. targetValue goes through convertGoalValue, before
  * validateGoalInput, so the validator (and the database) only ever see
- * metric — same principle as addBodyMetric/addPersonalRecord.
+ * metric — same principle as addBodyMetric/addPersonalRecord. A typed
+ * targetCustomName is likewise run through resolveCanonicalCustomName
+ * (lib/personal-records.ts) before validation, so a personal_record goal
+ * targeting "maratonas" reuses whatever spelling that subject's own records
+ * were first recorded under, rather than adding a new one.
  *
  * Once validation passes, checkGoalNotAlreadyMet runs unconditionally, for
  * every goal_type and direction — it both rejects an already-complete goal
@@ -202,6 +207,12 @@ export async function addGoal(
     return parsed;
   }
 
+  const rawTargetCustomName = formData.get("targetCustomName");
+  const targetCustomName =
+    typeof rawTargetCustomName === "string" && rawTargetCustomName.trim() !== ""
+      ? await resolveCanonicalCustomName(user.id, rawTargetCustomName.trim())
+      : rawTargetCustomName;
+
   const result = validateGoalInput(
     {
       title: formData.get("title"),
@@ -212,7 +223,7 @@ export async function addGoal(
       targetPrimaryType: formData.get("targetPrimaryType"),
       targetMetricType,
       targetExerciseId,
-      targetCustomName: formData.get("targetCustomName"),
+      targetCustomName,
       targetRecordType,
     },
     unitSystem
@@ -347,6 +358,12 @@ export async function updateGoal(
     return parsed;
   }
 
+  const rawTargetCustomName = formData.get("targetCustomName");
+  const targetCustomName =
+    typeof rawTargetCustomName === "string" && rawTargetCustomName.trim() !== ""
+      ? await resolveCanonicalCustomName(user.id, rawTargetCustomName.trim())
+      : rawTargetCustomName;
+
   const result = validateGoalInput(
     {
       title: formData.get("title"),
@@ -357,7 +374,7 @@ export async function updateGoal(
       targetPrimaryType: formData.get("targetPrimaryType"),
       targetMetricType,
       targetExerciseId,
-      targetCustomName: formData.get("targetCustomName"),
+      targetCustomName,
       targetRecordType,
     },
     unitSystem

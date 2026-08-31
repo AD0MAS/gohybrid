@@ -460,9 +460,7 @@ export function validateGoalInput(
           targetRecordType!,
           unitSystem
         );
-        const digitCheck = checkDigitLimit(targetValue, limit, label, {
-          roundInsteadOfReject: targetRecordType === "distance",
-        });
+        const digitCheck = checkDigitLimit(targetValue, limit, label);
         if (!digitCheck.ok) {
           return { success: false, error: digitCheck.error };
         }

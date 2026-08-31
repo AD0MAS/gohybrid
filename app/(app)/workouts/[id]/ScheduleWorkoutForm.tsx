@@ -36,7 +36,24 @@ const initialState: ScheduleFormState = { status: "idle" };
  * `formKey` remounts the `<form>` on every error, and `fieldDefault`,
  * reading scheduleWorkout's echoed `values`, supplies each plain
  * uncontrolled field's defaultValue — there's no `entry` here (a schedule
- * form always starts blank), so the fallback is simply undefined.
+ * form always starts blank), so the fallback is simply undefined. Every
+ * field here is uncontrolled, so unlike PersonalRecordFields/GoalFields/
+ * BodyMetricFields this file needs no split into a separately keyed inner
+ * component — remounting the `<form>` itself is enough.
+ *
+ * `openFresh` (the trigger button's handler) also bumps `formKey`, on top
+ * of the existing error-triggered bump — reopening must show a blank form,
+ * not whatever date/time/notes was last typed and abandoned (Esc, the X, a
+ * backdrop click: none of those submit the form, so nothing about a stale,
+ * uncorrected attempt gets cleared on its own). `errorActive` tracks
+ * whether `state`'s error, if any, still belongs to the session that's open
+ * right now, or is left over from one dismissed without fixing — without
+ * it, `submitted` would still read that stale `state.status === "error"` on
+ * reopen and hand the form its abandoned values instead of a blank one.
+ * `visibleState` is the real error while `errorActive`, and `initialState`
+ * otherwise, and every other read below is written against it instead of
+ * the raw `state` from useActionState (which stays untouched, so the sync
+ * block above can still tell success/error apart by identity).
  */
 export default function ScheduleWorkoutForm({
   scheduleAction,
@@ -45,21 +62,32 @@ export default function ScheduleWorkoutForm({
   const [state, formAction] = useActionState(scheduleAction, initialState);
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
+  const [errorActive, setErrorActive] = useState(false);
   if (state !== prevState) {
     setPrevState(state);
     if (state.status === "success") setOpen(false);
-    else if (state.status === "error") setFormKey((key) => key + 1);
+    else if (state.status === "error") {
+      setFormKey((key) => key + 1);
+      setErrorActive(true);
+    }
   }
-  const submitted = state.status === "error" ? state.values : null;
+  const visibleState: ScheduleFormState = errorActive ? state : initialState;
+  const submitted = visibleState.status === "error" ? visibleState.values : null;
   function fieldDefault(name: string): string | undefined {
     return submitted?.[name];
+  }
+
+  function openFresh() {
+    setFormKey((key) => key + 1);
+    setErrorActive(false);
+    setOpen(true);
   }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openFresh}
         className="flex h-12 items-center justify-center rounded-md border border-hairline bg-surface-1 px-6 text-base font-medium text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Schedule
@@ -102,8 +130,8 @@ export default function ScheduleWorkoutForm({
             />
           </label>
 
-          {state.status === "error" && (
-            <p className="text-sm text-danger">{state.error}</p>
+          {visibleState.status === "error" && (
+            <p className="text-sm text-danger">{visibleState.error}</p>
           )}
 
           <button

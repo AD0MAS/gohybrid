@@ -459,6 +459,15 @@ export function builderReducer(
                     customName: action.value,
                     exerciseId: null,
                   };
+                case "volumeType":
+                  // A stored volumeValue means something different per
+                  // volumeType (seconds, metres, reps, kcal) — carrying it
+                  // across a type change would silently reinterpret it.
+                  return {
+                    ...item,
+                    volumeType: action.value,
+                    volumeValue: null,
+                  };
                 case "targetPreset":
                   return {
                     ...item,
@@ -467,7 +476,16 @@ export function builderReducer(
                     targetValue: null,
                   };
                 case "targetType":
-                  return { ...item, targetType: action.value, targetPreset: "" };
+                  // A stored targetValue means something different per
+                  // targetType (pace_500m, cal_per_hour, watts, rpe) — same
+                  // reasoning as volumeType above, carrying it across a type
+                  // change would silently reinterpret it.
+                  return {
+                    ...item,
+                    targetType: action.value,
+                    targetPreset: "",
+                    targetValue: null,
+                  };
                 case "targetValue":
                   return {
                     ...item,

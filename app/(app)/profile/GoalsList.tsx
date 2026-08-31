@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
+import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import GoalFields from "./GoalFields";
 import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
@@ -33,11 +34,13 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  */
 export default async function GoalsList() {
   const user = await requireUser();
-  const [allGoals, catalog, { today, timezone, unitSystem }] = await Promise.all([
-    getGoalsForUser(user.id, true),
-    getExerciseCatalog(),
-    getUserContext(user.id),
-  ]);
+  const [allGoals, catalog, customNames, { today, timezone, unitSystem }] =
+    await Promise.all([
+      getGoalsForUser(user.id, true),
+      getExerciseCatalog(),
+      getDistinctCustomNamesForUser(user.id),
+      getUserContext(user.id),
+    ]);
 
   const activeGoals = allGoals.filter((g) => !g.isArchived);
   const archivedGoals = allGoals.filter((g) => g.isArchived);
@@ -97,7 +100,12 @@ export default async function GoalsList() {
                     Archive
                   </button>
                 </form>
-                <GoalFields catalog={catalog} unitSystem={unitSystem} entry={goal} />
+                <GoalFields
+                  catalog={catalog}
+                  customNames={customNames}
+                  unitSystem={unitSystem}
+                  entry={goal}
+                />
                 <form action={deleteGoal.bind(null, goal.id)}>
                   <button
                     type="submit"

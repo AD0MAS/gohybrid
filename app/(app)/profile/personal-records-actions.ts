@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import {
   createPersonalRecordForUser,
   deletePersonalRecordForUser,
+  resolveCanonicalCustomName,
   updatePersonalRecordForUser,
 } from "@/lib/personal-records";
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
@@ -46,7 +47,10 @@ export type PersonalRecordFormState =
  * so convertDistanceInputToMetres converts using that submitted unit
  * rather than inferring one. Both convert here, before
  * validatePersonalRecordInput, so the validator (and the database) only
- * ever see metric — reps/time never convert. Revalidates /profile on
+ * ever see metric — reps/time never convert. A typed customName is run
+ * through resolveCanonicalCustomName (lib/personal-records.ts) first, also
+ * before validation, so a subject's spelling can't diverge by accident of
+ * capitalization (see that function's doc comment). Revalidates /profile on
  * success.
  */
 export async function addPersonalRecord(
@@ -76,10 +80,16 @@ export async function addPersonalRecord(
     }
   }
 
+  const rawCustomName = formData.get("customName");
+  const customName =
+    typeof rawCustomName === "string" && rawCustomName.trim() !== ""
+      ? await resolveCanonicalCustomName(user.id, rawCustomName.trim())
+      : rawCustomName;
+
   const result = validatePersonalRecordInput(
     {
       exerciseId,
-      customName: formData.get("customName"),
+      customName,
       recordType,
       value,
       achievedAt: formData.get("achievedAt"),
@@ -112,7 +122,10 @@ export async function addPersonalRecord(
  * entry-populated form instead of an empty one. Ownership is enforced by
  * updatePersonalRecordForUser's WHERE clause; a null result (wrong id or
  * another user's row) throws, same as deletePersonalRecord, since a
- * forged id can't silently no-op. Revalidates /profile on success.
+ * forged id can't silently no-op. resolveCanonicalCustomName is called with
+ * this record's own id as `excludeRecordId`, so editing the sole record
+ * under a spelling can still correct that spelling's casing instead of
+ * always finding (and re-applying) itself. Revalidates /profile on success.
  */
 export async function updatePersonalRecord(
   id: string,
@@ -142,10 +155,16 @@ export async function updatePersonalRecord(
     }
   }
 
+  const rawCustomName = formData.get("customName");
+  const customName =
+    typeof rawCustomName === "string" && rawCustomName.trim() !== ""
+      ? await resolveCanonicalCustomName(user.id, rawCustomName.trim(), id)
+      : rawCustomName;
+
   const result = validatePersonalRecordInput(
     {
       exerciseId,
-      customName: formData.get("customName"),
+      customName,
       recordType,
       value,
       achievedAt: formData.get("achievedAt"),

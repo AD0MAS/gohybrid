@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { personalRecords, personalRecordTypeEnum } from "@/db/schema";
 import type { ValidatedPersonalRecordInput } from "./personal-records-validation";
@@ -128,6 +128,76 @@ export async function updatePersonalRecordForUser(
 }
 
 /**
+ * Resolves the canonical spelling for a subject `userId` refers to by
+ * `customName`: the earliest-recorded personal_records row whose customName
+ * matches case-insensitively, or `customName` itself unchanged when no such
+ * row exists yet. Called by the write path (addPersonalRecord,
+ * updatePersonalRecord, addGoal, updateGoal — all in app/(app)/profile/)
+ * before validation, so "maratonas", "Maratonas" and "MaraTonas" — which
+ * subjectKey already treats as one subject for grouping/comparison — also
+ * end up stored as one spelling: whichever the user typed first. Later
+ * writes reusing any case variant of that spelling snap back to it, so new
+ * rows can no longer diverge from each other the way old ones could.
+ *
+ * `excludeRecordId` lets updatePersonalRecord exclude the very row being
+ * edited from the lookup — otherwise a record that's the sole holder of a
+ * spelling could never have that spelling's casing corrected, since the
+ * lookup would just find itself and hand its own (pre-edit) text back.
+ */
+export async function resolveCanonicalCustomName(
+  userId: string,
+  customName: string,
+  excludeRecordId?: string
+): Promise<string> {
+  const conditions = [
+    eq(personalRecords.userId, userId),
+    sql`lower(${personalRecords.customName}) = lower(${customName})`,
+  ];
+  if (excludeRecordId) {
+    conditions.push(ne(personalRecords.id, excludeRecordId));
+  }
+
+  const [existing] = await db
+    .select({ customName: personalRecords.customName })
+    .from(personalRecords)
+    .where(and(...conditions))
+    .orderBy(personalRecords.createdAt)
+    .limit(1);
+
+  return existing?.customName ?? customName;
+}
+
+/**
+ * Distinct custom_name values `userId` has ever recorded, alphabetically —
+ * offered by PersonalRecordFields/GoalFields as a "previously used" group in
+ * their exercise <select> so a subject like "maratonas" can be picked again
+ * instead of retyped. One row per subject even for rows written before
+ * resolveCanonicalCustomName existed and so may still disagree on case:
+ * `DISTINCT ON (lower(custom_name))`, ordered by that same lowercased key
+ * and then `created_at`, keeps the earliest-recorded spelling per group —
+ * the same "first spelling wins" rule resolveCanonicalCustomName applies to
+ * new writes, applied here as a read-side backstop for old ones.
+ */
+export async function getDistinctCustomNamesForUser(
+  userId: string
+): Promise<string[]> {
+  const rows = await db
+    .selectDistinctOn([sql`lower(${personalRecords.customName})`], {
+      customName: personalRecords.customName,
+    })
+    .from(personalRecords)
+    .where(
+      and(eq(personalRecords.userId, userId), isNotNull(personalRecords.customName))
+    )
+    .orderBy(sql`lower(${personalRecords.customName})`, personalRecords.createdAt);
+
+  return rows
+    .map((row) => row.customName)
+    .filter((name): name is string => name !== null)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+/**
  * Deletes a personal record owned by `userId`, returning true if a row was
  * deleted and false otherwise — whether because the id doesn't exist or
  * because it belongs to a different user. Ownership is enforced in the
@@ -162,17 +232,23 @@ export function isBetterRecord(
 }
 
 /** A personal record's subject+type: the catalog exercise id (or custom
- * name) — the two are mutually exclusive per row — plus record_type.
- * record_type is part of the key because values of different types (e.g. a
- * "Run" distance PR and a "Run" time PR) aren't comparable. Exported so
- * lib/goals.ts can look up a group by the same subject+type identity a
- * personal-record goal targets, without redefining the key format. */
+ * name, lowercased) — the two are mutually exclusive per row — plus
+ * record_type. record_type is part of the key because values of different
+ * types (e.g. a "Run" distance PR and a "Run" time PR) aren't comparable.
+ * customName is lowercased here (comparison only — the stored value keeps
+ * whatever case the user typed) so "maratonas" and "Maratonas" group as one
+ * subject instead of splitting into two by accident of capitalization.
+ * Exported so lib/goals.ts can look up a group by the same subject+type
+ * identity a personal-record goal targets, without redefining the key
+ * format. */
 export function subjectKey(record: {
   exerciseId: string | null;
   customName: string | null;
   recordType: (typeof personalRecordTypeEnum.enumValues)[number];
 }): string {
-  const subject = record.exerciseId ? `exercise:${record.exerciseId}` : `custom:${record.customName}`;
+  const subject = record.exerciseId
+    ? `exercise:${record.exerciseId}`
+    : `custom:${(record.customName ?? "").toLowerCase()}`;
   return `${subject}:${record.recordType}`;
 }
 
