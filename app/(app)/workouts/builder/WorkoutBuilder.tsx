@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer, useState } from "react";
+import type { unitSystemEnum } from "@/db/schema";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
@@ -48,6 +49,10 @@ type WorkoutBuilderProps = {
   targetPresetOptions: readonly TargetPreset[];
   exerciseCatalog: readonly CatalogExercise[];
   tagCatalog: readonly CatalogTag[];
+  /** Threaded down to every item's DistanceInput (via BlockEditor/
+   * ItemEditor) for its unit <select> — the read-only page fetches this
+   * once via getUserContext, same as PersonalRecordFields/GoalFields. */
+  unitSystem: (typeof unitSystemEnum.enumValues)[number];
   /** When present, the builder starts pre-loaded from this workout (via
    * the LOAD_WORKOUT reducer action) and Save edits it in place instead
    * of creating a new one. */
@@ -81,6 +86,7 @@ export default function WorkoutBuilder({
   targetPresetOptions,
   exerciseCatalog,
   tagCatalog,
+  unitSystem,
   initialWorkout,
   workoutId,
 }: WorkoutBuilderProps) {
@@ -274,6 +280,7 @@ export default function WorkoutBuilder({
               volumeTypeOptions={volumeTypeOptions}
               targetTypeOptions={targetTypeOptions}
               targetPresetOptions={targetPresetOptions}
+              unitSystem={unitSystem}
               dispatch={dispatch}
             />
           ))

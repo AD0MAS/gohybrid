@@ -1,4 +1,5 @@
 import type { Dispatch } from "react";
+import type { unitSystemEnum } from "@/db/schema";
 import DurationInput from "../../_components/DurationInput";
 import ItemEditor from "./ItemEditor";
 import type {
@@ -19,6 +20,7 @@ type BlockEditorProps = {
   volumeTypeOptions: readonly VolumeType[];
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
+  unitSystem: (typeof unitSystemEnum.enumValues)[number];
   dispatch: Dispatch<BuilderAction>;
 };
 
@@ -50,6 +52,7 @@ export default function BlockEditor({
   volumeTypeOptions,
   targetTypeOptions,
   targetPresetOptions,
+  unitSystem,
   dispatch,
 }: BlockEditorProps) {
   return (
@@ -214,6 +217,7 @@ export default function BlockEditor({
                 volumeTypeOptions={volumeTypeOptions}
                 targetTypeOptions={targetTypeOptions}
                 targetPresetOptions={targetPresetOptions}
+                unitSystem={unitSystem}
                 dispatch={dispatch}
               />
             ))}

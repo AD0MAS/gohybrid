@@ -9,6 +9,7 @@ import {
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { getTagCatalog } from "@/lib/tags";
+import { getUserContext } from "@/lib/user-settings";
 import WorkoutBuilder from "../builder/WorkoutBuilder";
 
 /**
@@ -20,10 +21,11 @@ import WorkoutBuilder from "../builder/WorkoutBuilder";
  * Save doesn't persist anything yet.
  */
 export default async function NewWorkoutPage() {
-  await requireUser();
-  const [exerciseCatalog, tagCatalog] = await Promise.all([
+  const user = await requireUser();
+  const [exerciseCatalog, tagCatalog, { unitSystem }] = await Promise.all([
     getExerciseCatalog(),
     getTagCatalog(),
+    getUserContext(user.id),
   ]);
 
   return (
@@ -40,6 +42,7 @@ export default async function NewWorkoutPage() {
           targetPresetOptions={targetPresetEnum.enumValues}
           exerciseCatalog={exerciseCatalog}
           tagCatalog={tagCatalog}
+          unitSystem={unitSystem}
         />
       </div>
     </main>

@@ -5,10 +5,13 @@ import { Pencil, Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
 import type { PersonalRecord } from "@/lib/personal-records";
 import {
+  convertDistanceInputToMetres,
+  DISTANCE_INPUT_UNITS,
   formatPersonalRecordValue,
-  resolveDistanceInputUnit,
-  toDistanceInputValue,
+  type DistanceInputUnit,
 } from "@/lib/units";
+import { isOneOf } from "@/lib/workouts-validation";
+import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
@@ -35,11 +38,9 @@ const initialState: PersonalRecordFormState = { status: "idle" };
  * concerns (RecordTypeValueFields' record-type/value pair, and the
  * exercise/custom-name choice) into one, since both need client state and
  * useActionState itself requires a client component. Three things need
- * JS: (1) the value input's unit placeholder tracks the selected record
- * type AND, for distance, the selected exercise (a HYROX station always
- * shows metres — see resolveDistanceInputUnit in lib/units.ts, shared
- * with addPersonalRecord's actual conversion so the placeholder can never
- * promise a unit the server converts differently); (2) the exercise select
+ * JS: (1) the value input's placeholder tracks the selected record type
+ * AND, for distance, the selected exercise (a HYROX station locks
+ * DistanceInput to metres — see its own doc comment); (2) the exercise select
  * and the custom-name input are mutually exclusive — a single `<select>`
  * lists the catalog plus a "Custom…" option (value ""), and the
  * custom-name text input only renders when that option is selected. The
@@ -74,17 +75,11 @@ const initialState: PersonalRecordFormState = { status: "idle" };
  * record"/"Save" copy, and every field's local state/defaultValue seeded
  * from `entry`. `updatePersonalRecord.bind(null, entry.id)` is used as the
  * form action in place of addPersonalRecord — the bound function still
- * matches useActionState's (prevState, formData) signature. The value
- * input's pre-fill must use the INPUT unit (what recordType/unitSystem
- * actually reads the resubmitted number as), not the display unit shown
- * on the list — those two disagree for distance (see toDistanceInputValue
- * in lib/units.ts): a weight pre-fills via formatPersonalRecordValue
- * (display and input agree — both are always lb under imperial), but a
- * distance pre-fills via toDistanceInputValue, since formatPersonalRecordValue
- * picks ft/mi per value while the input is always ft (or m for a HYROX
- * station) regardless of the stored value's size. Seeding a distance input
- * with the display value under its input-unit label would silently
- * corrupt it on save.
+ * matches useActionState's (prevState, formData) signature. `entry.value` is
+ * always metres already (the DB's own storage), so DistanceInput's
+ * `defaultValueMetres` needs no conversion here — unlike the old
+ * toDistanceInputValue approach it replaced, seeding a distance field is now
+ * exactly as direct as seeding a weight one.
  *
  * A failed submit restores exactly what the user typed via the same
  * mechanism as GoalFields (see its doc comment for the full explanation):
@@ -94,7 +89,11 @@ const initialState: PersonalRecordFormState = { status: "idle" };
  * `addPersonalRecord`/`updatePersonalRecord`'s echoed `values`, restore the
  * plain uncontrolled fields (customName, achievedAt, notes) and the
  * value/DurationInput field that a remount alone would otherwise reset back
- * to `entry`'s original value.
+ * to `entry`'s original value. `fieldDefaultDistanceMetres`/
+ * `fieldDefaultDistanceUnit` do the same for DistanceInput, but must restore
+ * BOTH the number and the unit the user had selected — see their own doc
+ * comment for why the unit can't just be re-derived from the recovered
+ * metres value.
  */
 export default function PersonalRecordFields({
   catalog,
@@ -130,27 +129,58 @@ export default function PersonalRecordFields({
     }
     return fallback;
   }
+  /**
+   * DistanceInput's `defaultValueMetres` restore-on-error counterpart to
+   * fieldDefaultSeconds. Re-derives metres from the echoed `${name}`/
+   * `${name}Unit` pair via convertDistanceInputToMetres, using the unit the
+   * user actually had selected — never DistanceInput's own metres-based
+   * heuristic, which could reopen a different unit than the one submitted
+   * (see DistanceInput's `defaultUnit` doc comment).
+   */
+  function fieldDefaultDistanceMetres(
+    name: string,
+    fallback: number | null
+  ): number | null {
+    if (submitted && name in submitted) {
+      const raw = submitted[name];
+      const unit = submitted[`${name}Unit`];
+      if (raw === "" || !isOneOf(unit, DISTANCE_INPUT_UNITS)) return null;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed)
+        ? convertDistanceInputToMetres(parsed, unit)
+        : null;
+    }
+    return fallback;
+  }
+  /** The unit half of fieldDefaultDistanceMetres — passed to DistanceInput
+   * as `defaultUnit` so it pins exactly what was submitted instead of
+   * re-guessing from the recovered metres value. undefined outside of
+   * error-recovery, which leaves DistanceInput's own heuristic in charge. */
+  function fieldDefaultDistanceUnit(name: string): DistanceInputUnit | undefined {
+    const unit = submitted?.[`${name}Unit`];
+    return isOneOf(unit, DISTANCE_INPUT_UNITS) ? unit : undefined;
+  }
 
   const isHyroxStation =
     catalog.find((exercise) => exercise.id === exerciseId)?.isHyroxStation ??
     false;
 
-  const unit =
-    recordType === "distance"
-      ? resolveDistanceInputUnit(unitSystem, isHyroxStation)
-      : formatPersonalRecordValue(recordType, 0, unitSystem, isHyroxStation)
-          .unit;
+  const valueUnit = formatPersonalRecordValue(
+    recordType,
+    0,
+    unitSystem,
+    isHyroxStation
+  ).unit;
 
-  const defaultValue = entry
-    ? entry.recordType === "distance"
-      ? toDistanceInputValue(entry.value, unitSystem, isHyroxStation)
-      : formatPersonalRecordValue(
+  const defaultValue =
+    entry && entry.recordType !== "distance"
+      ? formatPersonalRecordValue(
           entry.recordType,
           entry.value,
           unitSystem,
           isHyroxStation
         ).value
-    : undefined;
+      : undefined;
 
   return (
     <>
@@ -223,6 +253,18 @@ export default function PersonalRecordFields({
               name="value"
               defaultValueSeconds={fieldDefaultSeconds("value", defaultValue ?? null)}
             />
+          ) : recordType === "distance" ? (
+            <DistanceInput
+              key={isHyroxStation ? "hyrox" : "standard"}
+              name="value"
+              unitSystem={unitSystem}
+              isHyroxStation={isHyroxStation}
+              defaultValueMetres={fieldDefaultDistanceMetres(
+                "value",
+                entry && entry.recordType === "distance" ? entry.value : null
+              )}
+              defaultUnit={fieldDefaultDistanceUnit("value")}
+            />
           ) : (
             <input
               type="number"
@@ -234,7 +276,7 @@ export default function PersonalRecordFields({
                 "value",
                 defaultValue !== undefined ? String(defaultValue) : undefined
               )}
-              placeholder={`Value (${unit})`}
+              placeholder={`Value (${valueUnit})`}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}

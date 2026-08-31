@@ -14,10 +14,12 @@ export async function getExerciseCatalog() {
 
 /**
  * Fetches a single exercise by id, or null if it doesn't exist. Used by
- * the Personal Records write path (personal-records-actions.ts) to look
- * up `isHyroxStation` for a distance PR's exercise before converting the
- * user's imperial input to metres — see resolveDistanceInputUnit in
- * lib/units.ts.
+ * the Goals write path (goals-actions.ts) to look up `isHyroxStation` for
+ * a personal_record goal's target exercise, needed only to format the
+ * "already complete" rejection message (checkGoalNotAlreadyMet) — the
+ * actual distance conversion no longer needs it, since DistanceInput
+ * submits its unit explicitly (see convertDistanceInputToMetres in
+ * lib/units.ts).
  */
 export async function getExerciseById(id: string) {
   const [exercise] = await db.select().from(exercises).where(eq(exercises.id, id));

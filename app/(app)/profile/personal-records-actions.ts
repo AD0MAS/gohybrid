@@ -2,14 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { getExerciseById } from "@/lib/exercises";
 import {
   createPersonalRecordForUser,
   deletePersonalRecordForUser,
   updatePersonalRecordForUser,
 } from "@/lib/personal-records";
 import { validatePersonalRecordInput } from "@/lib/personal-records-validation";
-import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
+import {
+  convertDistanceInputToMetres,
+  convertWeightInputToKg,
+  DISTANCE_INPUT_UNITS,
+} from "@/lib/units";
+import { isOneOf } from "@/lib/workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
 import { echoFormValues } from "@/lib/form-state";
 
@@ -33,12 +37,17 @@ export type PersonalRecordFormState =
  * `current_date` — same ground truth used everywhere else date validity is
  * judged against "today".
  *
- * Under imperial, a weight record was typed in lb and a distance record in
- * ft (or m, if the chosen exercise is a HYROX station — see
- * resolveDistanceInputUnit in lib/units.ts, which the isHyroxStation
- * lookup below feeds). Both convert here, before validatePersonalRecordInput,
- * so the validator (and the database) only ever see metric — reps/time
- * never convert. Revalidates /profile on success.
+ * Under imperial, a weight record was typed in lb — convertWeightInputToKg
+ * still infers that from unitSystem, since the weight field has no unit
+ * selector of its own. A distance record instead carries its unit
+ * explicitly: DistanceInput (app/(app)/_components/DistanceInput.tsx)
+ * submits the typed number under "value" and the unit the user picked
+ * under "valueUnit" (m/km/ft/mi — DISTANCE_INPUT_UNITS in lib/units.ts),
+ * so convertDistanceInputToMetres converts using that submitted unit
+ * rather than inferring one. Both convert here, before
+ * validatePersonalRecordInput, so the validator (and the database) only
+ * ever see metric — reps/time never convert. Revalidates /profile on
+ * success.
  */
 export async function addPersonalRecord(
   _prevState: PersonalRecordFormState,
@@ -50,12 +59,7 @@ export async function addPersonalRecord(
   const exerciseId = formData.get("exerciseId");
   const recordType = formData.get("recordType");
   const rawValue = formData.get("value");
-
-  let isHyroxStation = false;
-  if (typeof exerciseId === "string" && exerciseId !== "") {
-    const exercise = await getExerciseById(exerciseId);
-    isHyroxStation = exercise?.isHyroxStation ?? false;
-  }
+  const rawValueUnit = formData.get("valueUnit");
 
   let value: unknown = rawValue;
   if (typeof rawValue === "string" && rawValue !== "") {
@@ -63,8 +67,11 @@ export async function addPersonalRecord(
     if (Number.isFinite(parsed)) {
       if (recordType === "weight") {
         value = convertWeightInputToKg(parsed, unitSystem);
-      } else if (recordType === "distance") {
-        value = convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      } else if (
+        recordType === "distance" &&
+        isOneOf(rawValueUnit, DISTANCE_INPUT_UNITS)
+      ) {
+        value = convertDistanceInputToMetres(parsed, rawValueUnit);
       }
     }
   }
@@ -117,12 +124,7 @@ export async function updatePersonalRecord(
   const exerciseId = formData.get("exerciseId");
   const recordType = formData.get("recordType");
   const rawValue = formData.get("value");
-
-  let isHyroxStation = false;
-  if (typeof exerciseId === "string" && exerciseId !== "") {
-    const exercise = await getExerciseById(exerciseId);
-    isHyroxStation = exercise?.isHyroxStation ?? false;
-  }
+  const rawValueUnit = formData.get("valueUnit");
 
   let value: unknown = rawValue;
   if (typeof rawValue === "string" && rawValue !== "") {
@@ -130,8 +132,11 @@ export async function updatePersonalRecord(
     if (Number.isFinite(parsed)) {
       if (recordType === "weight") {
         value = convertWeightInputToKg(parsed, unitSystem);
-      } else if (recordType === "distance") {
-        value = convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      } else if (
+        recordType === "distance" &&
+        isOneOf(rawValueUnit, DISTANCE_INPUT_UNITS)
+      ) {
+        value = convertDistanceInputToMetres(parsed, rawValueUnit);
       }
     }
   }

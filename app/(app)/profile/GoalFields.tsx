@@ -13,11 +13,14 @@ import {
 } from "@/db/schema";
 import type { Goal } from "@/lib/goals";
 import {
+  convertDistanceInputToMetres,
+  DISTANCE_INPUT_UNITS,
   formatBodyMetricValue,
   formatPersonalRecordValue,
-  resolveDistanceInputUnit,
-  toDistanceInputValue,
+  type DistanceInputUnit,
 } from "@/lib/units";
+import { isOneOf } from "@/lib/workouts-validation";
+import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
@@ -63,12 +66,14 @@ const DIRECTION_CHOICE_TYPES = new Set<
  *
  * targetValue's placeholder shows the unit the user is expected to type —
  * same resolution PersonalRecordFields uses for its own value input
- * (formatBodyMetricValue/formatPersonalRecordValue/resolveDistanceInputUnit
- * from lib/units.ts), which is why targetMetricType and targetRecordType
- * need their own local state here too (previously uncontrolled, since
- * nothing else depended on their current value). addGoal (goals-actions.ts)
- * does the actual imperial→metric conversion server-side — this component
- * only ever displays a unit, never converts a value.
+ * (formatBodyMetricValue/formatPersonalRecordValue from lib/units.ts, for
+ * every target except a distance personal_record, which renders
+ * DistanceInput's own unit <select> instead of a placeholder), which is why
+ * targetMetricType and targetRecordType need their own local state here too
+ * (previously uncontrolled, since nothing else depended on their current
+ * value). addGoal (goals-actions.ts) does the actual imperial→metric
+ * conversion server-side — this component only ever displays a unit, never
+ * converts a value.
  *
  * The form itself lives inside a Modal, opened by the button rendered
  * alongside it: `open` is local state, closed only once addGoal's state
@@ -91,17 +96,14 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * every field's local state seeded from `entry` instead of the create
  * defaults. `updateGoal.bind(null, entry.id)` is used as the form action
  * in place of addGoal — the bound function still matches useActionState's
- * (prevState, formData) signature. targetValue is seeded via
- * formatGoalValue (goal-labels.ts) for every goal_type except one: a
- * personal_record goal targeting "distance" must seed from
- * toDistanceInputValue instead (lib/units.ts), because formatGoalValue
- * delegates to formatPersonalRecordValue's DISPLAY unit (ft/mi, chosen per
- * value) while the input always reads back in the INPUT unit (always ft,
- * or m for a HYROX station — see resolveDistanceInputUnit). Seeding with
- * the display value under the input's unit label would silently corrupt
- * it on save. Every other goal_type has display and input agree (a weight
- * is always lb under imperial either way), so formatGoalValue is correct
- * for those.
+ * (prevState, formData) signature. targetValue is seeded via formatGoalValue
+ * (goal-labels.ts) for every goal_type except one: a personal_record goal
+ * targeting "distance" seeds DistanceInput's `defaultValueMetres` straight
+ * from `entry.targetValue` instead, since that's already metres (the DB's
+ * own storage) — formatGoalValue's DISPLAY unit (ft/mi, chosen per value)
+ * would need converting back, and DistanceInput needs metres in either
+ * case. Every other goal_type has no such split (a weight is always lb
+ * under imperial either way), so formatGoalValue is correct for those.
  *
  * A FAILED submit must leave every field showing exactly what the user
  * typed, not what `entry`/the empty-add defaults say — this needed two
@@ -140,9 +142,14 @@ const DIRECTION_CHOICE_TYPES = new Set<
  *    `entry`/the add-time default. DurationInput's hidden input already
  *    submits its composed value in whole seconds under the field's own
  *    name, so the echoed string needs no reparsing to become
- *    `defaultValueSeconds` — and since it's read from what was actually
- *    submitted (pre-conversion, in the user's own unit system for
- *    weight/distance), it's correct without adjustment for those too.
+ *    `defaultValueSeconds` — read from what was actually submitted
+ *    (pre-conversion, in the user's own unit system for weight), it's
+ *    correct without adjustment. DistanceInput submits two hidden inputs
+ *    (`targetValue` and `targetValueUnit` — see its own doc comment), so
+ *    `fieldDefaultDistanceMetres`/`fieldDefaultDistanceUnit` below read both
+ *    and re-derive metres via convertDistanceInputToMetres, pinning the
+ *    exact unit the user had selected via DistanceInput's `defaultUnit`
+ *    rather than letting it re-guess one from the recovered metres value.
  */
 export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsProps) {
   const [open, setOpen] = useState(false);
@@ -169,6 +176,28 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
     }
     return fallback;
   }
+  // DistanceInput's defaultValueMetres/defaultUnit counterparts — see the
+  // file-level doc comment's final paragraph for why the unit must be
+  // restored exactly, not re-derived from the recovered metres value.
+  function fieldDefaultDistanceMetres(
+    name: string,
+    fallback: number | null
+  ): number | null {
+    if (submitted && name in submitted) {
+      const raw = submitted[name];
+      const unit = submitted[`${name}Unit`];
+      if (raw === "" || !isOneOf(unit, DISTANCE_INPUT_UNITS)) return null;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed)
+        ? convertDistanceInputToMetres(parsed, unit)
+        : null;
+    }
+    return fallback;
+  }
+  function fieldDefaultDistanceUnit(name: string): DistanceInputUnit | undefined {
+    const unit = submitted?.[`${name}Unit`];
+    return isOneOf(unit, DISTANCE_INPUT_UNITS) ? unit : undefined;
+  }
   const [goalType, setGoalType] =
     useState<(typeof goalTypeEnum.enumValues)[number]>(
       entry?.goalType ?? "session_count"
@@ -193,15 +222,16 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
   const entryIsDistanceRecord =
     entry?.goalType === "personal_record" && entry.targetRecordType === "distance";
 
-  const defaultTargetValue = entry
-    ? entryIsDistanceRecord
-      ? toDistanceInputValue(entry.targetValue, unitSystem, isHyroxStation)
-      : formatGoalValue(entry, entry.targetValue, unitSystem).value
-    : undefined;
+  const defaultTargetValue =
+    entry && !entryIsDistanceRecord
+      ? formatGoalValue(entry, entry.targetValue, unitSystem).value
+      : undefined;
 
   const showDirectionChoice = DIRECTION_CHOICE_TYPES.has(goalType);
   const isTimeRecordGoal =
     goalType === "personal_record" && targetRecordType === "time";
+  const isDistanceRecordGoal =
+    goalType === "personal_record" && targetRecordType === "distance";
 
   function handleGoalTypeChange(
     value: (typeof goalTypeEnum.enumValues)[number]
@@ -224,15 +254,14 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
       valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
       break;
     case "personal_record": {
-      valueUnit =
-        targetRecordType === "distance"
-          ? resolveDistanceInputUnit(unitSystem, isHyroxStation)
-          : formatPersonalRecordValue(
-              targetRecordType,
-              0,
-              unitSystem,
-              isHyroxStation
-            ).unit;
+      // Unused when targetRecordType is "distance" — that case renders
+      // DistanceInput's own unit <select> instead of this placeholder.
+      valueUnit = formatPersonalRecordValue(
+        targetRecordType,
+        0,
+        unitSystem,
+        isHyroxStation
+      ).unit;
       break;
     }
   }
@@ -413,6 +442,18 @@ export default function GoalFields({ catalog, unitSystem, entry }: GoalFieldsPro
                 "targetValue",
                 defaultTargetValue ?? null
               )}
+            />
+          ) : isDistanceRecordGoal ? (
+            <DistanceInput
+              key={isHyroxStation ? "hyrox" : "standard"}
+              name="targetValue"
+              unitSystem={unitSystem}
+              isHyroxStation={isHyroxStation}
+              defaultValueMetres={fieldDefaultDistanceMetres(
+                "targetValue",
+                entry && entryIsDistanceRecord ? entry.targetValue : null
+              )}
+              defaultUnit={fieldDefaultDistanceUnit("targetValue")}
             />
           ) : (
             <input

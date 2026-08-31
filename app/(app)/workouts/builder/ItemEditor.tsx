@@ -1,4 +1,6 @@
 import type { Dispatch } from "react";
+import type { unitSystemEnum } from "@/db/schema";
+import DistanceInput from "../../_components/DistanceInput";
 import DurationInput from "../../_components/DurationInput";
 import ExercisePicker from "./ExercisePicker";
 import type {
@@ -18,6 +20,7 @@ type ItemEditorProps = {
   volumeTypeOptions: readonly VolumeType[];
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
+  unitSystem: (typeof unitSystemEnum.enumValues)[number];
   dispatch: Dispatch<BuilderAction>;
 };
 
@@ -25,7 +28,13 @@ type ItemEditorProps = {
  * Editor for a single item within a block: exercise selection (via
  * ExercisePicker), then sets, volume, target, weight, rest, and notes —
  * all optional except sets, which defaults to 1. Leaving volume_value
- * empty with a volume_type selected means "Open Ended". target_type +
+ * empty with a volume_type selected means "Open Ended". A distance
+ * volume_value renders DistanceInput in its controlled (valueMetres +
+ * onChange) mode, same as DurationInput for a duration one — item.volumeValue
+ * stays metres in builder state either way, so createFullWorkout/
+ * updateFullWorkout need no unit awareness of their own. `isHyroxStation` is
+ * looked up from `catalog` by the item's own exerciseId, same pattern as
+ * PersonalRecordFields/GoalFields. target_type +
  * target_value and target_preset are alternatives: picking one clears
  * the other (enforced by the reducer). Not a "use client" file itself —
  * see WorkoutBuilder for the single client boundary.
@@ -38,8 +47,13 @@ export default function ItemEditor({
   volumeTypeOptions,
   targetTypeOptions,
   targetPresetOptions,
+  unitSystem,
   dispatch,
 }: ItemEditorProps) {
+  const isHyroxStation =
+    catalog.find((exercise) => exercise.id === item.exerciseId)
+      ?.isHyroxStation ?? false;
+
   return (
     <li className="flex flex-col gap-2 rounded border border-hairline bg-surface-1 p-5">
       <p className="text-sm font-medium">Item {index + 1}</p>
@@ -105,6 +119,22 @@ export default function ItemEditor({
             <DurationInput
               maxUnit="hours"
               valueSeconds={item.volumeValue}
+              onChange={(value) =>
+                dispatch({
+                  type: "UPDATE_ITEM_FIELD",
+                  blockId,
+                  itemId: item.id,
+                  field: "volumeValue",
+                  value,
+                })
+              }
+            />
+          ) : item.volumeType === "distance" ? (
+            <DistanceInput
+              key={isHyroxStation ? "hyrox" : "standard"}
+              unitSystem={unitSystem}
+              isHyroxStation={isHyroxStation}
+              valueMetres={item.volumeValue}
               onChange={(value) =>
                 dispatch({
                   type: "UPDATE_ITEM_FIELD",

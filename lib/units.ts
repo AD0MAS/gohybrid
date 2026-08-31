@@ -13,6 +13,19 @@ type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
 const KG_PER_LB = 0.45359237;
 const METRES_PER_FOOT = 0.3048;
 const METRES_PER_MILE = 1609.344;
+const METRES_PER_KM = 1000;
+
+/**
+ * The units DistanceInput's own <select> offers — metric (m, km) or
+ * imperial (ft, mi), chosen by the user rather than inferred from the
+ * value (see convertDistanceInputToMetres below). Exported so both
+ * DistanceInput (app/(app)/_components/DistanceInput.tsx) and the Server
+ * Actions that read its submitted unit off FormData (addPersonalRecord,
+ * updatePersonalRecord, addGoal, updateGoal) validate against the same
+ * list via isOneOf.
+ */
+export const DISTANCE_INPUT_UNITS = ["m", "km", "ft", "mi"] as const;
+export type DistanceInputUnit = (typeof DISTANCE_INPUT_UNITS)[number];
 
 // Below this, a distance reads more naturally in feet than miles; at or
 // above it, miles. Applied to the METRIC value, before any conversion —
@@ -43,12 +56,16 @@ export function milesToMetres(mi: number): number {
   return mi * METRES_PER_MILE;
 }
 
-function round1(value: number): number {
-  return Math.round(value * 10) / 10;
+export function metresToKm(m: number): number {
+  return m / METRES_PER_KM;
 }
 
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
+export function kmToMetres(km: number): number {
+  return km * METRES_PER_KM;
+}
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
 }
 
 export type DisplayValue = {
@@ -193,25 +210,6 @@ export function formatPersonalRecordValueText(
 }
 
 /**
- * The unit a distance personal-record INPUT is entered in — deliberately
- * simpler than formatDistanceMetres' three-way display rule (m/ft/mi):
- * the person typing a value doesn't yet know what it'll convert to, so
- * there's no sensible way to offer them a threshold-dependent choice.
- * Under imperial, every distance is entered in feet unless the chosen
- * exercise is a HYROX station, in which case metres (official HYROX
- * distances are always metric); under metric, always metres. Shared by
- * the Personal Records form (for its input placeholder) and its Server
- * Action (for the actual conversion), so the two can't drift apart — same
- * principle as the shared validators.
- */
-export function resolveDistanceInputUnit(
-  unitSystem: UnitSystem,
-  isHyroxStation: boolean
-): "m" | "ft" {
-  return unitSystem === "imperial" && !isHyroxStation ? "ft" : "m";
-}
-
-/**
  * Converts a weight value the user typed into the metric kg the database
  * stores. Identity under metric. The write-side counterpart to
  * formatWeightKg — call this in the Server Action, before validation;
@@ -227,44 +225,30 @@ export function convertWeightInputToKg(
 
 /**
  * Converts a distance value the user typed into the metric metres the
- * database stores, per resolveDistanceInputUnit's unit choice. The
- * write-side counterpart to formatDistanceMetres — call this in the
- * Server Action, before validation.
+ * database stores, given the unit they explicitly picked in DistanceInput's
+ * own <select> (app/(app)/_components/DistanceInput.tsx) — never inferred
+ * from unitSystem/isHyroxStation the way weight's convertWeightInputToKg
+ * still is. DistanceInput itself calls this for its controlled
+ * (valueMetres/onChange) mode; the Server Actions call it a second time for
+ * uncontrolled forms, using the unit submitted alongside the value in the
+ * `${name}Unit` hidden input, before validation. See DistanceInput's doc
+ * comment for why the input unit can't be inferred the way formatDistanceMetres
+ * infers a *display* unit (the old resolveDistanceInputUnit/toDistanceInputValue
+ * approach this replaced caused a silent corruption bug precisely because the
+ * two didn't agree).
  */
 export function convertDistanceInputToMetres(
   value: number,
-  unitSystem: UnitSystem,
-  isHyroxStation: boolean
+  unit: DistanceInputUnit
 ): number {
-  return resolveDistanceInputUnit(unitSystem, isHyroxStation) === "ft"
-    ? feetToMetres(value)
-    : value;
-}
-
-/**
- * The read-side counterpart to convertDistanceInputToMetres: converts a
- * stored metric value into whatever unit resolveDistanceInputUnit reports
- * for the same unitSystem/isHyroxStation pair, for seeding a distance
- * input's value when editing an existing record/goal.
- *
- * This is deliberately NOT formatDistanceMetres. Display and input units
- * are different concepts for distance: formatDistanceMetres picks ft vs.
- * mi per value (a 1000 m threshold), because that's what reads naturally
- * on a list; resolveDistanceInputUnit is threshold-free (always ft, or m
- * for a HYROX station), because a value typed into an input is converted
- * with that same fixed unit on submit — see convertDistanceInputToMetres.
- * Seeding an input's value with the display unit but labelling it with the
- * input unit silently corrupts the value on save (e.g. a stored 4877 m
- * displays as "3 mi", but re-submitting "3" under the input's "ft" label
- * converts to ~0.9 m). Anything seeding a distance form field must use
- * this function, never formatDistanceMetres.
- */
-export function toDistanceInputValue(
-  metres: number,
-  unitSystem: UnitSystem,
-  isHyroxStation: boolean
-): number {
-  return resolveDistanceInputUnit(unitSystem, isHyroxStation) === "ft"
-    ? round2(metresToFeet(metres))
-    : round2(metres);
+  switch (unit) {
+    case "m":
+      return value;
+    case "km":
+      return kmToMetres(value);
+    case "ft":
+      return feetToMetres(value);
+    case "mi":
+      return milesToMetres(value);
+  }
 }

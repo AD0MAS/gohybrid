@@ -14,7 +14,12 @@ import {
   type GoalTarget,
 } from "@/lib/goals";
 import { validateGoalInput, type ValidatedGoalInput } from "@/lib/goals-validation";
-import { convertDistanceInputToMetres, convertWeightInputToKg } from "@/lib/units";
+import {
+  convertDistanceInputToMetres,
+  convertWeightInputToKg,
+  DISTANCE_INPUT_UNITS,
+} from "@/lib/units";
+import { isOneOf } from "@/lib/workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
 import { echoFormValues } from "@/lib/form-state";
 import { formatGoalValueText } from "./goal-labels";
@@ -133,10 +138,14 @@ async function checkGoalNotAlreadyMet(
  * boundary.
  *
  * Under imperial, a body_metric weight goal's targetValue was typed in lb,
- * and a personal_record goal's in lb (weight) or ft/m (distance — see
- * resolveDistanceInputUnit in lib/units.ts, fed by the same isHyroxStation
- * lookup the Personal Records write path uses). session_count and streak
- * goals never convert. targetValue goes through convertGoalValue, before
+ * and a personal_record weight goal's the same — convertWeightInputToKg
+ * still infers lb from unitSystem for both, since neither has a unit
+ * selector of its own. A personal_record distance goal instead carries its
+ * unit explicitly, the same way a distance personal record does: DistanceInput
+ * submits the typed number under "targetValue" and the unit under
+ * "targetValueUnit" (m/km/ft/mi), and convertGoalValue converts using that
+ * submitted unit rather than inferring one. session_count and streak goals
+ * never convert. targetValue goes through convertGoalValue, before
  * validateGoalInput, so the validator (and the database) only ever see
  * metric — same principle as addBodyMetric/addPersonalRecord.
  *
@@ -169,6 +178,8 @@ export async function addGoal(
     isHyroxStation = exercise?.isHyroxStation ?? false;
   }
 
+  const targetValueUnit = formData.get("targetValueUnit");
+
   function convertGoalValue(raw: FormDataEntryValue | null): unknown {
     if (typeof raw !== "string" || raw === "") return raw;
     const parsed = Number(raw);
@@ -181,8 +192,11 @@ export async function addGoal(
       if (targetRecordType === "weight") {
         return convertWeightInputToKg(parsed, unitSystem);
       }
-      if (targetRecordType === "distance") {
-        return convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      if (
+        targetRecordType === "distance" &&
+        isOneOf(targetValueUnit, DISTANCE_INPUT_UNITS)
+      ) {
+        return convertDistanceInputToMetres(parsed, targetValueUnit);
       }
     }
     return parsed;
@@ -306,6 +320,8 @@ export async function updateGoal(
     isHyroxStation = exercise?.isHyroxStation ?? false;
   }
 
+  const targetValueUnit = formData.get("targetValueUnit");
+
   function convertGoalValue(raw: FormDataEntryValue | null): unknown {
     if (typeof raw !== "string" || raw === "") return raw;
     const parsed = Number(raw);
@@ -318,8 +334,11 @@ export async function updateGoal(
       if (targetRecordType === "weight") {
         return convertWeightInputToKg(parsed, unitSystem);
       }
-      if (targetRecordType === "distance") {
-        return convertDistanceInputToMetres(parsed, unitSystem, isHyroxStation);
+      if (
+        targetRecordType === "distance" &&
+        isOneOf(targetValueUnit, DISTANCE_INPUT_UNITS)
+      ) {
+        return convertDistanceInputToMetres(parsed, targetValueUnit);
       }
     }
     return parsed;
