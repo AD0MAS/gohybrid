@@ -11,6 +11,8 @@ import {
   unitSystemEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
+import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
 import type { Goal } from "@/lib/goals";
 import {
   convertDistanceInputToMetres,
@@ -28,7 +30,7 @@ import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
 
-type CatalogExercise = { id: string; name: string; isHyroxStation: boolean };
+type CatalogExercise = GroupableExercise;
 
 type GoalFieldsProps = {
   catalog: CatalogExercise[];
@@ -128,10 +130,13 @@ export default function GoalFields({
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
   const [errorActive, setErrorActive] = useState(false);
+  const [successCount, setSuccessCount] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
-    if (state.status === "success") setOpen(false);
-    else if (state.status === "error") {
+    if (state.status === "success") {
+      setOpen(false);
+      setSuccessCount((count) => count + 1);
+    } else if (state.status === "error") {
       setFormKey((key) => key + 1);
       setErrorActive(true);
     }
@@ -146,6 +151,7 @@ export default function GoalFields({
 
   return (
     <>
+      <FormSuccessBanner trigger={successCount} />
       {entry ? (
         <button
           type="button"
@@ -523,10 +529,14 @@ function GoalFormFields({
                 ))}
               </optgroup>
             )}
-            {catalog.map((exercise) => (
-              <option key={exercise.id} value={exercise.id}>
-                {exercise.name}
-              </option>
+            {groupExercisesForSelect(catalog).map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.exercises.map((exercise) => (
+                  <option key={exercise.id} value={exercise.id}>
+                    {exercise.name}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
 
@@ -653,12 +663,10 @@ function GoalFormFields({
         <p className="text-sm text-danger">{state.error}</p>
       )}
 
-      <button
-        type="submit"
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
+      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add goal"}
-      </button>
+      </SubmitButton>
+      <FormPendingBanner />
     </form>
   );
 }

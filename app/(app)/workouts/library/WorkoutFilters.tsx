@@ -213,7 +213,11 @@ export default function WorkoutFilters({
         )}
 
         {hasActiveFilters && (
-          <button type="button" onClick={clearFilters} className="text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
             Clear filters
           </button>
         )}

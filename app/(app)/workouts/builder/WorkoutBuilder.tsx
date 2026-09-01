@@ -2,6 +2,7 @@
 
 import { useReducer, useState } from "react";
 import type { unitSystemEnum } from "@/db/schema";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
@@ -76,6 +77,19 @@ type WorkoutBuilderProps = {
  * this file never bundles drizzle-orm into the client. This is the
  * single "use client" boundary for the builder; BlockEditor is a plain
  * function component rendered from here, not its own client boundary.
+ *
+ * The whole tree is wrapped in a <form action={handleSave}> (rather than a
+ * plain <div> with an onClick'd Save button) purely to give useFormStatus
+ * something to read: SubmitButton/FormPendingBanner (app/_components/
+ * FormStatus.tsx) need a <form> ancestor to report pending state from.
+ * handleSave takes no parameters — React calls a form action with the
+ * submitted FormData, but every field here is controlled via the reducer
+ * and none of them carry a `name`, so there'd be nothing in it to read.
+ * No BlockEditor/ItemEditor button is `type="submit"`, so pressing Enter
+ * in a text field is the only new way to trigger it. No FormSuccessBanner: both
+ * createFullWorkout and updateFullWorkout redirect() on success, so the
+ * component unmounts before any success state could render — same
+ * reasoning as SettingsFields.
  */
 export default function WorkoutBuilder({
   primaryTypeOptions,
@@ -129,7 +143,7 @@ export default function WorkoutBuilder({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <form action={handleSave} className="flex flex-col gap-6">
       <fieldset className="flex flex-col gap-3">
         <legend className="font-medium">Workout</legend>
 
@@ -301,13 +315,10 @@ export default function WorkoutBuilder({
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
+      <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         Save
-      </button>
-    </div>
+      </SubmitButton>
+      <FormPendingBanner />
+    </form>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { unitSystemEnum } from "@/db/schema";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { saveSettings, type SettingsFormState } from "./actions";
 
 type SettingsFieldsProps = {
@@ -92,12 +93,15 @@ export default function SettingsFields({
 
       {state.error && <p className="text-sm text-danger">{state.error}</p>}
 
-      <button
-        type="submit"
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
+      {/* No FormSuccessBanner here: saveSettings redirects to /profile on
+          success (see actions.ts), so useActionState's state never actually
+          resolves to a "saved" value — the redirect itself is the success
+          feedback. The pending banner still matters: it covers the gap
+          between clicking Save and that redirect landing. */}
+      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         Save
-      </button>
+      </SubmitButton>
+      <FormPendingBanner />
     </form>
   );
 }

@@ -2,6 +2,13 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { exercises } from "@/db/schema";
 
+// groupExercisesForSelect/GroupableExercise/ExerciseSelectGroup live in
+// lib/exercise-groups.ts instead of here, even though this file is their
+// natural conceptual home — this module imports `db`, and PersonalRecordFields/
+// GoalFields/ExercisePicker are client components that need the grouping
+// helper without pulling Drizzle/`postgres` into the browser bundle. See
+// that file's own top-of-file comment.
+
 /**
  * Fetches the full exercise catalog, ordered by name. The catalog is
  * small (currently ~43 rows) and not user-scoped, so callers — the

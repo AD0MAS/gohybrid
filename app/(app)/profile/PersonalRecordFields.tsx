@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
+import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
 import type { PersonalRecord } from "@/lib/personal-records";
 import {
   convertDistanceInputToMetres,
@@ -21,7 +23,7 @@ import {
   type PersonalRecordFormState,
 } from "./personal-records-actions";
 
-type CatalogExercise = { id: string; name: string; isHyroxStation: boolean };
+type CatalogExercise = GroupableExercise;
 
 type PersonalRecordFieldsProps = {
   catalog: CatalogExercise[];
@@ -120,10 +122,13 @@ export default function PersonalRecordFields({
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
   const [errorActive, setErrorActive] = useState(false);
+  const [successCount, setSuccessCount] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
-    if (state.status === "success") setOpen(false);
-    else if (state.status === "error") {
+    if (state.status === "success") {
+      setOpen(false);
+      setSuccessCount((count) => count + 1);
+    } else if (state.status === "error") {
       setFormKey((key) => key + 1);
       setErrorActive(true);
     }
@@ -140,6 +145,7 @@ export default function PersonalRecordFields({
 
   return (
     <>
+      <FormSuccessBanner trigger={successCount} />
       {entry ? (
         <button
           type="button"
@@ -388,10 +394,14 @@ function PersonalRecordFormFields({
             ))}
           </optgroup>
         )}
-        {catalog.map((exercise) => (
-          <option key={exercise.id} value={exercise.id}>
-            {exercise.name}
-          </option>
+        {groupExercisesForSelect(catalog).map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.exercises.map((exercise) => (
+              <option key={exercise.id} value={exercise.id}>
+                {exercise.name}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
 
@@ -484,12 +494,10 @@ function PersonalRecordFormFields({
         <p className="text-sm text-danger">{state.error}</p>
       )}
 
-      <button
-        type="submit"
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
+      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add record"}
-      </button>
+      </SubmitButton>
+      <FormPendingBanner />
     </form>
   );
 }

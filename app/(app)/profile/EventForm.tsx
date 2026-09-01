@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
+import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import Modal from "../_components/Modal";
 import { EVENT_TYPE_LABELS } from "./event-labels";
@@ -86,10 +87,13 @@ export default function EventForm({ entry }: EventFormProps) {
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
   const [errorActive, setErrorActive] = useState(false);
+  const [successCount, setSuccessCount] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
-    if (state.status === "success") setOpen(false);
-    else if (state.status === "error") {
+    if (state.status === "success") {
+      setOpen(false);
+      setSuccessCount((count) => count + 1);
+    } else if (state.status === "error") {
       setFormKey((key) => key + 1);
       setErrorActive(true);
     }
@@ -108,6 +112,7 @@ export default function EventForm({ entry }: EventFormProps) {
 
   return (
     <>
+      <FormSuccessBanner trigger={successCount} />
       {entry ? (
         <button
           type="button"
@@ -179,12 +184,10 @@ export default function EventForm({ entry }: EventFormProps) {
             <p className="text-sm text-danger">{visibleState.error}</p>
           )}
 
-          <button
-            type="submit"
-            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
+          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             {entry ? "Save" : "Add event"}
-          </button>
+          </SubmitButton>
+          <FormPendingBanner />
         </form>
       </Modal>
     </>

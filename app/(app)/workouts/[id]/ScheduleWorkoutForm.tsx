@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
 import Modal from "../../_components/Modal";
 import type { ScheduleFormState } from "../actions";
 
@@ -63,10 +64,13 @@ export default function ScheduleWorkoutForm({
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
   const [errorActive, setErrorActive] = useState(false);
+  const [successCount, setSuccessCount] = useState(0);
   if (state !== prevState) {
     setPrevState(state);
-    if (state.status === "success") setOpen(false);
-    else if (state.status === "error") {
+    if (state.status === "success") {
+      setOpen(false);
+      setSuccessCount((count) => count + 1);
+    } else if (state.status === "error") {
       setFormKey((key) => key + 1);
       setErrorActive(true);
     }
@@ -85,6 +89,7 @@ export default function ScheduleWorkoutForm({
 
   return (
     <>
+      <FormSuccessBanner trigger={successCount} />
       <button
         type="button"
         onClick={openFresh}
@@ -134,12 +139,10 @@ export default function ScheduleWorkoutForm({
             <p className="text-sm text-danger">{visibleState.error}</p>
           )}
 
-          <button
-            type="submit"
-            className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
+          <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Schedule
-          </button>
+          </SubmitButton>
+          <FormPendingBanner />
         </form>
       </Modal>
     </>

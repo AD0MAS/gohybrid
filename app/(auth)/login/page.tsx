@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signIn } from "../actions";
 
 export default async function LoginPage(props: PageProps<"/login">) {
@@ -36,12 +37,10 @@ export default async function LoginPage(props: PageProps<"/login">) {
             />
           </label>
 
-          <button
-            type="submit"
-            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
+          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Log in
-          </button>
+          </SubmitButton>
+          <FormPendingBanner />
         </form>
 
         <p className="text-sm text-ink-subtle">
