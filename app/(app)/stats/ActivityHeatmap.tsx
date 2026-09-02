@@ -49,6 +49,14 @@ const VIEW_HEIGHT = GRID_HEIGHT + MONTH_LABEL_HEIGHT;
  * column (see getHeatmapRange: `to` is always today, so today's cell is
  * always in the last column, never the first — no left-side margin needed). */
 const TODAY_STROKE_MARGIN = 2;
+/**
+ * Room reserved past the last column for a month label anchored there.
+ * Labels are drawn with textAnchor="start" at the column's own x, so a
+ * label starting in the rightmost column (e.g. "Sep" when the 1st of a
+ * month falls in the final week) extends past it rather than before it —
+ * wide enough for a 3-letter abbreviation at fontSize 9.
+ */
+const MONTH_LABEL_MARGIN = 18;
 
 type HeatmapGridProps = {
   columns: HeatmapColumn[];
@@ -68,7 +76,10 @@ type HeatmapGridProps = {
  */
 function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
   const viewWidth =
-    LABEL_WIDTH + columns.length * STEP - GAP + TODAY_STROKE_MARGIN;
+    LABEL_WIDTH +
+    columns.length * STEP -
+    GAP +
+    Math.max(TODAY_STROKE_MARGIN, MONTH_LABEL_MARGIN);
 
   return (
     <svg
@@ -114,10 +125,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
               stroke={isToday ? "var(--color-accent)" : "none"}
               strokeWidth={isToday ? 1.25 : 0}
             >
-              <title>
-                {formatDayHeading(cell.date)} — {cell.count} session
-                {cell.count === 1 ? "" : "s"}
-              </title>
+              <title>{`${formatDayHeading(cell.date)} — ${cell.count} session${cell.count === 1 ? "" : "s"}`}</title>
             </rect>
           );
         })

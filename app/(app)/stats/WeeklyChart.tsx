@@ -116,10 +116,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                   fill="var(--color-accent)"
                 />
               )}
-              <title>
-                Week of {formatDayMonthShort(bar.weekStart)} — {bar.count}{" "}
-                session{bar.count === 1 ? "" : "s"}
-              </title>
+              <title>{`Week of ${formatDayMonthShort(bar.weekStart)} — ${bar.count} session${bar.count === 1 ? "" : "s"}`}</title>
               <text
                 x={x + barWidth / 2}
                 y={PLOT_BOTTOM + 14}

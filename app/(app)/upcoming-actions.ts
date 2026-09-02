@@ -45,12 +45,18 @@ export async function markScheduledWorkoutSkipped(
  * finishWorkout goes through, so the created session has the identical
  * shape (snapshot columns, no status field) regardless of entry point.
  *
- * The session's completed_at is noon on the entry's own scheduledDate in
- * the user's timezone (toNoonInstant, lib/timezone.ts), not "now" — the
- * user is recording that a past (or today's) plan got done, and stamping it
- * with the current instant would put a workout actually done on Tuesday
- * into Thursday's heatmap cell and streak the moment this button is
- * clicked days later.
+ * The session's completed_at depends on which day is being completed:
+ * - entry.scheduledDate is today (in the user's timezone) → now(), the real
+ *   completion instant, since it's genuinely known.
+ * - otherwise (a past-dated plan) → noon on the entry's own scheduledDate
+ *   (toNoonInstant, lib/timezone.ts), because the actual time of day is
+ *   unknown, and stamping it with the current instant would put a workout
+ *   actually done on Tuesday into Thursday's heatmap cell and streak the
+ *   moment this button is clicked days later.
+ *
+ * `today` comes from getUserContext, the same source already used below for
+ * `timezone` — never computed separately, so this comparison and
+ * toNoonInstant always agree on what day it is.
  *
  * Links directly to this exact scheduled_workouts id (SessionLinkTarget's
  * "specific" case) rather than searching by date — unlike finishWorkout,
@@ -70,8 +76,11 @@ export async function markScheduledWorkoutDone(id: string) {
     throw new Error("This scheduled workout is already marked done.");
   }
 
-  const { timezone } = await getUserContext(user.id);
-  const completedAt = await toNoonInstant(entry.scheduledDate, timezone);
+  const { today, timezone } = await getUserContext(user.id);
+  const completedAt =
+    entry.scheduledDate === today
+      ? new Date()
+      : await toNoonInstant(entry.scheduledDate, timezone);
 
   const session = await createSessionForWorkout(
     user.id,
