@@ -97,6 +97,20 @@ type WorkoutBuilderProps = {
  * createFullWorkout and updateFullWorkout redirect() on success, so the
  * component unmounts before any success state could render — same
  * reasoning as SettingsFields.
+ *
+ * `noValidate` on the <form> is required, not cosmetic: BlockEditor's Rounds
+ * input is natively `required` for on_off/emom, and Modal never unmounts a
+ * closed block's fields (see Modal.tsx) — it only hides them via the native
+ * dialog:not([open]) { display: none } rule. A `required`-and-empty field
+ * that becomes unrenderable this way is still a submission candidate per
+ * the HTML spec (display:none isn't one of the listed bar-from-validation
+ * reasons), but isn't focusable either, so the browser silently aborts the
+ * submit event instead of showing its usual validation bubble — handleSave
+ * never runs, and whatever saveError was already on screen just sits there
+ * unchanged, looking exactly like a stale error message. `noValidate`
+ * removes native constraint validation from the picture entirely, leaving
+ * validateBuilderPayload as the only thing that ever decides whether Save
+ * succeeds — which was already the intent (see above).
  */
 export default function WorkoutBuilder({
   primaryTypeOptions,
@@ -124,8 +138,19 @@ export default function WorkoutBuilder({
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  /** The most recently ADD_BLOCK-ed block's id, so that block's
+   * BlockEditor can auto-open its modal once. Generated here (not by the
+   * reducer) so it's known in the same tick as the dispatch — see
+   * AddBlockAction's doc comment in reducer.ts. */
+  const [lastAddedBlockId, setLastAddedBlockId] = useState<string | null>(null);
 
+  /** Clears saveError up front, before validation runs, rather than only
+   * ever overwriting it in the failure branch below — belt-and-braces
+   * alongside the <form>'s `noValidate` above, so a message from a
+   * previous attempt can never survive a run that produces no message of
+   * its own. */
   async function handleSave() {
+    setSaveError(null);
     setIsSaving(true);
     const payload = toBuilderPayload(state);
     const result = validateBuilderPayload(payload, {
@@ -143,7 +168,6 @@ export default function WorkoutBuilder({
       return;
     }
 
-    setSaveError(null);
     const response = workoutId
       ? await updateFullWorkout(workoutId, payload)
       : await createFullWorkout(payload);
@@ -155,6 +179,7 @@ export default function WorkoutBuilder({
 
   return (
     <form
+      noValidate
       onSubmit={(e) => {
         e.preventDefault();
         handleSave();
@@ -307,6 +332,7 @@ export default function WorkoutBuilder({
               key={block.id}
               block={block}
               index={index}
+              autoOpen={block.id === lastAddedBlockId}
               blockTypeOptions={blockTypeOptions}
               catalog={exerciseCatalog}
               volumeTypeOptions={volumeTypeOptions}
@@ -320,7 +346,11 @@ export default function WorkoutBuilder({
 
         <button
           type="button"
-          onClick={() => dispatch({ type: "ADD_BLOCK" })}
+          onClick={() => {
+            const id = crypto.randomUUID();
+            setLastAddedBlockId(id);
+            dispatch({ type: "ADD_BLOCK", id });
+          }}
           className="flex h-11 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add block
