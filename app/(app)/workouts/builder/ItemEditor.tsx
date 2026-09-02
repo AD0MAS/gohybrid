@@ -89,7 +89,7 @@ export default function ItemEditor({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        Volume type
+        Volume type <span className="text-xs text-ink-subtle">(optional)</span>
         <select
           value={item.volumeType}
           onChange={(e) =>
@@ -114,7 +114,8 @@ export default function ItemEditor({
 
       {item.volumeType !== "" && (
         <label className="flex flex-col gap-1 text-sm">
-          Volume value (leave empty for Open Ended)
+          Volume value (leave empty for Open Ended){" "}
+          <span className="text-xs text-ink-subtle">(optional)</span>
           {item.volumeType === "duration" ? (
             <DurationInput
               maxUnit="hours"
@@ -167,7 +168,7 @@ export default function ItemEditor({
       )}
 
       <label className="flex flex-col gap-1 text-sm">
-        Target preset
+        Target preset <span className="text-xs text-ink-subtle">(optional)</span>
         <select
           value={item.targetPreset}
           onChange={(e) =>
@@ -195,7 +196,7 @@ export default function ItemEditor({
       </p>
 
       <label className="flex flex-col gap-1 text-sm">
-        Target type
+        Target type <span className="text-xs text-ink-subtle">(optional)</span>
         <select
           value={item.targetType}
           onChange={(e) =>
@@ -220,7 +221,7 @@ export default function ItemEditor({
 
       {item.targetType !== "" && (
         <label className="flex flex-col gap-1 text-sm">
-          Target value
+          Target value <span className="text-xs text-ink-subtle">(optional)</span>
           <input
             type="number"
             step="any"
@@ -240,7 +241,7 @@ export default function ItemEditor({
       )}
 
       <label className="flex flex-col gap-1 text-sm">
-        Weight in kg
+        Weight in kg <span className="text-xs text-ink-subtle">(optional)</span>
         <input
           type="number"
           min={0}
@@ -260,7 +261,7 @@ export default function ItemEditor({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        Rest
+        Rest <span className="text-xs text-ink-subtle">(optional)</span>
         <DurationInput
           maxUnit="minutes"
           valueSeconds={item.restSeconds}
@@ -277,7 +278,7 @@ export default function ItemEditor({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        Notes
+        Notes <span className="text-xs text-ink-subtle">(optional)</span>
         <textarea
           value={item.notes}
           onChange={(e) =>

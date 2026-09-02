@@ -49,6 +49,52 @@ export function SubmitButton({
 }
 
 /**
+ * Prop-driven counterpart to FormPendingBanner, for a <form> that isn't a
+ * React 19 Action (i.e. uses onSubmit instead of action) — useFormStatus
+ * only reports pending state for a <form action={...}>, so a form driven by
+ * a plain client function has no hook to read and passes its own pending
+ * state in instead. A separate component rather than an optional prop on
+ * FormPendingBanner itself, so every existing action-based call site is
+ * untouched by this addition.
+ */
+export function PendingBanner({
+  pending,
+  label = "Saving…",
+}: {
+  pending: boolean;
+  label?: string;
+}) {
+  if (!pending) return null;
+
+  return (
+    <p role="status" className={`${BANNER_CLASSES} border-hairline-strong bg-surface-2 text-ink`}>
+      {label}
+    </p>
+  );
+}
+
+/**
+ * Prop-driven counterpart to SubmitButton, for the same non-Action <form>
+ * case as PendingBanner above — disables itself from the caller's own
+ * pending state instead of useFormStatus.
+ */
+export function PendingSubmitButton({
+  pending,
+  children,
+  className,
+}: {
+  pending: boolean;
+  children: React.ReactNode;
+  className: string;
+}) {
+  return (
+    <button type="submit" disabled={pending} className={className}>
+      {children}
+    </button>
+  );
+}
+
+/**
  * Brief "Saved" confirmation for the success half of a form submission —
  * the same fixed-bottom position as FormPendingBanner, so it reads as that
  * banner turning into a confirmation, then disappears on its own after two

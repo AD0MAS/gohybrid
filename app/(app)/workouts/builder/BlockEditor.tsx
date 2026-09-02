@@ -60,7 +60,7 @@ export default function BlockEditor({
       <p className="text-sm font-medium">Block {index + 1}</p>
 
       <label className="flex flex-col gap-1 text-sm">
-        Title (optional)
+        Title <span className="text-xs text-ink-subtle">(optional)</span>
         <input
           type="text"
           value={block.title}
@@ -100,8 +100,10 @@ export default function BlockEditor({
 
       {(block.blockType === "for_time" || block.blockType === "amrap") && (
         <label className="flex flex-col gap-1 text-sm">
-          Duration
-          {block.blockType === "for_time" ? " (optional)" : ""}
+          Duration{" "}
+          {block.blockType === "for_time" && (
+            <span className="text-xs text-ink-subtle">(optional)</span>
+          )}
           <DurationInput
             key={block.blockType}
             maxUnit="hours"
@@ -122,8 +124,10 @@ export default function BlockEditor({
         block.blockType === "on_off" ||
         block.blockType === "emom") && (
         <label className="flex flex-col gap-1 text-sm">
-          Rounds
-          {block.blockType === "for_time" ? " (optional)" : ""}
+          Rounds{" "}
+          {block.blockType === "for_time" && (
+            <span className="text-xs text-ink-subtle">(optional)</span>
+          )}
           <input
             type="number"
             min={1}

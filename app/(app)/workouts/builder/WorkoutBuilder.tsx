@@ -2,7 +2,7 @@
 
 import { useReducer, useState } from "react";
 import type { unitSystemEnum } from "@/db/schema";
-import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
+import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
@@ -78,15 +78,22 @@ type WorkoutBuilderProps = {
  * single "use client" boundary for the builder; BlockEditor is a plain
  * function component rendered from here, not its own client boundary.
  *
- * The whole tree is wrapped in a <form action={handleSave}> (rather than a
- * plain <div> with an onClick'd Save button) purely to give useFormStatus
- * something to read: SubmitButton/FormPendingBanner (app/_components/
- * FormStatus.tsx) need a <form> ancestor to report pending state from.
- * handleSave takes no parameters — React calls a form action with the
- * submitted FormData, but every field here is controlled via the reducer
- * and none of them carry a `name`, so there'd be nothing in it to read.
- * No BlockEditor/ItemEditor button is `type="submit"`, so pressing Enter
- * in a text field is the only new way to trigger it. No FormSuccessBanner: both
+ * The whole tree is wrapped in a <form onSubmit={...}> (rather than a plain
+ * <div> with an onClick'd Save button) purely for semantics and so pressing
+ * Enter in a text field submits — not a React 19 Action: every field here
+ * is controlled via the reducer and none of them carry a `name`, so
+ * FormData has nothing to read, and `action={handleSave}` was tried and
+ * reverted — React calls the native form.reset() as the last DOM operation
+ * of every Action's commit (success or failure), which silently wiped
+ * controlled inputs on a failed save even though the reducer state was
+ * untouched. onSubmit only calls preventDefault + handleSave, so no such
+ * reset ever runs. Pending state is therefore a plain `isSaving` state
+ * variable instead of useFormStatus (which only reports on a <form
+ * action={...}>) — see PendingBanner/PendingSubmitButton (app/_components/
+ * FormStatus.tsx), the prop-driven counterparts to FormPendingBanner/
+ * SubmitButton kept for this reason. No BlockEditor/ItemEditor button is
+ * `type="submit"`, so pressing Enter in a text field is the only other way
+ * to trigger it. No FormSuccessBanner: both
  * createFullWorkout and updateFullWorkout redirect() on success, so the
  * component unmounts before any success state could render — same
  * reasoning as SettingsFields.
@@ -116,8 +123,10 @@ export default function WorkoutBuilder({
         : createInitialBuilderState()
   );
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   async function handleSave() {
+    setIsSaving(true);
     const payload = toBuilderPayload(state);
     const result = validateBuilderPayload(payload, {
       primaryTypeOptions,
@@ -130,6 +139,7 @@ export default function WorkoutBuilder({
 
     if (!result.success) {
       setSaveError(result.error);
+      setIsSaving(false);
       return;
     }
 
@@ -139,11 +149,18 @@ export default function WorkoutBuilder({
       : await createFullWorkout(payload);
     if (response?.error) {
       setSaveError(response.error);
+      setIsSaving(false);
     }
   }
 
   return (
-    <form action={handleSave} className="flex flex-col gap-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSave();
+      }}
+      className="flex flex-col gap-6"
+    >
       <fieldset className="flex flex-col gap-3">
         <legend className="font-medium">Workout</legend>
 
@@ -165,7 +182,7 @@ export default function WorkoutBuilder({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Description
+          Description <span className="text-xs text-ink-subtle">(optional)</span>
           <textarea
             value={state.meta.description}
             onChange={(e) =>
@@ -230,7 +247,8 @@ export default function WorkoutBuilder({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Estimated duration in minutes
+          Estimated duration in minutes{" "}
+          <span className="text-xs text-ink-subtle">(optional)</span>
           <input
             type="number"
             min={1}
@@ -248,7 +266,7 @@ export default function WorkoutBuilder({
         </label>
 
         <div className="flex flex-col gap-1 text-sm">
-          Tags
+          Tags <span className="text-xs text-ink-subtle">(optional)</span>
           <div className="flex flex-wrap gap-2">
             {tagCatalog.length === 0 ? (
               <p className="text-sm text-ink-subtle">No tags available.</p>
@@ -315,10 +333,13 @@ export default function WorkoutBuilder({
         </p>
       )}
 
-      <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+      <PendingSubmitButton
+        pending={isSaving}
+        className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+      >
         Save
-      </SubmitButton>
-      <FormPendingBanner />
+      </PendingSubmitButton>
+      <PendingBanner pending={isSaving} />
     </form>
   );
 }
