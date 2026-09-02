@@ -346,7 +346,7 @@ export const scheduledWorkouts = pgTable(
     scheduledDate: date("scheduled_date").notNull(),
     // Optional — "no specific time" is a normal, common state, not a
     // missing value. Purely informational: never part of session-linking
-    // (see linkTodaysScheduledWorkoutToSession in lib/scheduled-workouts.ts).
+    // (see linkScheduledWorkoutForDateToSession in lib/scheduled-workouts.ts).
     scheduledTime: time("scheduled_time"),
     sessionId: uuid("session_id").references(() => workoutSessions.id, {
       onDelete: "set null",

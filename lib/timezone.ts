@@ -36,6 +36,46 @@ export async function getCurrentDateString(timezone: string): Promise<string> {
 }
 
 /**
+ * Converts a calendar day (YYYY-MM-DD) plus a fixed noon wall-clock time to
+ * the UTC instant that represents in `timezone` — computed in Postgres by
+ * applying `AT TIME ZONE` to a naive timestamp (the same technique
+ * getCurrentDateString uses in the other direction), so a backdated session
+ * with no recorded time-of-day still lands in the correct calendar-day
+ * bucket everywhere completed_at is later read back, whether via `AT TIME
+ * ZONE` in SQL (lib/activity.ts) or toCalendarDayInTimezone above. A plain
+ * `new Date(\`${date}T12:00:00\`)` would use the application server's own
+ * local timezone instead of the user's. Noon rather than midnight: a fixed
+ * local wall-clock instant right at a DST transition boundary can be
+ * ambiguous (falls twice) or nonexistent (skipped) in some zones, and noon
+ * is never inside one, so this is safe for every IANA zone without needing
+ * to special-case the transition.
+ *
+ * Selects the instant as an explicit ISO-8601 UTC string
+ * (`to_char(... at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`) rather
+ * than the bare `timestamptz` expression, then parses it in JS —
+ * `db.execute`'s type parameter is only a compile-time assertion, not a
+ * runtime guarantee, and for a raw (non-schema-mapped) query the
+ * underlying driver hands back Postgres's own text representation
+ * ("2026-08-24 09:00:00+00") rather than a Date, same reasoning every
+ * other db.execute query in this codebase already follows by casting to
+ * `::text`/`::int` and typing the row as string/number (see
+ * getCurrentDateString above and lib/activity.ts) instead of trusting a
+ * richer type back from the driver. A raw `new Date(pgTimestampString)`
+ * would depend on Node's non-standard leniency for that exact text shape;
+ * this format is guaranteed parseable per the ECMA-262 Date Time String
+ * Format instead.
+ */
+export async function toNoonInstant(date: string, timezone: string): Promise<Date> {
+  const [row] = await db.execute<{ instant: string }>(
+    sql`select to_char(
+      ((${date}::date + time '12:00:00') at time zone ${timezone}) at time zone 'UTC',
+      'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+    ) as instant`
+  );
+  return new Date(row.instant);
+}
+
+/**
  * Converts an already-fetched `timestamptz` instant (e.g. a session's
  * completedAt) to the YYYY-MM-DD calendar day it falls on in `timezone`,
  * entirely in JavaScript via Intl — not `AT TIME ZONE`. The other functions

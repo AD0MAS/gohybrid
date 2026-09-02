@@ -48,7 +48,8 @@ export async function PATCH(
  * Removes one of the authenticated user's scheduled workouts. Responds 401
  * if there is no authenticated user, 404 both when the id doesn't exist
  * and when it belongs to a different user, and 204 No Content on success.
- * Any linked workout_session is untouched — see unscheduleForUser.
+ * If the entry was Completed (session_id NOT NULL), its linked
+ * workout_session is deleted along with it — see unscheduleForUser.
  */
 export async function DELETE(
   _request: Request,

@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import UpcomingList from "../UpcomingList";
 import WeekStrip from "./WeekStrip";
-
-const UPCOMING_LIMIT = 5;
 
 /**
  * Workouts (GOHYBRID_PLAN.md §5A): the planning page shell — the week
  * strip up top (what this page is primarily for), then a prominent New
- * workout action, an entry into the library at /workouts/library, and
- * Upcoming. Deliberately not the library itself, since the strip, the
- * library, filters, sorting and secondary actions on one page was too
- * much for one screen. A Calendar corner button leads to /calendar.
+ * workout action and an entry into the library at /workouts/library.
+ * Deliberately not the library itself, since the strip, the library,
+ * filters, sorting and secondary actions on one page was too much for one
+ * screen. A Calendar corner button leads to /calendar.
+ *
+ * No longer renders UpcomingList: the week strip's own day cards now carry
+ * Mark done / Mark skipped / Remove (see WeekStrip's doc comment), which
+ * made a second, future-only list of the same actions on this page
+ * redundant. Home keeps its own UpcomingList unchanged — that's still the
+ * only place those three entries render as a flat, cross-day list.
  */
 export default async function WorkoutsPage(props: PageProps<"/workouts">) {
   const user = await requireUser();
@@ -45,8 +48,6 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
         >
           My Workouts
         </Link>
-
-        <UpcomingList limit={UPCOMING_LIMIT} />
       </div>
     </main>
   );

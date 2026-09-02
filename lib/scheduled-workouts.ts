@@ -1,6 +1,6 @@
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { scheduledWorkouts, workouts } from "@/db/schema";
+import { scheduledWorkouts, workoutSessions, workouts } from "@/db/schema";
 
 /** The transaction handle db.transaction()'s callback receives — used to
  * type helpers that may run inside a transaction started elsewhere (e.g.
@@ -142,45 +142,103 @@ export async function markSkippedForUser(
 }
 
 /**
- * Deletes a scheduled workout owned by `userId`, returning true if a row
- * was deleted and false otherwise — whether because the id doesn't exist
- * or because it belongs to a different user. The linked workout_session
- * (if any) is untouched: scheduling is a plan pointing at a session, never
- * the other way round, so removing the plan must never remove completed
- * training history.
+ * Reads one scheduled workout owned by `userId`, or null if the id doesn't
+ * exist or belongs to a different user. Used by markScheduledWorkoutDone
+ * (app/(app)/upcoming-actions.ts) to resolve the entry's workoutId,
+ * scheduledDate and current sessionId before creating a session for it —
+ * same ownership-in-WHERE-clause pattern as markSkippedForUser/
+ * unscheduleForUser, just a read instead of a write.
  */
-export async function unscheduleForUser(id: string, userId: string) {
-  const deleted = await db
-    .delete(scheduledWorkouts)
+export async function getScheduledWorkoutForUser(id: string, userId: string) {
+  const [row] = await db
+    .select({
+      id: scheduledWorkouts.id,
+      workoutId: scheduledWorkouts.workoutId,
+      scheduledDate: scheduledWorkouts.scheduledDate,
+      sessionId: scheduledWorkouts.sessionId,
+    })
+    .from(scheduledWorkouts)
     .where(
       and(eq(scheduledWorkouts.id, id), eq(scheduledWorkouts.userId, userId))
-    )
-    .returning({ id: scheduledWorkouts.id });
+    );
 
-  return deleted.length > 0;
+  return row ?? null;
+}
+
+/**
+ * Deletes a scheduled workout owned by `userId`, and — if it was linked to
+ * a session (session_id NOT NULL, i.e. Completed) — deletes that
+ * workout_session too, so removing a completed entry doesn't leave an
+ * orphaned session in training history. Ownership is enforced in every
+ * statement's own WHERE clause, so a non-owned or nonexistent id deletes
+ * nothing and returns false silently, rather than throwing — a forged id
+ * is never confirmed to exist.
+ */
+export async function unscheduleForUser(
+  id: string,
+  userId: string
+): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [entry] = await tx
+      .select({ sessionId: scheduledWorkouts.sessionId })
+      .from(scheduledWorkouts)
+      .where(
+        and(eq(scheduledWorkouts.id, id), eq(scheduledWorkouts.userId, userId))
+      );
+
+    if (!entry) {
+      return false;
+    }
+
+    await tx
+      .delete(scheduledWorkouts)
+      .where(
+        and(eq(scheduledWorkouts.id, id), eq(scheduledWorkouts.userId, userId))
+      );
+
+    if (entry.sessionId) {
+      await tx
+        .delete(workoutSessions)
+        .where(
+          and(
+            eq(workoutSessions.id, entry.sessionId),
+            eq(workoutSessions.userId, userId)
+          )
+        );
+    }
+
+    return true;
+  });
 }
 
 /**
  * Links a newly created workout_session to `userId`'s earliest still-open
- * scheduled_workouts entry for `workoutId` dated today (session_id IS
- * NULL), if one exists — so finishing a scheduled workout marks the plan
- * completed instead of leaving it dangling. Matching is by date only —
- * scheduled_time is informational for the user, never a constraint here, so
- * finishing at 20:30 still links to a plan set for 19:00. "Earliest" breaks
- * ties between same-day entries by scheduled_time first (NULLs last, so a
- * timed entry wins over an untimed one), then by created_at. The candidate
- * row is selected and
- * updated in a single statement (a scalar subquery inside the UPDATE's
- * WHERE, not a read followed by a write) so two concurrent finishes can't
- * both link to the same row. A no-op, returning null, when nothing
- * matches — starting a workout that wasn't scheduled keeps working exactly
- * as before. Accepts an optional transaction handle so
- * createSessionForWorkout can run this in the same transaction as the
- * session insert.
+ * scheduled_workouts entry for `workoutId` dated `date` (a YYYY-MM-DD
+ * string, session_id IS NULL), if one exists — so finishing a scheduled
+ * workout marks the plan completed instead of leaving it dangling.
+ * Matching is by date only — scheduled_time is informational for the user,
+ * never a constraint here, so finishing at 20:30 still links to a plan set
+ * for 19:00. "Earliest" breaks ties between same-day entries by
+ * scheduled_time first (NULLs last, so a timed entry wins over an untimed
+ * one), then by created_at. The candidate row is selected and updated in a
+ * single statement (a scalar subquery inside the UPDATE's WHERE, not a read
+ * followed by a write) so two concurrent finishes can't both link to the
+ * same row. A no-op, returning null, when nothing matches — starting a
+ * workout that wasn't scheduled keeps working exactly as before. Accepts an
+ * optional transaction handle so createSessionForWorkout can run this in
+ * the same transaction as the session insert.
+ *
+ * `date` is a required parameter, not Postgres's `current_date` — the
+ * caller (finishWorkout) resolves "which day" from the user's own
+ * getUserContext first, same reasoning as every other "what day is it"
+ * read in this codebase (lib/user-settings.ts). Used when the caller only
+ * knows a workout and a day, not a specific scheduled_workouts id; see
+ * linkScheduledWorkoutToSession below for the case where it does.
  */
-export async function linkTodaysScheduledWorkoutToSession(
+export async function linkScheduledWorkoutForDateToSession(
   userId: string,
   workoutId: string,
+  date: string,
   sessionId: string,
   executor: Executor = db
 ) {
@@ -191,7 +249,7 @@ export async function linkTodaysScheduledWorkoutToSession(
       and(
         eq(scheduledWorkouts.userId, userId),
         eq(scheduledWorkouts.workoutId, workoutId),
-        eq(scheduledWorkouts.scheduledDate, sql`current_date`),
+        eq(scheduledWorkouts.scheduledDate, date),
         isNull(scheduledWorkouts.sessionId)
       )
     )
@@ -202,6 +260,37 @@ export async function linkTodaysScheduledWorkoutToSession(
     .update(scheduledWorkouts)
     .set({ sessionId })
     .where(sql`${scheduledWorkouts.id} = (${candidate})`)
+    .returning();
+
+  return linked ?? null;
+}
+
+/**
+ * Links a newly created workout_session directly to one specific scheduled
+ * workout owned by `userId`, ownership enforced in the UPDATE's WHERE
+ * clause. Used by markScheduledWorkoutDone (app/(app)/upcoming-actions.ts),
+ * which already holds the exact scheduled_workouts id the user clicked —
+ * unlike linkScheduledWorkoutForDateToSession's same-day search, there's no
+ * ambiguity to break a tie on here, so a plain conditional UPDATE is enough
+ * (still race-free: two concurrent "mark done" clicks on the same id just
+ * both succeed idempotently). Accepts an optional transaction handle for
+ * the same reason linkScheduledWorkoutForDateToSession does.
+ */
+export async function linkScheduledWorkoutToSession(
+  userId: string,
+  scheduledWorkoutId: string,
+  sessionId: string,
+  executor: Executor = db
+) {
+  const [linked] = await executor
+    .update(scheduledWorkouts)
+    .set({ sessionId })
+    .where(
+      and(
+        eq(scheduledWorkouts.id, scheduledWorkoutId),
+        eq(scheduledWorkouts.userId, userId)
+      )
+    )
     .returning();
 
   return linked ?? null;

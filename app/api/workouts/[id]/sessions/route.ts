@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { createSessionForWorkout } from "@/lib/sessions";
+import { getUserContext } from "@/lib/user-settings";
 import { isValidUuid } from "@/lib/workouts-validation";
 
 /**
@@ -28,7 +29,11 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const session = await createSessionForWorkout(user.id, id);
+  const { today } = await getUserContext(user.id);
+  const session = await createSessionForWorkout(user.id, id, {
+    kind: "sameDay",
+    date: today,
+  });
 
   if (!session) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

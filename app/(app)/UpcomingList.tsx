@@ -5,7 +5,11 @@ import { formatRelativeDay } from "@/lib/dates";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
 import { TAG_COLOR_CLASSES } from "./workouts/tag-colors";
-import { markScheduledWorkoutSkipped, unscheduleWorkout } from "./upcoming-actions";
+import {
+  markScheduledWorkoutDone,
+  markScheduledWorkoutSkipped,
+  unscheduleWorkout,
+} from "./upcoming-actions";
 
 type UpcomingListProps = {
   limit: number;
@@ -74,6 +78,14 @@ export default async function UpcomingList({ limit }: UpcomingListProps) {
               )}
 
               <div className="relative z-10 mt-2 flex gap-4">
+                <form action={markScheduledWorkoutDone.bind(null, entry.id)}>
+                  <button
+                    type="submit"
+                    className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
+                    Mark done
+                  </button>
+                </form>
                 <form
                   action={markScheduledWorkoutSkipped.bind(null, entry.id, true)}
                 >

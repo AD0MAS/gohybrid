@@ -1,6 +1,12 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
+  markScheduledWorkoutDone,
+  markScheduledWorkoutSkipped,
+  unscheduleWorkout,
+} from "../upcoming-actions";
+import ConfirmModal from "../_components/ConfirmModal";
+import {
   formatDayHeading,
   getDayNumber,
   WEEKDAY_INITIALS,
@@ -9,6 +15,9 @@ import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
 import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
 import { TAG_COLOR_CLASSES } from "./tag-colors";
+
+const REMOVE_BUTTON_CLASSES =
+  "text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
@@ -45,6 +54,26 @@ type WeekStripProps = {
  * search param combination, resolved by resolveWeekStripView, so nothing
  * here needs client-side state. `today` comes from getUserContext, so it's
  * always the viewing user's own calendar day, not the database's UTC one.
+ *
+ * Each entry also carries the same Mark done / Mark skipped / Remove
+ * controls as UpcomingList (GOHYBRID_PLAN.md §5A), bound to the identical
+ * Server Actions in app/(app)/upcoming-actions.ts — this is the only place
+ * that can reach a *past* scheduled entry (UpcomingList only ever lists
+ * today-or-later, not-yet-completed ones), so it's also the only place a
+ * past-dated entry can be completed, skipped or removed. Which controls
+ * show depends on status: Planned gets all three; Completed gets only
+ * Remove (un-completing would mean deleting a session, which belongs to
+ * /history, not here); Skipped gets Mark done and Remove (un-skipping is
+ * just marking it done or removing it).
+ *
+ * Removing a Completed entry also deletes its workout_session
+ * (unscheduleForUser, lib/scheduled-workouts.ts) — a plain one-click Remove
+ * would silently erase training history, so that case goes through
+ * ConfirmModal instead of the plain one-click form Planned/Skipped use,
+ * warning that the session is deleted from training history and stats too.
+ * UpcomingList never needs this: getUpcomingForUser filters to session_id
+ * IS NULL, so a Completed entry can never reach it — this is the only place
+ * Remove can act on one.
  */
 export default async function WeekStrip({
   userId,
@@ -201,6 +230,53 @@ export default async function WeekStrip({
                         ))}
                       </div>
                     )}
+
+                    <div className="relative z-10 mt-2 flex gap-4">
+                      {status !== "Completed" && (
+                        <form
+                          action={markScheduledWorkoutDone.bind(null, entry.id)}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                          >
+                            Mark done
+                          </button>
+                        </form>
+                      )}
+                      {status === "Planned" && (
+                        <form
+                          action={markScheduledWorkoutSkipped.bind(
+                            null,
+                            entry.id,
+                            true
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                          >
+                            Mark skipped
+                          </button>
+                        </form>
+                      )}
+                      {status === "Completed" ? (
+                        <ConfirmModal
+                          trigger="Remove"
+                          triggerClassName={REMOVE_BUTTON_CLASSES}
+                          title="Delete scheduled entry"
+                          description="Deleting this scheduled entry also deletes its workout session. It will be removed from training history and from all stats."
+                          confirmLabel="Delete"
+                          action={unscheduleWorkout.bind(null, entry.id)}
+                        />
+                      ) : (
+                        <form action={unscheduleWorkout.bind(null, entry.id)}>
+                          <button type="submit" className={REMOVE_BUTTON_CLASSES}>
+                            Remove
+                          </button>
+                        </form>
+                      )}
+                    </div>
                     <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />
                   </li>
                 );
