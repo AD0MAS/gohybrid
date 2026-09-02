@@ -15,8 +15,10 @@ import { deleteSessionForUser } from "@/lib/sessions";
  * route is revalidated: /history itself, / (Home's summary cards and
  * recent activity), /stats (all charts), /workouts (the week strip and
  * Upcoming, since a completed scheduled workout reverts to Planned via
- * scheduled_workouts.session_id's ON DELETE SET NULL), and /profile (goals
- * that count sessions).
+ * scheduled_workouts.session_id's ON DELETE SET NULL, or — if it was
+ * backfilled by finishWorkout — is deleted along with the session, see
+ * deleteSessionForUser), /calendar (the same backfilled/reverted entry),
+ * and /profile (goals that count sessions).
  */
 export async function deleteSession(id: string) {
   const user = await requireUser();
@@ -31,5 +33,6 @@ export async function deleteSession(id: string) {
   revalidatePath("/");
   revalidatePath("/stats");
   revalidatePath("/workouts");
+  revalidatePath("/calendar");
   revalidatePath("/profile");
 }

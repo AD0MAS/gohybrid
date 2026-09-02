@@ -1,10 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { workoutSessions, workouts } from "@/db/schema";
+import { scheduledWorkouts, workoutSessions, workouts } from "@/db/schema";
 import {
   linkScheduledWorkoutForDateToSession,
   linkScheduledWorkoutToSession,
 } from "./scheduled-workouts";
+import { toCalendarDayInTimezone, toClockTimeInTimezone } from "./timezone";
 
 /**
  * Which scheduled_workouts entry, if any, to link the new session to — see
@@ -12,10 +13,13 @@ import {
  * lib/scheduled-workouts.ts for what each search does and why both exist.
  * `sameDay` is for callers that only know a workout and a calendar day
  * (finishWorkout); `specific` is for markScheduledWorkoutDone, which
- * already holds the exact entry the user clicked.
+ * already holds the exact entry the user clicked. `sameDay` also carries
+ * `timezone` — see the backfill step in createSessionForWorkout below,
+ * which needs it to turn the new session's completedAt into a calendar day
+ * and clock time when there was nothing to link to.
  */
 export type SessionLinkTarget =
-  | { kind: "sameDay"; date: string }
+  | { kind: "sameDay"; date: string; timezone: string }
   | { kind: "specific"; scheduledWorkoutId: string };
 
 /**
@@ -36,9 +40,16 @@ export type SessionLinkTarget =
  *
  * `link` decides which scheduled_workouts entry (if any) to attach the new
  * session to, in the same transaction as the insert — see
- * SessionLinkTarget above. If nothing matches, this is a no-op and the
- * session simply stands alone, the common case since most workouts are
- * started unscheduled.
+ * SessionLinkTarget above. For `specific` (markScheduledWorkoutDone), the
+ * entry is already known and this is a no-op if it can't be linked. For
+ * `sameDay` (finishWorkout and the sessions API route), when no existing
+ * entry matches, a new scheduled_workouts row is inserted instead —
+ * is_backfilled true, session_id pointing at the session just created,
+ * scheduled_date/scheduled_time derived from completedAt in `link.timezone`
+ * — so an unplanned workout still appears on the week strip and calendar as
+ * Completed, exactly like a planned one (GOHYBRID_PLAN.md's week-strip/
+ * calendar reasoning). The backfill insert happens in the same transaction
+ * as the session insert, so a `sameDay` session is never left without one.
  */
 export async function createSessionForWorkout(
   userId: string,
@@ -72,13 +83,30 @@ export async function createSessionForWorkout(
       .returning();
 
     if (link.kind === "sameDay") {
-      await linkScheduledWorkoutForDateToSession(
+      const linked = await linkScheduledWorkoutForDateToSession(
         userId,
         workout.id,
         link.date,
         created.id,
         tx
       );
+
+      if (!linked) {
+        await tx.insert(scheduledWorkouts).values({
+          userId,
+          workoutId: workout.id,
+          scheduledDate: toCalendarDayInTimezone(
+            created.completedAt,
+            link.timezone
+          ),
+          scheduledTime: toClockTimeInTimezone(
+            created.completedAt,
+            link.timezone
+          ),
+          sessionId: created.id,
+          isBackfilled: true,
+        });
+      }
     } else {
       await linkScheduledWorkoutToSession(
         userId,
@@ -128,19 +156,40 @@ export async function getRecentSessionsForUser(userId: string, limit: number) {
  * deleted and false otherwise — whether because the id doesn't exist or
  * because it belongs to a different user. Ownership is enforced in the
  * WHERE clause, same pattern as deleteBodyMetricForUser/
- * deletePersonalRecordForUser. No cleanup of scheduled_workouts is needed
- * here: scheduled_workouts.session_id is ON DELETE SET NULL (see
- * GOHYBRID_PLAN.md §6A), so a scheduled workout that pointed at this
- * session automatically goes back to Planned.
+ * deletePersonalRecordForUser.
+ *
+ * A user-planned scheduled_workouts entry that pointed at this session needs
+ * no cleanup: scheduled_workouts.session_id is ON DELETE SET NULL (see
+ * GOHYBRID_PLAN.md §6A), so it automatically goes back to Planned — the plan
+ * was deliberate and should survive the session. A *backfilled* entry
+ * (is_backfilled true — see createSessionForWorkout) only ever existed to
+ * represent this session, so it must disappear with it instead: it's deleted
+ * explicitly, in the same transaction, before the session itself — deleting
+ * the session first would let ON DELETE SET NULL clear session_id before
+ * this query could find the row to remove.
  */
 export async function deleteSessionForUser(
   id: string,
   userId: string
 ): Promise<boolean> {
-  const deleted = await db
-    .delete(workoutSessions)
-    .where(and(eq(workoutSessions.id, id), eq(workoutSessions.userId, userId)))
-    .returning({ id: workoutSessions.id });
+  return db.transaction(async (tx) => {
+    await tx
+      .delete(scheduledWorkouts)
+      .where(
+        and(
+          eq(scheduledWorkouts.sessionId, id),
+          eq(scheduledWorkouts.userId, userId),
+          eq(scheduledWorkouts.isBackfilled, true)
+        )
+      );
 
-  return deleted.length > 0;
+    const deleted = await tx
+      .delete(workoutSessions)
+      .where(
+        and(eq(workoutSessions.id, id), eq(workoutSessions.userId, userId))
+      )
+      .returning({ id: workoutSessions.id });
+
+    return deleted.length > 0;
+  });
 }

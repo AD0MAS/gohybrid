@@ -352,6 +352,13 @@ export const scheduledWorkouts = pgTable(
       onDelete: "set null",
     }),
     isSkipped: boolean("is_skipped").notNull().default(false),
+    // True for a row created by finishWorkout to represent an unplanned
+    // workout that had no matching scheduled entry, rather than one the
+    // user actually planned. Distinguishes the two so deleting the linked
+    // session (lib/sessions.ts) can delete this row along with it instead
+    // of reverting it to Planned via ON DELETE SET NULL — a backfilled row
+    // has no meaning once the session it stands in for is gone.
+    isBackfilled: boolean("is_backfilled").notNull().default(false),
     notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

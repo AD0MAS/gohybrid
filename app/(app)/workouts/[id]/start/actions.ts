@@ -17,15 +17,20 @@ import { getUserContext } from "@/lib/user-settings";
  * completedAt is left to createSessionForWorkout's DB-default `now()` — a
  * Finish always means "just now." The link target is today in the user's
  * own timezone (getUserContext), not Postgres's `current_date`, so linking
- * agrees with every other "what day is it" read in this codebase.
+ * agrees with every other "what day is it" read in this codebase. When
+ * nothing matches, createSessionForWorkout backfills a scheduled_workouts
+ * row instead, so an unplanned Finish still shows up as Completed on the
+ * week strip and calendar — hence revalidating those routes too, not just
+ * /history.
  */
 export async function finishWorkout(workoutId: string) {
   const user = await requireUser();
-  const { today } = await getUserContext(user.id);
+  const { today, timezone } = await getUserContext(user.id);
 
   const session = await createSessionForWorkout(user.id, workoutId, {
     kind: "sameDay",
     date: today,
+    timezone,
   });
 
   if (!session) {
@@ -33,6 +38,10 @@ export async function finishWorkout(workoutId: string) {
   }
 
   revalidatePath("/history");
+  revalidatePath("/");
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+  revalidatePath("/stats");
 
   return session;
 }

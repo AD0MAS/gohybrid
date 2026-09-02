@@ -92,6 +92,13 @@
       "when": 1788084050114,
       "tag": "0012_rare_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788338626703,
+      "tag": "0013_round_triathlon",
+      "breakpoints": true
     }
   ]
 }

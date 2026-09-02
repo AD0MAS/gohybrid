@@ -1,0 +1,1 @@
+ALTER TABLE "scheduled_workouts" ADD COLUMN "is_backfilled" boolean DEFAULT false NOT NULL;

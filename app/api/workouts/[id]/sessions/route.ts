@@ -29,10 +29,11 @@ export async function POST(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { today } = await getUserContext(user.id);
+  const { today, timezone } = await getUserContext(user.id);
   const session = await createSessionForWorkout(user.id, id, {
     kind: "sameDay",
     date: today,
+    timezone,
   });
 
   if (!session) {
