@@ -49,7 +49,7 @@ export default async function EventsList() {
           {upcoming.map((event) => (
             <li
               key={event.id}
-              className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
+              className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-1 p-5"
             >
               <div>
                 <p className="text-sm font-semibold">
@@ -82,7 +82,7 @@ export default async function EventsList() {
       )}
 
       {past.length > 0 && (
-        <details className="rounded border border-hairline">
+        <details className="rounded-lg border border-hairline">
           <summary className="cursor-pointer p-3 text-sm text-ink-subtle">
             Past events ({past.length})
           </summary>
@@ -90,7 +90,7 @@ export default async function EventsList() {
             {past.map((event) => (
               <li
                 key={event.id}
-                className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
+                className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-1 p-5"
               >
                 <div>
                   <p className="text-sm">{event.title}</p>

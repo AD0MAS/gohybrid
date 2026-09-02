@@ -80,7 +80,7 @@ export default async function GoalsList() {
         return (
           <div
             key={goal.id}
-            className="flex flex-col gap-2 rounded border border-hairline bg-surface-1 p-5"
+            className="flex flex-col gap-2 rounded-lg border border-hairline bg-surface-1 p-5"
           >
             <div className="flex items-start justify-between gap-2">
               <div>
@@ -156,7 +156,7 @@ export default async function GoalsList() {
       })}
 
       {archivedGoals.length > 0 && (
-        <details className="rounded border border-hairline">
+        <details className="rounded-lg border border-hairline">
           <summary className="cursor-pointer p-3 text-sm text-ink-subtle">
             Archived goals ({archivedGoals.length})
           </summary>
@@ -168,7 +168,7 @@ export default async function GoalsList() {
               return (
                 <div
                   key={goal.id}
-                  className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
+                  className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-1 p-5"
                 >
                   <div>
                     <p className="text-sm">{goal.title}</p>

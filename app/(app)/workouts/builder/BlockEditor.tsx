@@ -56,7 +56,7 @@ export default function BlockEditor({
   dispatch,
 }: BlockEditorProps) {
   return (
-    <div className="flex flex-col gap-3 rounded border border-hairline bg-surface-1 p-5">
+    <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-surface-1 p-5">
       <p className="text-sm font-medium">Block {index + 1}</p>
 
       <label className="flex flex-col gap-1 text-sm">

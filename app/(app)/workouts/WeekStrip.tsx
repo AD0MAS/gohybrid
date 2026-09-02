@@ -182,7 +182,7 @@ export default async function WeekStrip({
                 return (
                   <li
                     key={entry.id}
-                    className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+                    className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
                   >
                     <Link
                       href={`/workouts/${entry.workout.id}`}

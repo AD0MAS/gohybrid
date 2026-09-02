@@ -36,7 +36,7 @@ export default async function RecentActivity() {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded border border-hairline bg-surface-1 p-5"
+              className="rounded-lg border border-hairline bg-surface-1 p-5"
             >
               <p className="font-medium text-ink">{session.workoutTitle}</p>
               <p className="text-sm text-ink-subtle">

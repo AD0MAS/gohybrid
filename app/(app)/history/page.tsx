@@ -32,7 +32,7 @@ export default async function HistoryPage() {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="flex items-center justify-between gap-2 rounded border border-hairline bg-surface-1 p-5"
+              className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-surface-1 p-5"
             >
               <div>
                 <p className="font-medium text-ink">{session.workoutTitle}</p>

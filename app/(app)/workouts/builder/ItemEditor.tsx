@@ -55,7 +55,7 @@ export default function ItemEditor({
       ?.isHyroxStation ?? false;
 
   return (
-    <li className="flex flex-col gap-2 rounded border border-hairline bg-surface-1 p-5">
+    <li className="flex flex-col gap-2 rounded-lg border border-hairline bg-surface-1 p-5">
       <p className="text-sm font-medium">Item {index + 1}</p>
 
       <ExercisePicker

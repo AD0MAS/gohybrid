@@ -100,7 +100,7 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="relative cursor-pointer rounded border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
             >
               <div className="flex items-center gap-2">
                 <Link

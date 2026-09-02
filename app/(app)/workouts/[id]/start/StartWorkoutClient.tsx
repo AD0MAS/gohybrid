@@ -231,7 +231,7 @@ export default function StartWorkoutClient({
             return (
               <li
                 key={block.id}
-                className="rounded border border-hairline p-5"
+                className="rounded-lg border border-hairline p-5"
               >
                 <p className="font-medium">
                   {block.title ? `${block.title} — ` : ""}
@@ -307,7 +307,7 @@ export default function StartWorkoutClient({
 
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-w-sm flex-col gap-4 rounded border border-hairline bg-surface-1 p-5">
+          <div className="flex max-w-sm flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-5">
             <p className="text-sm text-ink">
               {checkedItemIds.size} / {totalItems} items are checked. Finish
               anyway?

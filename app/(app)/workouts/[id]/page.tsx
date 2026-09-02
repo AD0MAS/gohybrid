@@ -131,7 +131,7 @@ export default async function WorkoutDetailPage(
             return (
               <li
                 key={block.id}
-                className="rounded border border-hairline bg-surface-1 p-5"
+                className="rounded-lg border border-hairline bg-surface-1 p-5"
               >
                 <p className="font-medium text-ink">
                   {block.title ? `${block.title} — ` : ""}
