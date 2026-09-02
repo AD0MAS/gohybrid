@@ -35,6 +35,12 @@ export const CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 5, maxDecima
 // for it (numeric(9,2)). 7 integer digits + 2 decimals is exactly that
 // column's capacity, so this stays a true backstop.
 export const DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 7, maxDecimals: 2 };
+// workouts.estimated_duration_minutes is a plain `integer` column (no
+// numeric(x,y) bound), so this limit is plausibility-only: a workout longer
+// than 999 minutes isn't real. Shares its shape with RESTING_HR_DIGIT_LIMIT
+// but is kept as its own constant, same reasoning as BODY_WEIGHT vs
+// LIFTED_WEIGHT above — an unrelated field's bound must not drift this one.
+export const DURATION_MINUTES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 3, maxDecimals: 0 };
 // workout_items-only: numeric(6,2) caps the integer part at 4 digits
 // regardless of subject, so an item's calories/distance can't use the
 // wider PR/goal limits above without allowing a value the column rejects.

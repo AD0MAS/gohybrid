@@ -17,6 +17,7 @@ import type {
 } from "@/db/schema";
 import {
   checkDigitLimit,
+  DURATION_MINUTES_DIGIT_LIMIT,
   ITEM_CALORIES_DIGIT_LIMIT,
   ITEM_DISTANCE_DIGIT_LIMIT,
   LIFTED_WEIGHT_DIGIT_LIMIT,
@@ -497,7 +498,15 @@ export function validateBuilderPayload(
         error: "estimatedDurationMinutes must be a positive integer.",
       };
     }
-    estimatedDurationMinutes = parsed;
+    const digitCheck = checkDigitLimit(
+      parsed,
+      DURATION_MINUTES_DIGIT_LIMIT,
+      "Estimated duration"
+    );
+    if (!digitCheck.ok) {
+      return { success: false, error: digitCheck.error };
+    }
+    estimatedDurationMinutes = digitCheck.value;
   }
 
   const rawBlocks = Array.isArray(input.blocks) ? input.blocks : [];

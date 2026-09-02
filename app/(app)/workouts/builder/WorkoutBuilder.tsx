@@ -234,7 +234,7 @@ export default function WorkoutBuilder({
           <input
             type="number"
             min={1}
-            step={5}
+            step={1}
             value={state.meta.estimatedDurationMinutes ?? ""}
             onChange={(e) =>
               dispatch({
@@ -310,7 +310,7 @@ export default function WorkoutBuilder({
       </fieldset>
 
       {saveError && (
-        <p className="rounded border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
+        <p className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
           {saveError}
         </p>
       )}

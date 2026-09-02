@@ -11,7 +11,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
         <h1 className="text-xl font-semibold text-ink">Register</h1>
 
         {error && (
-          <p className="rounded border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
+          <p className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
             {error}
           </p>
         )}

@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getWeekOffsetForDate, resolveCalendarView } from "@/lib/calendar";
 import {
@@ -62,9 +63,9 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         <Link
           href={monthHref(addMonths(view.month, -1))}
           aria-label="Previous month"
-          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
-          ←
+          <ChevronLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
         <h2 className="text-sm font-medium text-ink">
           {formatMonthYearHeading(getFirstDayOfMonth(view.month))}
@@ -72,9 +73,9 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         <Link
           href={monthHref(addMonths(view.month, 1))}
           aria-label="Next month"
-          className="px-2 text-sm text-ink-subtle underline hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
-          →
+          <ChevronRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
       </div>
 
