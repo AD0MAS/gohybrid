@@ -236,7 +236,7 @@ export const workoutItems = pgTable(
     notes: text("notes"),
     sets: integer("sets").notNull().default(1),
     volumeType: volumeTypeEnum("volume_type"),
-    volumeValue: numeric("volume_value", { precision: 6, scale: 2 }),
+    volumeValue: numeric("volume_value", { precision: 9, scale: 2 }),
     targetType: targetTypeEnum("target_type"),
     targetValue: numeric("target_value", { precision: 6, scale: 2 }),
     targetPreset: targetPresetEnum("target_preset"),

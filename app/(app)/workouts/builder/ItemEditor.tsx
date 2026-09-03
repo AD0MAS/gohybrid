@@ -3,6 +3,7 @@ import { Pencil, StickyNote, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import {
   ITEM_CALORIES_DIGIT_LIMIT,
+  ITEM_DISTANCE_DIGIT_LIMIT,
   ITEM_TARGET_RATE_DIGIT_LIMIT,
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
@@ -26,7 +27,10 @@ import type {
   TargetType,
   VolumeType,
 } from "./reducer";
-import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
+import {
+  numberInputGuardProps,
+  sanitizeNumberInputChange,
+} from "../../_components/sanitize-live-number";
 import { TARGET_PRESET_LABELS } from "./target-preset-labels";
 import { TARGET_TYPE_LABELS } from "./target-type-labels";
 import { VOLUME_TYPE_LABELS } from "./volume-type-labels";
@@ -428,7 +432,7 @@ export default function ItemEditor({
                   // REPS_DIGIT_LIMIT (4 digits, no decimals), reused here
                   // rather than inventing a near-duplicate constant.
                   value:
-                    sanitizeLiveNumber(e.target.value, {
+                    sanitizeNumberInputChange(e, {
                       min: 1,
                       digitLimit: REPS_DIGIT_LIMIT,
                     }) ?? 1,
@@ -487,6 +491,7 @@ export default function ItemEditor({
                   key={isHyroxStation ? "hyrox" : "standard"}
                   unitSystem={unitSystem}
                   isHyroxStation={isHyroxStation}
+                  digitLimit={ITEM_DISTANCE_DIGIT_LIMIT}
                   valueMetres={item.volumeValue}
                   onChange={(value) =>
                     dispatch({
@@ -513,7 +518,7 @@ export default function ItemEditor({
                       // Same two limits validateBuilderPayload's own
                       // volume_type switch uses for this pair (distance
                       // goes through DistanceInput above instead).
-                      value: sanitizeLiveNumber(e.target.value, {
+                      value: sanitizeNumberInputChange(e, {
                         min: 0,
                         digitLimit:
                           item.volumeType === "calories"
@@ -603,7 +608,7 @@ export default function ItemEditor({
                     // `integer: true` alone gets the whole-number rule
                     // sanitizeLiveNumber's digitLimit branch would
                     // otherwise provide.
-                    value: sanitizeLiveNumber(e.target.value, {
+                    value: sanitizeNumberInputChange(e, {
                       min: 1,
                       max: 10,
                       integer: true,
@@ -663,7 +668,7 @@ export default function ItemEditor({
                     // Cal/h and watts share ITEM_TARGET_RATE_DIGIT_LIMIT
                     // here too — same constant validateBuilderPayload
                     // checks target_value against for both.
-                    value: sanitizeLiveNumber(e.target.value, {
+                    value: sanitizeNumberInputChange(e, {
                       min: 0,
                       digitLimit: ITEM_TARGET_RATE_DIGIT_LIMIT,
                     }),
@@ -691,9 +696,10 @@ export default function ItemEditor({
                   field: "weightKg",
                   // LIFTED_WEIGHT_DIGIT_LIMIT allows one decimal (12.5 kg) —
                   // the one field here where a decimal point stays valid.
-                  value: sanitizeLiveNumber(e.target.value, {
+                  value: sanitizeNumberInputChange(e, {
                     min: 0,
                     digitLimit: LIFTED_WEIGHT_DIGIT_LIMIT,
+                    allowDecimal: true,
                   }),
                 })
               }

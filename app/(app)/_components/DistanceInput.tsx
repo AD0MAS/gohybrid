@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { unitSystemEnum } from "@/db/schema";
+import type { DigitLimit } from "@/lib/numeric-limits";
 import {
   convertDistanceInputToMetres,
   metresToFeet,
@@ -10,9 +11,11 @@ import {
   type DistanceInputUnit,
 } from "@/lib/units";
 import {
+  ceilingFor,
+  correctedLiveNumberText,
   numberInputGuardProps,
   sanitizeLiveNumber,
-} from "../workouts/builder/sanitize-live-number";
+} from "./sanitize-live-number";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
@@ -48,6 +51,64 @@ function unitOptions(
 
 function stepForUnit(unit: DistanceInputUnit): number {
   return unit === "km" || unit === "mi" ? 0.5 : 10;
+}
+
+/**
+ * Converts `metresLimit` — the digit limit of whichever column this
+ * instance's value ultimately lands in (workout_items.volume_value via
+ * ITEM_DISTANCE_DIGIT_LIMIT, or personal_records.value/goals.target_value
+ * via DISTANCE_DIGIT_LIMIT — both numeric(9,2), so the two currently share
+ * a shape) — into an equivalent cap for the currently selected display
+ * unit, for live-typing correction only. Deliberately loose rather than
+ * exact: digit-count limits are inherently a "how many digits" bound, not a
+ * tight value bound, so a unit whose conversion factor isn't a power of ten
+ * (ft, mi) ends up with a per-unit ceiling somewhat above the true metres
+ * bound (e.g. a 7-digit metres cap of 9999999.99 m becomes an 8-digit ft
+ * cap, since 9999999.99 m in feet already needs 8 integer digits). That's
+ * fine — this cap only exists to stop a typed value from growing without
+ * limit while the user is mid-keystroke; the actual bound is enforced
+ * separately, in metres, by compose() below, which is what every caller's
+ * onChange/dispatched value actually goes through.
+ */
+function digitLimitForUnit(
+  unit: DistanceInputUnit,
+  metresLimit: DigitLimit
+): DigitLimit {
+  const maxMetres =
+    10 ** metresLimit.maxIntegerDigits - 10 ** -metresLimit.maxDecimals;
+  const maxIntegerDigits = Math.max(
+    1,
+    String(Math.floor(metresToUnit(maxMetres, unit))).length
+  );
+  return { maxIntegerDigits, maxDecimals: metresLimit.maxDecimals };
+}
+
+/**
+ * DistanceInput's own text-correction, called from updateText on every
+ * keystroke — the equivalent of what DurationInput's clampBox does for its
+ * own boxes, adapted for a field that (unlike DurationInput's whole-number
+ * 0-59/0-99 boxes) must tolerate decimals and can't just collapse the raw
+ * text to a canonical number on every change. Delegates entirely to
+ * correctedLiveNumberText (the same leading-zero/decimal-budget/ceiling
+ * rules sanitizeNumberInputChange applies to the builder's plain number
+ * fields), passing `unitLimit`'s own ceiling via ceilingFor — that ceiling
+ * check is what catches an overlong *integer* part here ("333333333333",
+ * no leading zero, no decimal), a class of drift the plain number fields
+ * never had to reach for it themselves, since their controlled `value` is a
+ * number and React's own reconciliation already rewrites the DOM once the
+ * parsed value genuinely differs (see sanitizeNumberInputChange's doc
+ * comment). DistanceInput's controlled value is the raw string itself (see
+ * the module doc comment for why), so nothing else will ever catch it.
+ */
+function correctedDistanceText(
+  raw: string,
+  unitLimit: DigitLimit
+): string | null {
+  const sanitized = sanitizeLiveNumber(raw, { min: 0, digitLimit: unitLimit });
+  return correctedLiveNumberText(raw, sanitized, {
+    maxDecimals: unitLimit.maxDecimals,
+    ceiling: ceilingFor({ digitLimit: unitLimit }),
+  });
 }
 
 /** The unit a fresh distance input opens with when nothing pins it
@@ -91,10 +152,24 @@ function decompose(
  * field in the builder, this one never got a live clamp, so a typed
  * negative distance (e.g. "-500") converted straight through to metres
  * and reached item.volumeValue as a negative number, same DB column any
- * other volume value shares. */
-function compose(text: string, unit: DistanceInputUnit): number | null {
+ * other volume value shares.
+ *
+ * The result is then clamped against `metresLimit` — in metres, the unit
+ * the value is actually stored/validated in — regardless of what unit was
+ * typed. This is the authoritative bound: digitLimitForUnit's per-unit cap
+ * above is only a live-typing throttle and, for ft/mi, is looser than the
+ * true metres bound (see its own doc comment), so a value that passes the
+ * per-unit text check can still need clamping here before it's ever handed
+ * to onChange. */
+function compose(
+  text: string,
+  unit: DistanceInputUnit,
+  metresLimit: DigitLimit
+): number | null {
   const value = sanitizeLiveNumber(text, { min: 0 });
-  return value === null ? null : convertDistanceInputToMetres(value, unit);
+  if (value === null) return null;
+  const metres = convertDistanceInputToMetres(value, unit);
+  return sanitizeLiveNumber(String(metres), { min: 0, digitLimit: metresLimit });
 }
 
 type DistanceInputBaseProps = {
@@ -103,6 +178,15 @@ type DistanceInputBaseProps = {
    * locks the unit to "m" and disables the <select> regardless of
    * unitSystem. */
   isHyroxStation: boolean;
+  /** The digit limit of whichever column this instance's value ultimately
+   * lands in, in metres — ITEM_DISTANCE_DIGIT_LIMIT for ItemEditor's
+   * volume_value (numeric(6,2)), DISTANCE_DIGIT_LIMIT for
+   * PersonalRecordFields/GoalFields' value/target_value (numeric(9,2)).
+   * Passed explicitly rather than assumed, same as every other field's own
+   * digitLimit — DistanceInput has no column of its own to know about.
+   * Drives both digitLimitForUnit's live-typing cap and compose()'s
+   * authoritative metres-space clamp. */
+  digitLimit: DigitLimit;
   className?: string;
 };
 
@@ -206,7 +290,7 @@ const selectClassName =
  * for this.
  */
 export default function DistanceInput(props: DistanceInputProps) {
-  const { unitSystem, isHyroxStation, className } = props;
+  const { unitSystem, isHyroxStation, digitLimit, className } = props;
   const isControlled = "onChange" in props;
 
   const [box, setBox] = useState<Box>(() =>
@@ -219,15 +303,17 @@ export default function DistanceInput(props: DistanceInputProps) {
   );
 
   function updateText(text: string) {
-    const next = { ...box, text };
+    const unitLimit = digitLimitForUnit(box.unit, digitLimit);
+    const corrected = correctedDistanceText(text, unitLimit) ?? text;
+    const next = { ...box, text: corrected };
     setBox(next);
     if (isControlled) {
-      props.onChange(compose(text, box.unit));
+      props.onChange(compose(corrected, box.unit, digitLimit));
     }
   }
 
   function updateUnit(unit: DistanceInputUnit) {
-    const metres = compose(box.text, box.unit);
+    const metres = compose(box.text, box.unit, digitLimit);
     const next: Box = {
       text: metres === null ? box.text : String(round2(metresToUnit(metres, unit))),
       unit,

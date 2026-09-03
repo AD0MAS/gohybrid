@@ -22,7 +22,10 @@ import {
   type TargetType,
   type VolumeType,
 } from "./reducer";
-import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
+import {
+  numberInputGuardProps,
+  sanitizeNumberInputChange,
+} from "../../_components/sanitize-live-number";
 
 /**
  * Flattens the builder's internal {meta, blocks} state into the flat
@@ -287,7 +290,7 @@ export default function WorkoutBuilder({
                 field: "estimatedDurationMinutes",
                 // Same DURATION_MINUTES_DIGIT_LIMIT
                 // validateBuilderPayload checks this field against.
-                value: sanitizeLiveNumber(e.target.value, {
+                value: sanitizeNumberInputChange(e, {
                   min: 1,
                   digitLimit: DURATION_MINUTES_DIGIT_LIMIT,
                 }),

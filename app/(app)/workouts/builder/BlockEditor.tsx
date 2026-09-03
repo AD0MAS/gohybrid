@@ -16,7 +16,10 @@ import type {
   TargetType,
   VolumeType,
 } from "./reducer";
-import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
+import {
+  numberInputGuardProps,
+  sanitizeNumberInputChange,
+} from "../../_components/sanitize-live-number";
 
 type BlockEditorProps = {
   block: BuilderBlock;
@@ -263,7 +266,7 @@ export default function BlockEditor({
                     // same reuse of REPS_DIGIT_LIMIT as ItemEditor's Sets
                     // field, for the same reason (a plain whole-number
                     // count with no constant of its own).
-                    value: sanitizeLiveNumber(e.target.value, {
+                    value: sanitizeNumberInputChange(e, {
                       min: 1,
                       digitLimit: REPS_DIGIT_LIMIT,
                     }),

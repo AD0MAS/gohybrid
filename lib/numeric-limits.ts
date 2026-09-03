@@ -16,13 +16,18 @@ export type DigitLimitResult =
 // uses. Centralized here so the same number can't drift between, e.g., a
 // personal record's own weight field and a goal that targets one.
 //
-// workout_items.volume_value/weight_kg are numeric(6,2) (GOHYBRID_PLAN.md
-// §6) — a strictly narrower column than personal_records.value/
-// goals.target_value's numeric(9,2) (§6B). BODY_WEIGHT/LIFTED_WEIGHT/REPS
-// fit both column widths unchanged, but the ITEM_* calorie/distance limits
-// below are deliberately narrower than their PR/goal counterparts so a
-// value the numeric(6,2) column can't hold is never validated as fine —
-// see workout-builder-validation.ts's comment at their use.
+// workout_items.weight_kg and target_value are numeric(6,2) (GOHYBRID_PLAN.md
+// §6) — narrower than personal_records.value/goals.target_value's
+// numeric(9,2) (§6B). volume_value is numeric(9,2) too, widened from
+// numeric(6,2) so a distance volume item isn't capped at 9999.99 m (9.99
+// km — unusable for a run); see db/migrations for the ALTER. BODY_WEIGHT/
+// LIFTED_WEIGHT/REPS fit every column width unchanged. ITEM_CALORIES_DIGIT_
+// LIMIT/ITEM_DISTANCE_DIGIT_LIMIT (volume_value) now share their shape with
+// CALORIES_DIGIT_LIMIT/DISTANCE_DIGIT_LIMIT, but ITEM_TARGET_RATE_DIGIT_
+// LIMIT/ITEM_PACE_DIGIT_LIMIT (target_value, still numeric(6,2)) stay
+// narrower than their PR/goal counterparts so a value that column can't
+// hold is never validated as fine — see workout-builder-validation.ts's
+// comment at their use.
 export const BODY_WEIGHT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 1 };
 export const BODY_FAT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 2, maxDecimals: 1 };
 export const RESTING_HR_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 3, maxDecimals: 0 };
@@ -41,27 +46,45 @@ export const DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 7, maxDecima
 // but is kept as its own constant, same reasoning as BODY_WEIGHT vs
 // LIFTED_WEIGHT above — an unrelated field's bound must not drift this one.
 export const DURATION_MINUTES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 3, maxDecimals: 0 };
-// workout_items-only: numeric(6,2) caps the integer part at 4 digits
-// regardless of subject, so an item's calories/distance can't use the
-// wider PR/goal limits above without allowing a value the column rejects.
-export const ITEM_CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
-// maxDecimals 2 for the same reason as DISTANCE_DIGIT_LIMIT above; 4
-// integer digits + 2 decimals is exactly workout_items.volume_value's
-// numeric(6,2) capacity.
-export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 2 };
-// workout_items.target_value shares the same numeric(6,2) column as
-// volume_value, so it shares its 4-integer-digit ceiling regardless of
-// which target_type it holds. Cal/h and watts are both plain rate numbers
-// with no legitimate fractional value — same reasoning as
-// ITEM_CALORIES_DIGIT_LIMIT above, kept as its own constant rather than
-// reused since target_value and volume_value are unrelated fields whose
-// bounds must not drift together (see BODY_WEIGHT vs LIFTED_WEIGHT above).
+// goals.target_value is numeric(9,2) — plenty wide enough on its own, so
+// this limit is plausibility-only, same reasoning as
+// DURATION_MINUTES_DIGIT_LIMIT above. Kept as its own constant rather than
+// reusing REPS_DIGIT_LIMIT despite the identical shape: a session_count/
+// streak goal target is a different subject from an item's rep count, and
+// the two must be free to diverge later without dragging each other along
+// (see BODY_WEIGHT vs LIFTED_WEIGHT above for the same principle). 4 digits
+// (max 9999) comfortably covers any realistic session-count or streak
+// target across every goal period, including "all_time".
+export const GOAL_COUNT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
+// workout_items.volume_value is numeric(9,2) (widened from numeric(6,2) —
+// see the module comment above), the same capacity as personal_records'/
+// goals' own calorie counts, so this now shares CALORIES_DIGIT_LIMIT's
+// shape exactly. Kept as its own constant rather than reused: an item's
+// calorie count and a PR/goal's are still different subjects, and the two
+// must be free to diverge later without dragging each other along (see
+// BODY_WEIGHT vs LIFTED_WEIGHT above).
+export const ITEM_CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 5, maxDecimals: 0 };
+// Same reasoning as ITEM_CALORIES_DIGIT_LIMIT immediately above — now
+// shares DISTANCE_DIGIT_LIMIT's shape (volume_value's widened numeric(9,2)
+// capacity), kept as its own constant for the same drift-independence
+// reason. maxDecimals stays 2: distance is a converted unit (see
+// DISTANCE_DIGIT_LIMIT's own comment above).
+export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 7, maxDecimals: 2 };
+// workout_items.target_value is its own column, still numeric(6,2) (only
+// volume_value was widened — see the module comment above), so it keeps a
+// 4-integer-digit ceiling regardless of which target_type it holds. Cal/h
+// and watts are both plain rate numbers with no legitimate fractional
+// value — kept as its own constant rather than reused since target_value
+// and volume_value are unrelated fields whose bounds must not drift
+// together (see BODY_WEIGHT vs LIFTED_WEIGHT above).
 export const ITEM_TARGET_RATE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
-// Pace, stored in seconds: shares ITEM_DISTANCE_DIGIT_LIMIT's shape for the
-// same reason that one needed maxDecimals > 0 — a pace typed in /mi
-// converts to a non-integer number of seconds-per-km via
-// secondsPerMileToSecondsPerKm (lib/units.ts), and the numeric(6,2) column
-// has room for it.
+// Pace, stored in seconds, in the same still-numeric(6,2) target_value
+// column as ITEM_TARGET_RATE_DIGIT_LIMIT above — no longer the same shape
+// as ITEM_DISTANCE_DIGIT_LIMIT now that volume_value and target_value have
+// diverged, just the same 4-integer-digit ceiling that column's capacity
+// allows. maxDecimals is 2, not 0, because a pace typed in /mi converts to
+// a non-integer number of seconds-per-km via secondsPerMileToSecondsPerKm
+// (lib/units.ts), and the column has room for it.
 export const ITEM_PACE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 2 };
 
 /**

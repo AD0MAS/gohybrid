@@ -1,4 +1,4 @@
-import type { ClipboardEvent, KeyboardEvent } from "react";
+import type { ChangeEvent, ClipboardEvent, KeyboardEvent } from "react";
 import type { DigitLimit } from "@/lib/numeric-limits";
 
 type LiveNumberOptions = {
@@ -65,6 +65,119 @@ export function sanitizeLiveNumber(
   return value;
 }
 
+/**
+ * The same clamp sanitizeLiveNumber's `digitLimit`/`max` branches compute
+ * internally, exposed on its own: the single largest value the field will
+ * ever accept, min(the digit-limit-derived ceiling, an explicit `max`).
+ * Shared by correctedLiveNumberText below and DistanceInput's own text
+ * correction, both of which need to know "is the raw text already past the
+ * field's own ceiling" independently of whatever sanitizeLiveNumber's
+ * *rounded* return value happens to be this keystroke.
+ */
+export function ceilingFor({ max, digitLimit }: LiveNumberOptions): number | undefined {
+  let ceiling: number | undefined;
+  if (digitLimit) {
+    const factor = 10 ** digitLimit.maxDecimals;
+    ceiling = 10 ** digitLimit.maxIntegerDigits - 1 / factor;
+  }
+  if (max !== undefined) {
+    ceiling = ceiling === undefined ? max : Math.min(ceiling, max);
+  }
+  return ceiling;
+}
+
+/**
+ * Shared by sanitizeNumberInputChange below and DistanceInput's own text
+ * correction: decides whether `raw` needs rewriting back to `sanitized`'s
+ * canonical string, or is a legitimate in-progress prefix that should be
+ * left alone. "Redundant" is deliberately narrow, to avoid stripping text
+ * the user is legitimately still typing toward a different value:
+ *  - a leading zero immediately followed by another digit ("00", "05") —
+ *    leading zeros never carry meaning in this app, so this is always safe
+ *    to collapse regardless of what follows.
+ *  - decimal digits beyond `maxDecimals` ("1.00" once maxDecimals is 1) —
+ *    once that many decimals are typed, further digits round away to the
+ *    same value, so continuing to accept them has no effect on what gets
+ *    saved.
+ *  - raw's own numeric value already exceeds `ceiling` (typing "99999" into
+ *    a 4-digit field, or "910" into RPE's 1-10 range) — this is checked
+ *    against raw's OWN parse, not against whether `sanitized` differs from
+ *    whatever the field showed last render, because those can disagree: a
+ *    field already pinned at its ceiling that gets MORE digits prepended
+ *    (cursor at position 0, not appending at the end) still clamps to the
+ *    exact same ceiling value as before, so a "did the value change"
+ *    comparison would miss it — nothing besides the field's own ceiling
+ *    tells you the text has grown past what's reachable.
+ * A bare trailing "." or decimals still within budget are left alone even
+ * though they parse to the same value as before — that in-progress case is
+ * exactly what the plain sanitizeLiveNumber + controlled-value idiom is
+ * built to tolerate (see sanitizeLiveNumber's own doc comment), and forcing
+ * the canonical string back on every keystroke would make it impossible to
+ * ever type a decimal point. Returns the corrected string to write back, or
+ * null when `raw` needs no change.
+ */
+export function correctedLiveNumberText(
+  raw: string,
+  sanitized: number | null,
+  { maxDecimals, ceiling }: { maxDecimals: number; ceiling?: number }
+): string | null {
+  if (raw === "") return null;
+
+  const hasRedundantLeadingZero = /^0\d/.test(raw);
+  const dotIndex = raw.indexOf(".");
+  const hasRedundantDecimal =
+    dotIndex !== -1 && raw.length - dotIndex - 1 > maxDecimals;
+  const rawValue = Number(raw);
+  const hasExceededCeiling =
+    ceiling !== undefined && Number.isFinite(rawValue) && rawValue > ceiling;
+
+  if (!hasRedundantLeadingZero && !hasRedundantDecimal && !hasExceededCeiling) {
+    return null;
+  }
+  return sanitized === null ? "" : String(sanitized);
+}
+
+/**
+ * The onChange counterpart to numberInputGuardProps' onKeyDown/onPaste pair:
+ * runs sanitizeLiveNumber as usual, then corrects the DOM text itself for
+ * the classes of drift neither the guard nor a plain controlled `value`
+ * catches — see correctedLiveNumberText's doc comment for exactly which.
+ * The core problem in all of them: React's own reconciliation for
+ * `type="number"` (react-dom's updateInput) compares the live DOM text
+ * against the value prop with `!=`: `"00" != 0` is false (they coerce
+ * equal), so React skips rewriting the DOM whenever the two are only
+ * loosely equal, or whenever the sanitized value is byte-for-byte unchanged
+ * from the previous render (e.g. already clamped to the same ceiling).
+ * Every field driven by sanitizeLiveNumber's returned number hits this;
+ * DurationInput/DistanceInput's own boxes don't, because their controlled
+ * value is always the raw typed *string*, and a string `value` takes
+ * updateInput's other branch (strict string comparison, no numeric
+ * coercion) — see their own files for why they need a different fix
+ * (DistanceInput reuses correctedLiveNumberText directly, since nothing
+ * ever auto-corrects a string-valued controlled input the way React does
+ * here for a number-valued one).
+ */
+export function sanitizeNumberInputChange(
+  e: ChangeEvent<HTMLInputElement>,
+  options: LiveNumberOptions & { allowDecimal?: boolean }
+): number | null {
+  const raw = e.target.value;
+  const sanitized = sanitizeLiveNumber(raw, options);
+
+  const maxDecimals =
+    options.integer || options.digitLimit?.maxDecimals === 0
+      ? 0
+      : (options.digitLimit?.maxDecimals ?? (options.allowDecimal ? Infinity : 0));
+
+  const corrected = correctedLiveNumberText(raw, sanitized, {
+    maxDecimals,
+    ceiling: ceilingFor(options),
+  });
+  if (corrected !== null) e.target.value = corrected;
+
+  return sanitized;
+}
+
 type NumberInputGuardOptions = {
   /** Whether "." may ever appear. Every whole-number field (RPE, Sets,
    * Rounds, Cal/h, Watts, Estimated duration, the reps/calories branch of
@@ -119,6 +232,15 @@ const BLOCKED_KEYS = new Set(["-", "+", "e", "E"]);
  * exactly what sanitizeLiveNumber's onChange already does the moment a
  * *valid* paste lands; reconstructing that here for an *invalid* one would
  * duplicate it for a case a user can just paste again correctly.
+ *
+ * No onBlur here (there used to be one, for the /profile forms' number
+ * inputs back when they were plain uncontrolled `<input defaultValue>`
+ * elements with no per-keystroke correction at all). Every numeric field in
+ * the app, /profile included, is now a controlled input wired through
+ * sanitizeNumberInputChange (NumberField, app/(app)/_components/
+ * NumberField.tsx, is the /profile forms' version of that wiring), so
+ * correction already happens on every keystroke — an onBlur pass over
+ * already-canonical text has nothing left to do.
  */
 export function numberInputGuardProps({
   allowDecimal = false,

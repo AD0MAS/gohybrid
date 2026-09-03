@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
+import { numberInputGuardProps } from "./sanitize-live-number";
 
 const MAX_HOURS = 99;
 const MAX_MINUTES_OR_SECONDS = 59;

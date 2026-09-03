@@ -1,0 +1,1 @@
+ALTER TABLE "workout_items" ALTER COLUMN "volume_value" SET DATA TYPE numeric(9, 2);

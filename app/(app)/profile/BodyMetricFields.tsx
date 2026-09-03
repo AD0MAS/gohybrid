@@ -5,10 +5,15 @@ import { Pencil, Plus } from "lucide-react";
 import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
 import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
 import type { BodyMetric } from "@/lib/body-metrics";
+import {
+  BODY_FAT_DIGIT_LIMIT,
+  BODY_WEIGHT_DIGIT_LIMIT,
+  RESTING_HR_DIGIT_LIMIT,
+} from "@/lib/numeric-limits";
 import { formatBodyMetricValue } from "@/lib/units";
 import { isOneOf } from "@/lib/workouts-validation";
 import Modal from "../_components/Modal";
-import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
+import NumberField from "../_components/NumberField";
 import {
   addBodyMetric,
   updateBodyMetric,
@@ -213,6 +218,12 @@ function BodyMetricFormFields({
   // A scale reads to 0.1 kg/lb; body fat % follows the same precision;
   // resting HR is always a whole beats-per-minute reading.
   const valueStep = metricType === "resting_hr" ? 1 : 0.1;
+  const valueDigitLimit =
+    metricType === "weight"
+      ? BODY_WEIGHT_DIGIT_LIMIT
+      : metricType === "body_fat"
+        ? BODY_FAT_DIGIT_LIMIT
+        : RESTING_HR_DIGIT_LIMIT;
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -233,18 +244,19 @@ function BodyMetricFormFields({
         ))}
       </select>
 
-      <input
-        type="number"
+      <NumberField
+        key={metricType}
         name="value"
         step={valueStep}
-        min="0"
+        min={0}
         required
-        defaultValue={fieldDefault(
+        digitLimit={valueDigitLimit}
+        allowDecimal={metricType !== "resting_hr"}
+        initialValue={fieldDefault(
           "value",
           defaultValue !== undefined ? String(defaultValue) : undefined
         )}
         placeholder={`Value (${unit})`}
-        {...numberInputGuardProps({ allowDecimal: metricType !== "resting_hr" })}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 

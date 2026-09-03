@@ -15,6 +15,17 @@ import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_compo
 import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
 import type { Goal } from "@/lib/goals";
 import {
+  BODY_FAT_DIGIT_LIMIT,
+  BODY_WEIGHT_DIGIT_LIMIT,
+  CALORIES_DIGIT_LIMIT,
+  DISTANCE_DIGIT_LIMIT,
+  type DigitLimit,
+  GOAL_COUNT_DIGIT_LIMIT,
+  LIFTED_WEIGHT_DIGIT_LIMIT,
+  REPS_DIGIT_LIMIT,
+  RESTING_HR_DIGIT_LIMIT,
+} from "@/lib/numeric-limits";
+import {
   convertDistanceInputToMetres,
   DISTANCE_INPUT_UNITS,
   formatBodyMetricValue,
@@ -25,7 +36,7 @@ import { isOneOf } from "@/lib/workouts-validation";
 import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
-import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
+import NumberField from "../_components/NumberField";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
@@ -413,18 +424,27 @@ function GoalFormFields({
 
   let valueUnit: string;
   let valueStep: number;
+  let valueDigitLimit: DigitLimit;
   switch (goalType) {
     case "session_count":
       valueUnit = "sessions";
       valueStep = 1;
+      valueDigitLimit = GOAL_COUNT_DIGIT_LIMIT;
       break;
     case "streak":
       valueUnit = "days";
       valueStep = 1;
+      valueDigitLimit = GOAL_COUNT_DIGIT_LIMIT;
       break;
     case "body_metric":
       valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
       valueStep = targetMetricType === "resting_hr" ? 1 : 0.1;
+      valueDigitLimit =
+        targetMetricType === "weight"
+          ? BODY_WEIGHT_DIGIT_LIMIT
+          : targetMetricType === "body_fat"
+            ? BODY_FAT_DIGIT_LIMIT
+            : RESTING_HR_DIGIT_LIMIT;
       break;
     case "personal_record": {
       // Unused when targetRecordType is "distance" — that case renders
@@ -437,6 +457,12 @@ function GoalFormFields({
       ).unit;
       valueStep =
         targetRecordType === "weight" ? 2.5 : targetRecordType === "calories" ? 10 : 1;
+      valueDigitLimit =
+        targetRecordType === "weight"
+          ? LIFTED_WEIGHT_DIGIT_LIMIT
+          : targetRecordType === "calories"
+            ? CALORIES_DIGIT_LIMIT
+            : REPS_DIGIT_LIMIT;
       break;
     }
   }
@@ -645,6 +671,7 @@ function GoalFormFields({
           name="targetValue"
           unitSystem={unitSystem}
           isHyroxStation={isHyroxStation}
+          digitLimit={DISTANCE_DIGIT_LIMIT}
           defaultValueMetres={fieldDefaultDistanceMetres(
             "targetValue",
             entry && entryIsDistanceRecord ? entry.targetValue : null
@@ -652,21 +679,21 @@ function GoalFormFields({
           defaultUnit={fieldDefaultDistanceUnit("targetValue")}
         />
       ) : (
-        <input
+        <NumberField
           key={valueKind}
-          type="number"
           name="targetValue"
           step={valueStep}
-          min={goalType === "session_count" || goalType === "streak" ? "1" : "0"}
+          min={goalType === "session_count" || goalType === "streak" ? 1 : 0}
           required
-          defaultValue={fieldDefault(
+          digitLimit={valueDigitLimit}
+          allowDecimal={allowDecimalTargetValue}
+          initialValue={fieldDefault(
             "targetValue",
             defaultTargetValue !== undefined
               ? String(defaultTargetValue)
               : undefined
           )}
           placeholder={`Target value (${valueUnit})`}
-          {...numberInputGuardProps({ allowDecimal: allowDecimalTargetValue })}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}

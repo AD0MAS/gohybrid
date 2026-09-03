@@ -5,6 +5,12 @@ import { Pencil, Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
 import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
+import {
+  CALORIES_DIGIT_LIMIT,
+  DISTANCE_DIGIT_LIMIT,
+  LIFTED_WEIGHT_DIGIT_LIMIT,
+  REPS_DIGIT_LIMIT,
+} from "@/lib/numeric-limits";
 import type { PersonalRecord } from "@/lib/personal-records";
 import {
   convertDistanceInputToMetres,
@@ -16,7 +22,7 @@ import { isOneOf } from "@/lib/workouts-validation";
 import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
-import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
+import NumberField from "../_components/NumberField";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
   addPersonalRecord,
@@ -364,6 +370,14 @@ function PersonalRecordFormFields({
   // counts (distance/time route through their own inputs above).
   const valueStep =
     recordType === "weight" ? 2.5 : recordType === "calories" ? 10 : 1;
+  // Only reached for weight/reps/calories — time/distance render
+  // DurationInput/DistanceInput above instead, which carry their own limit.
+  const valueDigitLimit =
+    recordType === "weight"
+      ? LIFTED_WEIGHT_DIGIT_LIMIT
+      : recordType === "calories"
+        ? CALORIES_DIGIT_LIMIT
+        : REPS_DIGIT_LIMIT;
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -451,6 +465,7 @@ function PersonalRecordFormFields({
           name="value"
           unitSystem={unitSystem}
           isHyroxStation={isHyroxStation}
+          digitLimit={DISTANCE_DIGIT_LIMIT}
           defaultValueMetres={fieldDefaultDistanceMetres(
             "value",
             entry && entry.recordType === "distance" ? entry.value : null
@@ -458,19 +473,19 @@ function PersonalRecordFormFields({
           defaultUnit={fieldDefaultDistanceUnit("value")}
         />
       ) : (
-        <input
+        <NumberField
           key={recordType}
-          type="number"
           name="value"
           step={valueStep}
-          min="0"
+          min={0}
           required
-          defaultValue={fieldDefault(
+          digitLimit={valueDigitLimit}
+          allowDecimal={recordType === "weight"}
+          initialValue={fieldDefault(
             "value",
             defaultValue !== undefined ? String(defaultValue) : undefined
           )}
           placeholder={`Value (${valueUnit})`}
-          {...numberInputGuardProps({ allowDecimal: recordType === "weight" })}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}

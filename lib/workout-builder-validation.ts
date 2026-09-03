@@ -238,10 +238,12 @@ function parseBuilderItem(
   }
   // Digit limit per volume_type — "duration" is DurationInput's own
   // composed whole-seconds count (its own boxes already cap it), so it's
-  // skipped here. These limits are narrower than personal_records/goals'
-  // own — this table's volume_value column is numeric(6,2), not
-  // numeric(9,2) (see lib/numeric-limits.ts's ITEM_CALORIES_DIGIT_LIMIT/
-  // ITEM_DISTANCE_DIGIT_LIMIT comment).
+  // skipped here. workout_items.volume_value is numeric(9,2), matching
+  // personal_records.value/goals.target_value, so ITEM_CALORIES_DIGIT_LIMIT/
+  // ITEM_DISTANCE_DIGIT_LIMIT now share their shape with
+  // CALORIES_DIGIT_LIMIT/DISTANCE_DIGIT_LIMIT — kept as their own constants
+  // regardless (see lib/numeric-limits.ts's comment) so an unrelated
+  // subject's bound can't silently drift this one.
   if (volumeValue !== null && volumeType !== null && volumeType !== "duration") {
     const { limit, label } =
       volumeType === "reps"
