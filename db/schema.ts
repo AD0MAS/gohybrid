@@ -60,6 +60,7 @@ export const volumeTypeEnum = pgEnum("volume_type", [
 
 export const targetTypeEnum = pgEnum("target_type", [
   "pace_500m",
+  "pace_km",
   "cal_per_hour",
   "watts",
   "rpe",
@@ -69,7 +70,6 @@ export const targetPresetEnum = pgEnum("target_preset", [
   "threshold",
   "race_pace",
   "zone2",
-  "easy",
   "tempo",
   "recovery",
 ]);

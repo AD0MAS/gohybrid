@@ -8,11 +8,6 @@ type ModalProps = {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  /** Optional content rendered below `children`, in its own bordered
-   * strip — for a modal the user is expected to explicitly finish (e.g. a
-   * "Done" button), rather than only ever dismissed via the close X. Every
-   * existing call site omits this and renders exactly as before. */
-  footer?: React.ReactNode;
 };
 
 /**
@@ -28,7 +23,7 @@ type ModalProps = {
  * rather than relied on from the UA stylesheet, since Tailwind's preflight
  * reset is not guaranteed to leave dialog's default margin untouched.
  */
-export default function Modal({ open, onClose, title, children, footer }: ModalProps) {
+export default function Modal({ open, onClose, title, children }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -72,11 +67,6 @@ export default function Modal({ open, onClose, title, children, footer }: ModalP
       <div className="max-h-[calc(85vh-4rem)] overflow-y-auto p-6">
         {children}
       </div>
-      {footer && (
-        <div className="flex justify-end border-t border-hairline p-4">
-          {footer}
-        </div>
-      )}
     </dialog>
   );
 }

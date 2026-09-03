@@ -1,4 +1,5 @@
 import { useState, type Dispatch } from "react";
+import { Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import { formatDurationSeconds } from "@/lib/units";
 import DurationInput from "../../_components/DurationInput";
@@ -97,8 +98,9 @@ function formatBlockTiming(block: BuilderBlock): string | null {
  * unlike the /profile forms, which seed local state once from `entry`.
  * Changes dispatch immediately; there is no save/cancel inside the modal,
  * the builder's Save button is still the only commit point — the modal's
- * Done footer button (Modal's optional `footer` prop) only calls
- * setOpen(false), same as the close X.
+ * Done button, the last element inside its content (Modal itself has no
+ * footer slot — see Modal's own doc comment), only calls setOpen(false),
+ * same as the close X.
  *
  * `open`'s initial value comes from `autoOpen` (useState(autoOpen), not a
  * synced value) — true for the block WorkoutBuilder just created via
@@ -126,12 +128,20 @@ export default function BlockEditor({
   dispatch,
 }: BlockEditorProps) {
   const [open, setOpen] = useState(autoOpen);
+  /** The most recently ADD_ITEM-ed item's id within this block, so that
+   * item's ItemEditor can auto-open its modal once. Scoped per block
+   * (rather than lifted to WorkoutBuilder, the way lastAddedBlockId is) so
+   * an id can never match an item in a different block and auto-open the
+   * wrong modal. Generated here (not by the reducer) so it's known in the
+   * same tick as the dispatch — see AddItemAction's doc comment in
+   * reducer.ts. */
+  const [lastAddedItemId, setLastAddedItemId] = useState<string | null>(null);
   const timing = formatBlockTiming(block);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-surface-1 p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">
             {block.title || `Block ${index + 1}`}
           </p>
@@ -141,20 +151,22 @@ export default function BlockEditor({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex h-9 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            aria-label="Configure"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Configure
+            <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => dispatch({ type: "REMOVE_BLOCK", blockId: block.id })}
-            className="flex h-9 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            aria-label="Remove block"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
-            Remove block
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -163,15 +175,6 @@ export default function BlockEditor({
         open={open}
         onClose={() => setOpen(false)}
         title={block.title || `Block ${index + 1}`}
-        footer={
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            Done
-          </button>
-        }
       >
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
@@ -318,6 +321,14 @@ export default function BlockEditor({
               />
             </label>
           )}
+
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            Done
+          </button>
         </div>
       </Modal>
 
@@ -328,12 +339,12 @@ export default function BlockEditor({
           <p className="text-sm text-ink-subtle">No items yet.</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {block.items.map((item, itemIndex) => (
+            {block.items.map((item) => (
               <ItemEditor
                 key={item.id}
                 blockId={block.id}
                 item={item}
-                index={itemIndex}
+                autoOpen={item.id === lastAddedItemId}
                 catalog={catalog}
                 volumeTypeOptions={volumeTypeOptions}
                 targetTypeOptions={targetTypeOptions}
@@ -347,7 +358,11 @@ export default function BlockEditor({
 
         <button
           type="button"
-          onClick={() => dispatch({ type: "ADD_ITEM", blockId: block.id })}
+          onClick={() => {
+            const id = crypto.randomUUID();
+            setLastAddedItemId(id);
+            dispatch({ type: "ADD_ITEM", blockId: block.id, id });
+          }}
           className="flex h-11 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add item
