@@ -1,26 +1,62 @@
-import type { Dispatch } from "react";
 import { groupExercisesForSelect } from "@/lib/exercise-groups";
-import type { BuilderAction, CatalogExercise } from "./reducer";
+import type { CatalogExercise } from "./reducer";
 
 const CUSTOM_VALUE = "custom";
 
+/**
+ * The builder's own <optgroup> order — Runs, Rest, HYROX, Exercises —
+ * distinct from groupExercisesForSelect's HYROX/Exercises/Runs/Rest
+ * (lib/exercise-groups.ts), which PersonalRecordFields/GoalFields also
+ * render unmodified. The reorder lives here rather than in that shared
+ * function so those two forms keep their existing order; only the builder
+ * (this component, plus the "Custom (new)…" option rendered ahead of every
+ * group below) needed Quick Add first, then Run, then Rest — items a
+ * workout reaches for constantly — ahead of HYROX and the general
+ * Exercises catch-all.
+ */
+const PICKER_GROUP_ORDER = ["Runs", "Rest", "HYROX", "Exercises"];
+
+function orderGroupsForPicker<T extends { label: string }>(
+  groups: readonly T[]
+): T[] {
+  return PICKER_GROUP_ORDER.map((label) =>
+    groups.find((group) => group.label === label)
+  ).filter((group): group is T => group !== undefined);
+}
+
 type ExercisePickerProps = {
-  blockId: string;
-  itemId: string;
   exerciseId: string | null;
   customName: string | null;
   catalog: readonly CatalogExercise[];
-  dispatch: Dispatch<BuilderAction>;
+  /** Selecting a catalog exercise or clearing back to "Select exercise…" —
+   * mirrors the reducer's own exerciseId case, which always clears
+   * customName alongside it (see ItemEditor's updateExerciseId). */
+  onChangeExerciseId: (value: string | null) => void;
+  /** Typing (or entering) a custom name — mirrors the reducer's own
+   * customName case, which always clears exerciseId alongside it (see
+   * ItemEditor's updateCustomName). */
+  onChangeCustomName: (value: string) => void;
+  /** The exerciseId/customName pair's own validation error, if any —
+   * rendered beneath both fields since the rule ("needs either an
+   * exercise or a custom name", "cannot have both") is about the pair, not
+   * either field alone. */
+  error?: string;
 };
 
 /**
  * Picks an item's exercise: either linked to a catalog entry
  * (`exerciseId` set) or a free-typed custom name (`customName` set —
- * "Quick add" from GOHYBRID_PLAN.md §5), never both; the reducer enforces
- * this on every write. A single <select> lists the full catalog, grouped
- * via <optgroup> by groupExercisesForSelect (lib/exercises.ts) — the same
- * HYROX/Exercises/Runs/Rest grouping PersonalRecordFields/GoalFields use —
- * plus a "Custom (new)…" option first. There's no "Previously used" group
+ * "Quick add" from GOHYBRID_PLAN.md §5), never both — enforced here by
+ * always clearing the other field on change, the same mutual exclusivity
+ * the reducer's own UPDATE_ITEM_FIELD cases enforce for the committed
+ * state (this component now writes to ItemEditor's draft instead, via
+ * onChangeExerciseId/onChangeCustomName, so it must keep that guarantee
+ * itself). A single <select> lists the full catalog, grouped via
+ * <optgroup> by groupExercisesForSelect (lib/exercise-groups.ts) — the
+ * same HYROX/Exercises/Runs/Rest grouping PersonalRecordFields/GoalFields
+ * use, reordered to Runs/Rest/HYROX/Exercises for this picker specifically
+ * (see orderGroupsForPicker above) — plus a "Custom (new)…" option first.
+ * There's no "Previously used" group
  * here: that comes from a user's personal_records history, which the
  * builder has no reason to fetch. Choosing "Custom (new)…" reveals a text
  * input for the name; choosing a catalog
@@ -32,35 +68,23 @@ type ExercisePickerProps = {
  * "use client" file itself — see ItemEditor/WorkoutBuilder.
  */
 export default function ExercisePicker({
-  blockId,
-  itemId,
   exerciseId,
   customName,
   catalog,
-  dispatch,
+  onChangeExerciseId,
+  onChangeCustomName,
+  error,
 }: ExercisePickerProps) {
   const selectValue = exerciseId ?? (customName !== null ? CUSTOM_VALUE : "");
-  const groups = groupExercisesForSelect(catalog);
+  const groups = orderGroupsForPicker(groupExercisesForSelect(catalog));
 
   function handleSelectChange(value: string) {
     if (value === CUSTOM_VALUE) {
-      dispatch({
-        type: "UPDATE_ITEM_FIELD",
-        blockId,
-        itemId,
-        field: "customName",
-        value: "",
-      });
+      onChangeCustomName("");
       return;
     }
 
-    dispatch({
-      type: "UPDATE_ITEM_FIELD",
-      blockId,
-      itemId,
-      field: "exerciseId",
-      value: value === "" ? null : value,
-    });
+    onChangeExerciseId(value === "" ? null : value);
   }
 
   return (
@@ -91,19 +115,13 @@ export default function ExercisePicker({
         <input
           type="text"
           value={customName ?? ""}
-          onChange={(e) =>
-            dispatch({
-              type: "UPDATE_ITEM_FIELD",
-              blockId,
-              itemId,
-              field: "customName",
-              value: e.target.value,
-            })
-          }
+          onChange={(e) => onChangeCustomName(e.target.value)}
           placeholder="Custom name"
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}
+
+      {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );
 }

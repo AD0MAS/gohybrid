@@ -383,7 +383,9 @@ function BlockEditorModalFields({
   return (
     <div className="flex flex-col gap-3">
       <label className="flex flex-col gap-1 text-sm">
-        Title <span className="text-xs text-ink-subtle">(optional)</span>
+        <span className="flex items-center gap-1">
+          Title<span className="text-xs text-ink-subtle">(optional)</span>
+        </span>
         <input
           type="text"
           value={draft.title}
@@ -412,10 +414,12 @@ function BlockEditorModalFields({
 
       {(draft.blockType === "for_time" || draft.blockType === "amrap") && (
         <label className="flex flex-col gap-1 text-sm">
-          Duration{" "}
-          {draft.blockType === "for_time" && (
-            <span className="text-xs text-ink-subtle">(optional)</span>
-          )}
+          <span className="flex items-center gap-1">
+            Duration
+            {draft.blockType === "for_time" && (
+              <span className="text-xs text-ink-subtle">(optional)</span>
+            )}
+          </span>
           <DurationInput
             key={draft.blockType}
             maxUnit="hours"
@@ -432,10 +436,12 @@ function BlockEditorModalFields({
         draft.blockType === "on_off" ||
         draft.blockType === "emom") && (
         <label className="flex flex-col gap-1 text-sm">
-          Rounds{" "}
-          {draft.blockType === "for_time" && (
-            <span className="text-xs text-ink-subtle">(optional)</span>
-          )}
+          <span className="flex items-center gap-1">
+            Rounds
+            {draft.blockType === "for_time" && (
+              <span className="text-xs text-ink-subtle">(optional)</span>
+            )}
+          </span>
           <input
             type="number"
             min={1}

@@ -81,6 +81,16 @@ export type BuilderEnumOptions = {
   volumeTypeOptions: readonly string[];
   targetTypeOptions: readonly string[];
   targetPresetOptions: readonly string[];
+  /** Ids of every catalog exercise whose category is "rest" — computed by
+   * the caller from the exercise catalog it already has (the builder page's
+   * own fetch, or getExerciseCatalog() server-side), the same "caller
+   * supplies what it already has" pattern as the other *Options lists.
+   * Used to tell a rest item apart from a regular one: rest items are
+   * exempt from the volumeType/volumeValue requirement below (§ change 2 —
+   * a rest item has no volume at all, only an optional rest_seconds). A
+   * custom-named item is never a rest item (it has no catalog row), so this
+   * is only ever consulted when exerciseId is set. */
+  restExerciseIds: readonly string[];
 };
 
 type RawBuilderItemPayload = {
@@ -233,6 +243,204 @@ export function validateBuilderBlockDraft(
   return errors;
 }
 
+/** The subset of an item's editable fields ItemEditor's modal holds as a
+ * draft — notes is deliberately excluded, since it has no validation rule
+ * (parseBuilderItem only ever trims it). */
+export type BuilderItemDraft = {
+  exerciseId: string | null;
+  customName: string | null;
+  sets: number;
+  volumeType: (typeof volumeTypeEnum.enumValues)[number] | "";
+  volumeValue: number | null;
+  targetType: (typeof targetTypeEnum.enumValues)[number] | "";
+  targetValue: number | null;
+  targetPreset: (typeof targetPresetEnum.enumValues)[number] | "";
+  weightKg: number | null;
+  restSeconds: number | null;
+};
+
+/** Per-field validation errors for a single item draft — same convention as
+ * BuilderBlockDraftErrors: every key optional, empty object means valid.
+ * `exercise` covers the exerciseId/customName pair together, since that
+ * rule is about the relationship between the two fields rather than
+ * either one on its own — mirrored in the UI by ExercisePicker showing it
+ * beneath both. */
+export type BuilderItemDraftErrors = {
+  exercise?: string;
+  sets?: string;
+  volumeType?: string;
+  volumeValue?: string;
+  targetType?: string;
+  targetValue?: string;
+  targetPreset?: string;
+  weightKg?: string;
+  restSeconds?: string;
+};
+
+/**
+ * Validates one item's own fields in isolation — the same rules
+ * parseBuilderItem applies to an item within the full payload (see its own
+ * comment below), reworded for a single field rather than prefixed with
+ * "Block N item M". Used by ItemEditor's modal for immediate, per-field
+ * feedback on Save; validateBuilderPayload remains the actual gate run
+ * against the whole tree when the workout itself is saved.
+ */
+export function validateBuilderItemDraft(
+  draft: BuilderItemDraft,
+  options: Pick<
+    BuilderEnumOptions,
+    | "volumeTypeOptions"
+    | "targetTypeOptions"
+    | "targetPresetOptions"
+    | "restExerciseIds"
+  >
+): BuilderItemDraftErrors {
+  const errors: BuilderItemDraftErrors = {};
+
+  if (draft.exerciseId !== null && draft.customName !== null) {
+    errors.exercise = "Cannot have both an exercise and a custom name.";
+  } else if (draft.exerciseId === null && draft.customName === null) {
+    errors.exercise = "Needs either an exercise or a custom name.";
+  }
+
+  if (!Number.isInteger(draft.sets) || draft.sets < 1) {
+    errors.sets = "Sets must be a positive integer.";
+  }
+
+  // A rest item (exerciseId pointing at an exercises.category = "rest" row)
+  // has no volume at all — only its own optional rest_seconds field, which
+  // is validated separately below regardless of category. Every other item
+  // now requires both a volume type and a volume value (change 1): "Open
+  // Ended" — a volume type with no value — no longer exists as a UI state.
+  const isRestItem =
+    draft.exerciseId !== null &&
+    options.restExerciseIds.includes(draft.exerciseId);
+
+  if (draft.volumeType !== "") {
+    if (!isOneOf(draft.volumeType, options.volumeTypeOptions)) {
+      errors.volumeType = "Invalid volume type.";
+    }
+  } else if (!isRestItem) {
+    errors.volumeType = "Volume type is required.";
+  }
+
+  if (draft.volumeValue !== null) {
+    // Reps and calories are guarded by min: 1 on their own <input>
+    // (ItemEditor) — a typed 0 is corrected to 1 before it ever reaches
+    // the draft, so there's nothing left to check here for them (§ fix
+    // 2: enforce minimums at the input, not the validator). Duration and
+    // distance route through DurationInput/DistanceInput instead, neither
+    // of which has a min concept, so this stays their only client-side
+    // guard against a typed zero — same reasoning as pace below.
+    if (
+      (draft.volumeType === "duration" || draft.volumeType === "distance") &&
+      draft.volumeValue <= 0
+    ) {
+      errors.volumeValue = "Volume value must be greater than zero.";
+    } else if (draft.volumeType !== "" && draft.volumeType !== "duration") {
+      const { limit, label } =
+        draft.volumeType === "reps"
+          ? { limit: REPS_DIGIT_LIMIT, label: "Volume value (reps)" }
+          : draft.volumeType === "calories"
+            ? { limit: ITEM_CALORIES_DIGIT_LIMIT, label: "Volume value (calories)" }
+            : { limit: ITEM_DISTANCE_DIGIT_LIMIT, label: "Volume value (m)" };
+      const digitCheck = checkDigitLimit(draft.volumeValue, limit, label);
+      if (!digitCheck.ok) {
+        errors.volumeValue = digitCheck.error;
+      }
+    }
+  } else if (!isRestItem) {
+    errors.volumeValue = "Volume value is required.";
+  }
+
+  if (
+    draft.targetType !== "" &&
+    !isOneOf(draft.targetType, options.targetTypeOptions)
+  ) {
+    errors.targetType = "Invalid target type.";
+  }
+
+  if (draft.targetValue !== null) {
+    if (draft.targetType === "rpe") {
+      if (
+        !Number.isInteger(draft.targetValue) ||
+        draft.targetValue < 1 ||
+        draft.targetValue > 10
+      ) {
+        errors.targetValue = "RPE must be a whole number from 1 to 10.";
+      }
+    } else if (
+      (draft.targetType === "pace_500m" || draft.targetType === "pace_km") &&
+      draft.targetValue <= 0
+    ) {
+      // Pace routes through DurationInput, which — like DistanceInput for
+      // duration/distance volume above — has no min concept, so this
+      // stays the only client-side guard against a typed zero pace.
+      errors.targetValue = "Pace must be greater than zero.";
+    }
+    // cal_per_hour/watts are no longer checked for <= 0 here: both inputs
+    // now carry min: 1 (ItemEditor), so a typed 0 is corrected to 1
+    // before it ever reaches the draft. parseBuilderItem keeps the
+    // server-side check, since that runs for POST /api/workouts/[id]/full
+    // too, which never sees the input's min attribute.
+
+    if (!errors.targetValue && draft.targetType !== "" && draft.targetType !== "rpe") {
+      const { limit, label } =
+        draft.targetType === "cal_per_hour"
+          ? { limit: ITEM_TARGET_RATE_DIGIT_LIMIT, label: "Target value (cal/h)" }
+          : draft.targetType === "watts"
+            ? { limit: ITEM_TARGET_RATE_DIGIT_LIMIT, label: "Target value (watts)" }
+            : { limit: ITEM_PACE_DIGIT_LIMIT, label: "Target value (pace)" };
+      const digitCheck = checkDigitLimit(draft.targetValue, limit, label);
+      if (!digitCheck.ok) {
+        errors.targetValue = digitCheck.error;
+      }
+    }
+  } else if (draft.targetType !== "") {
+    // Fix 1: a target mode with no value must not pass — RPE/Pace/Cal per
+    // hour/Watts all require targetValue once targetType is set.
+    // Intensity zone is unaffected: it stores targetPreset, not
+    // targetType/targetValue, so it never reaches this branch.
+    errors.targetValue = "Target value is required.";
+  }
+
+  if (
+    draft.targetPreset !== "" &&
+    !isOneOf(draft.targetPreset, options.targetPresetOptions)
+  ) {
+    errors.targetPreset = "Invalid target preset.";
+  }
+
+  if (
+    draft.targetPreset !== "" &&
+    (draft.targetType !== "" || draft.targetValue !== null)
+  ) {
+    errors.targetPreset =
+      "Cannot have both a target preset and a target type/value.";
+  }
+
+  if (draft.weightKg !== null) {
+    if (draft.weightKg < 0) {
+      errors.weightKg = "Weight must be zero or greater.";
+    } else {
+      const digitCheck = checkDigitLimit(
+        draft.weightKg,
+        LIFTED_WEIGHT_DIGIT_LIMIT,
+        "Weight (kg)"
+      );
+      if (!digitCheck.ok) {
+        errors.weightKg = digitCheck.error;
+      }
+    }
+  }
+
+  if (draft.restSeconds !== null && draft.restSeconds < 0) {
+    errors.restSeconds = "Rest must be zero or greater.";
+  }
+
+  return errors;
+}
+
 /**
  * Validates the workout's selected tag ids. Like `exerciseId` on an item,
  * a tag id is only checked for being a syntactically valid UUID here, not
@@ -310,6 +518,12 @@ function parseBuilderItem(
     return { error: `${context} needs either an exercise or a custom name.` };
   }
 
+  // See validateBuilderItemDraft's matching comment: a rest item is exempt
+  // from the volume requirement below, and can never be reached through
+  // customName (no catalog row to carry a "rest" category).
+  const isRestItem =
+    exerciseId !== null && options.restExerciseIds.includes(exerciseId);
+
   const parsedSets = parseOptionalNumber(item.sets);
   const sets = parsedSets === null ? 1 : parsedSets;
   if (sets === INVALID || !Number.isInteger(sets) || sets < 1) {
@@ -328,12 +542,13 @@ function parseBuilderItem(
   if (volumeValue === INVALID) {
     return { error: `${context} volume value must be a number.` };
   }
-  // Checked regardless of volume_type — a negative duration/distance/reps/
-  // calories is meaningless the same way for all four, and the UI's own
-  // inputs (DurationInput/DistanceInput/the plain number box) can't produce
-  // one, but this validator is the real gate, not them.
-  if (volumeValue !== null && volumeValue < 0) {
-    return { error: `${context} volume value must be zero or greater.` };
+  // Checked regardless of volume_type — a zero or negative duration/
+  // distance/reps/calories is meaningless the same way for all four ("0 ×
+  // 12 reps" is not a set of anything), and the UI's own inputs
+  // (DurationInput/DistanceInput/the plain number box) can't produce a
+  // negative one, but this validator is the real gate, not them.
+  if (volumeValue !== null && volumeValue <= 0) {
+    return { error: `${context} volume value must be greater than zero.` };
   }
   // Digit limit per volume_type — "duration" is DurationInput's own
   // composed whole-seconds count (its own boxes already cap it), so it's
@@ -355,6 +570,19 @@ function parseBuilderItem(
       return { error: digitCheck.error };
     }
     volumeValue = digitCheck.value;
+  }
+
+  // Change 1: every non-rest item must have both a volume type and a
+  // volume value — "Open Ended" (a type with no value) is gone. Checked
+  // after the digit-limit pass above so a malformed value is reported as
+  // malformed, not as merely missing.
+  if (!isRestItem) {
+    if (volumeType === null) {
+      return { error: `${context} needs a volume type.` };
+    }
+    if (volumeValue === null) {
+      return { error: `${context} needs a volume value.` };
+    }
   }
 
   const targetType = parseOptionalEnumValue(
@@ -387,17 +615,18 @@ function parseBuilderItem(
     (targetType === "pace_500m" || targetType === "pace_km") &&
     targetValue <= 0
   ) {
-    // Strictly greater than zero, not >= 0 like the other target types — a
-    // pace of zero (zero seconds per 500m/km) isn't a slow pace, it's not a
-    // pace at all.
+    // Strictly greater than zero — a pace of zero (zero seconds per
+    // 500m/km) isn't a slow pace, it's not a pace at all.
     return { error: `${context} pace must be greater than zero.` };
   }
   if (
     targetValue !== null &&
     (targetType === "cal_per_hour" || targetType === "watts") &&
-    targetValue < 0
+    targetValue <= 0
   ) {
-    return { error: `${context} target value must be zero or greater.` };
+    // Same reasoning as the pace check above: a target of zero effort
+    // isn't a target.
+    return { error: `${context} target value must be greater than zero.` };
   }
   // Digit limit per target_type — "rpe" is excluded on purpose: its bound
   // is the fixed 1-10 range checked above, not a digit-count bound, so it
@@ -417,6 +646,14 @@ function parseBuilderItem(
       return { error: digitCheck.error };
     }
     targetValue = digitCheck.value;
+  }
+
+  // Fix 1: a target mode with no value must not save — RPE/Pace/Cal per
+  // hour/Watts all require targetValue once targetType is set (mirrors
+  // validateBuilderItemDraft's matching check). targetPreset (intensity
+  // zone) is unaffected: it stores its own field, never targetType.
+  if (targetType !== null && targetValue === null) {
+    return { error: `${context} needs a target value.` };
   }
 
   const targetPreset = parseOptionalEnumValue(
@@ -630,13 +867,13 @@ function parseBuilderBlock(
  * DB level (§6) regardless, since this is application-level validation,
  * not a column constraint. Each item must have exactly one of exerciseId
  * or customName (never both, never neither); targetType/targetValue and
- * targetPreset are alternatives, never both; at least one item across
- * the whole workout must have volumeValue or weightKg set — the guard
- * against saving an "empty" workout with no real content. A
- * duration-type volume satisfies this the same way any other volume
- * value does, since duration is represented as volumeType "duration"
- * plus volumeValue, not a separate field. tagIds defaults to an empty
- * array when absent (tags are optional) and each entry must be a
+ * targetPreset are alternatives, never both. Every item whose exercise is
+ * not a rest exercise (options.restExerciseIds) must have both a
+ * volumeType and a volumeValue (see parseBuilderItem) — there is
+ * deliberately no workout-level "at least one item has a volume" fallback
+ * any more, since that rule reported an item-level problem in the wrong
+ * place; requiring volume per item makes it redundant. tagIds defaults to
+ * an empty array when absent (tags are optional) and each entry must be a
  * syntactically valid UUID, deduplicated rather than rejected.
  */
 export function validateBuilderPayload(
@@ -703,19 +940,6 @@ export function validateBuilderPayload(
       return { success: false, error: parsed.error };
     }
     blocks.push(parsed.block);
-  }
-
-  const hasContent = blocks.some((block) =>
-    block.items.some(
-      (item) => item.volumeValue !== null || item.weightKg !== null
-    )
-  );
-  if (!hasContent) {
-    return {
-      success: false,
-      error:
-        "Add at least one item with a volume or weight filled in — an empty workout can't be saved.",
-    };
   }
 
   const tagIds = parseTagIds(input.tagIds);

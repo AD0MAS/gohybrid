@@ -8,11 +8,12 @@ import {
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { updateFullWorkoutForUser } from "@/lib/workouts";
+import { getExerciseCatalog } from "@/lib/exercises";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
+import { updateFullWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 
-const ENUM_OPTIONS = {
+const STATIC_ENUM_OPTIONS = {
   primaryTypeOptions: workoutPrimaryTypeEnum.enumValues,
   difficultyOptions: workoutDifficultyEnum.enumValues,
   blockTypeOptions: blockTypeEnum.enumValues,
@@ -57,7 +58,13 @@ export async function PATCH(
     );
   }
 
-  const result = validateBuilderPayload(body, ENUM_OPTIONS);
+  const exerciseCatalog = await getExerciseCatalog();
+  const result = validateBuilderPayload(body, {
+    ...STATIC_ENUM_OPTIONS,
+    restExerciseIds: exerciseCatalog
+      .filter((exercise) => exercise.category === "rest")
+      .map((exercise) => exercise.id),
+  });
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }

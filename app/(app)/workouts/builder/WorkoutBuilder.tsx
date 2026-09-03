@@ -148,6 +148,13 @@ export default function WorkoutBuilder({
    * reducer) so it's known in the same tick as the dispatch — see
    * AddBlockAction's doc comment in reducer.ts. */
   const [lastAddedBlockId, setLastAddedBlockId] = useState<string | null>(null);
+  /** Derived from exerciseCatalog rather than threaded down as its own
+   * prop — every caller of validateBuilderPayload/validateBuilderItemDraft
+   * computes restExerciseIds from a catalog it already has (see
+   * BuilderEnumOptions' own doc comment). */
+  const restExerciseIds = exerciseCatalog
+    .filter((exercise) => exercise.category === "rest")
+    .map((exercise) => exercise.id);
 
   /** Clears saveError up front, before validation runs, rather than only
    * ever overwriting it in the failure branch below — belt-and-braces
@@ -165,6 +172,7 @@ export default function WorkoutBuilder({
       volumeTypeOptions,
       targetTypeOptions,
       targetPresetOptions,
+      restExerciseIds,
     });
 
     if (!result.success) {
@@ -212,7 +220,9 @@ export default function WorkoutBuilder({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Description <span className="text-xs text-ink-subtle">(optional)</span>
+          <span className="flex items-center gap-1">
+            Description<span className="text-xs text-ink-subtle">(optional)</span>
+          </span>
           <textarea
             value={state.meta.description}
             onChange={(e) =>
@@ -277,8 +287,10 @@ export default function WorkoutBuilder({
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Estimated duration in minutes{" "}
-          <span className="text-xs text-ink-subtle">(optional)</span>
+          <span className="flex items-center gap-1">
+            Estimated duration in minutes
+            <span className="text-xs text-ink-subtle">(optional)</span>
+          </span>
           <input
             type="number"
             min={1}
@@ -302,7 +314,9 @@ export default function WorkoutBuilder({
         </label>
 
         <div className="flex flex-col gap-1 text-sm">
-          Tags <span className="text-xs text-ink-subtle">(optional)</span>
+          <span className="flex items-center gap-1">
+            Tags<span className="text-xs text-ink-subtle">(optional)</span>
+          </span>
           <div className="flex flex-wrap gap-2">
             {tagCatalog.length === 0 ? (
               <p className="text-sm text-ink-subtle">No tags available.</p>
