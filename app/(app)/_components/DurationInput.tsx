@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
 
 const MAX_HOURS = 99;
 const MAX_MINUTES_OR_SECONDS = 59;
@@ -142,6 +143,7 @@ export default function DurationInput(props: DurationInputProps) {
             step={1}
             value={displayBox(boxes.h)}
             onChange={(e) => updateBox("h", e.target.value, MAX_HOURS)}
+            {...numberInputGuardProps()}
             aria-label="Hours"
             className={boxClassName}
           />
@@ -156,6 +158,7 @@ export default function DurationInput(props: DurationInputProps) {
         step={1}
         value={displayBox(boxes.m)}
         onChange={(e) => updateBox("m", e.target.value, MAX_MINUTES_OR_SECONDS)}
+        {...numberInputGuardProps()}
         aria-label="Minutes"
         className={boxClassName}
       />
@@ -168,6 +171,7 @@ export default function DurationInput(props: DurationInputProps) {
         step={1}
         value={displayBox(boxes.s)}
         onChange={(e) => updateBox("s", e.target.value, MAX_MINUTES_OR_SECONDS)}
+        {...numberInputGuardProps()}
         aria-label="Seconds"
         className={boxClassName}
       />

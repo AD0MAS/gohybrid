@@ -8,6 +8,7 @@ import type { BodyMetric } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
 import { isOneOf } from "@/lib/workouts-validation";
 import Modal from "../_components/Modal";
+import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
 import {
   addBodyMetric,
   updateBodyMetric,
@@ -243,6 +244,7 @@ function BodyMetricFormFields({
           defaultValue !== undefined ? String(defaultValue) : undefined
         )}
         placeholder={`Value (${unit})`}
+        {...numberInputGuardProps({ allowDecimal: metricType !== "resting_hr" })}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 

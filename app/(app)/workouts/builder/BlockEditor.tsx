@@ -1,6 +1,7 @@
 import { useState, type Dispatch } from "react";
 import { Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
+import { REPS_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { formatDurationSeconds } from "@/lib/units";
 import DurationInput from "../../_components/DurationInput";
 import Modal from "../../_components/Modal";
@@ -15,6 +16,7 @@ import type {
   TargetType,
   VolumeType,
 } from "./reducer";
+import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
 
 type BlockEditorProps = {
   block: BuilderBlock;
@@ -257,9 +259,17 @@ export default function BlockEditor({
                     type: "UPDATE_BLOCK_FIELD",
                     blockId: block.id,
                     field: "rounds",
-                    value: e.target.value === "" ? null : Number(e.target.value),
+                    // No dedicated Rounds constant in lib/numeric-limits.ts —
+                    // same reuse of REPS_DIGIT_LIMIT as ItemEditor's Sets
+                    // field, for the same reason (a plain whole-number
+                    // count with no constant of its own).
+                    value: sanitizeLiveNumber(e.target.value, {
+                      min: 1,
+                      digitLimit: REPS_DIGIT_LIMIT,
+                    }),
                   })
                 }
+                {...numberInputGuardProps()}
                 className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
             </label>

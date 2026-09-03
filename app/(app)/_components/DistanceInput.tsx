@@ -9,6 +9,10 @@ import {
   metresToMiles,
   type DistanceInputUnit,
 } from "@/lib/units";
+import {
+  numberInputGuardProps,
+  sanitizeLiveNumber,
+} from "../workouts/builder/sanitize-live-number";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
@@ -81,11 +85,16 @@ function decompose(
 
 /** Inverse of decompose's `text`/`unit` pair — parses the currently typed
  * number in the currently selected unit into metres, or null when blank
- * or not a finite number (mid-edit states like "-" or "."). */
+ * or not a finite number (mid-edit states like "-" or "."). Goes through
+ * sanitizeLiveNumber (min: 0, no digitLimit — decimals stay exactly as
+ * typed) rather than a bare `Number(text)`: unlike every other numeric
+ * field in the builder, this one never got a live clamp, so a typed
+ * negative distance (e.g. "-500") converted straight through to metres
+ * and reached item.volumeValue as a negative number, same DB column any
+ * other volume value shares. */
 function compose(text: string, unit: DistanceInputUnit): number | null {
-  if (text === "") return null;
-  const parsed = Number(text);
-  return Number.isFinite(parsed) ? convertDistanceInputToMetres(parsed, unit) : null;
+  const value = sanitizeLiveNumber(text, { min: 0 });
+  return value === null ? null : convertDistanceInputToMetres(value, unit);
 }
 
 type DistanceInputBaseProps = {
@@ -240,6 +249,7 @@ export default function DistanceInput(props: DistanceInputProps) {
         step={stepForUnit(box.unit)}
         value={box.text}
         onChange={(e) => updateText(e.target.value)}
+        {...numberInputGuardProps({ allowDecimal: true })}
         aria-label="Distance"
         className={inputClassName}
       />

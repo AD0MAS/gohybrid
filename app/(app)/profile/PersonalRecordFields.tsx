@@ -16,6 +16,7 @@ import { isOneOf } from "@/lib/workouts-validation";
 import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
+import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
   addPersonalRecord,
@@ -469,6 +470,7 @@ function PersonalRecordFormFields({
             defaultValue !== undefined ? String(defaultValue) : undefined
           )}
           placeholder={`Value (${valueUnit})`}
+          {...numberInputGuardProps({ allowDecimal: recordType === "weight" })}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}

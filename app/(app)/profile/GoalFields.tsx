@@ -25,6 +25,7 @@ import { isOneOf } from "@/lib/workouts-validation";
 import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
+import { numberInputGuardProps } from "../workouts/builder/sanitize-live-number";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
@@ -439,6 +440,16 @@ function GoalFormFields({
       break;
     }
   }
+  // Mirrors the switch above, as a boolean rather than a step size: only
+  // a non-resting_hr body metric or a weight personal record ever takes a
+  // decimal point here (session_count/streak/reps/calories are whole
+  // numbers despite calories' 10-unit step). Unused when targetRecordType
+  // is "time"/"distance" — those render DurationInput/DistanceInput
+  // instead of this plain number input.
+  const allowDecimalTargetValue =
+    goalType === "body_metric"
+      ? targetMetricType !== "resting_hr"
+      : goalType === "personal_record" && targetRecordType === "weight";
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
@@ -655,6 +666,7 @@ function GoalFormFields({
               : undefined
           )}
           placeholder={`Target value (${valueUnit})`}
+          {...numberInputGuardProps({ allowDecimal: allowDecimalTargetValue })}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}

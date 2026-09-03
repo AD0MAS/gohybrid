@@ -2,6 +2,12 @@ import { useState, type Dispatch } from "react";
 import { Pencil, StickyNote, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import {
+  ITEM_CALORIES_DIGIT_LIMIT,
+  ITEM_TARGET_RATE_DIGIT_LIMIT,
+  LIFTED_WEIGHT_DIGIT_LIMIT,
+  REPS_DIGIT_LIMIT,
+} from "@/lib/numeric-limits";
+import {
   formatDistanceMetres,
   formatDurationSeconds,
   formatWeightKg,
@@ -20,6 +26,7 @@ import type {
   TargetType,
   VolumeType,
 } from "./reducer";
+import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
 import { TARGET_PRESET_LABELS } from "./target-preset-labels";
 import { TARGET_TYPE_LABELS } from "./target-type-labels";
 import { VOLUME_TYPE_LABELS } from "./volume-type-labels";
@@ -416,9 +423,18 @@ export default function ItemEditor({
                   blockId,
                   itemId: item.id,
                   field: "sets",
-                  value: e.target.value === "" ? 1 : Number(e.target.value),
+                  // No dedicated Sets constant in lib/numeric-limits.ts —
+                  // it's a plain whole-number count with the same shape as
+                  // REPS_DIGIT_LIMIT (4 digits, no decimals), reused here
+                  // rather than inventing a near-duplicate constant.
+                  value:
+                    sanitizeLiveNumber(e.target.value, {
+                      min: 1,
+                      digitLimit: REPS_DIGIT_LIMIT,
+                    }) ?? 1,
                 })
               }
+              {...numberInputGuardProps()}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
@@ -494,10 +510,19 @@ export default function ItemEditor({
                       blockId,
                       itemId: item.id,
                       field: "volumeValue",
-                      value:
-                        e.target.value === "" ? null : Number(e.target.value),
+                      // Same two limits validateBuilderPayload's own
+                      // volume_type switch uses for this pair (distance
+                      // goes through DistanceInput above instead).
+                      value: sanitizeLiveNumber(e.target.value, {
+                        min: 0,
+                        digitLimit:
+                          item.volumeType === "calories"
+                            ? ITEM_CALORIES_DIGIT_LIMIT
+                            : REPS_DIGIT_LIMIT,
+                      }),
                     })
                   }
+                  {...numberInputGuardProps()}
                   className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 />
               )}
@@ -572,20 +597,20 @@ export default function ItemEditor({
                     // min/max attributes above — those only affect the
                     // native spinner/blur validation, which noValidate on
                     // the builder's <form> turns off, and typing "11" or
-                    // "-5" directly bypasses them regardless. Same
-                    // clamp-while-typing approach DurationInput's own boxes
-                    // use for their 0-59 range (clampBox in
-                    // app/(app)/_components/DurationInput.tsx): parse,
-                    // fall back to empty/null on a non-finite result,
-                    // truncate, then Math.min(Math.max(...)) into range.
-                    value: (() => {
-                      if (e.target.value === "") return null;
-                      const parsed = Number(e.target.value);
-                      if (!Number.isFinite(parsed)) return null;
-                      return Math.min(Math.max(Math.trunc(parsed), 1), 10);
-                    })(),
+                    // "-5" directly bypasses them regardless. No matching
+                    // DigitLimit constant exists (or is needed): the 1-10
+                    // range is already tighter than any digit-count cap, so
+                    // `integer: true` alone gets the whole-number rule
+                    // sanitizeLiveNumber's digitLimit branch would
+                    // otherwise provide.
+                    value: sanitizeLiveNumber(e.target.value, {
+                      min: 1,
+                      max: 10,
+                      integer: true,
+                    }),
                   })
                 }
+                {...numberInputGuardProps()}
                 className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
             </label>
@@ -635,10 +660,16 @@ export default function ItemEditor({
                     blockId,
                     itemId: item.id,
                     field: "targetValue",
-                    value:
-                      e.target.value === "" ? null : Number(e.target.value),
+                    // Cal/h and watts share ITEM_TARGET_RATE_DIGIT_LIMIT
+                    // here too — same constant validateBuilderPayload
+                    // checks target_value against for both.
+                    value: sanitizeLiveNumber(e.target.value, {
+                      min: 0,
+                      digitLimit: ITEM_TARGET_RATE_DIGIT_LIMIT,
+                    }),
                   })
                 }
+                {...numberInputGuardProps()}
                 className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
             </label>
@@ -658,9 +689,15 @@ export default function ItemEditor({
                   blockId,
                   itemId: item.id,
                   field: "weightKg",
-                  value: e.target.value === "" ? null : Number(e.target.value),
+                  // LIFTED_WEIGHT_DIGIT_LIMIT allows one decimal (12.5 kg) —
+                  // the one field here where a decimal point stays valid.
+                  value: sanitizeLiveNumber(e.target.value, {
+                    min: 0,
+                    digitLimit: LIFTED_WEIGHT_DIGIT_LIMIT,
+                  }),
                 })
               }
+              {...numberInputGuardProps({ allowDecimal: true })}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>

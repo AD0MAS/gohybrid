@@ -3,6 +3,7 @@
 import { useReducer, useState } from "react";
 import type { unitSystemEnum } from "@/db/schema";
 import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
+import { DURATION_MINUTES_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
@@ -21,6 +22,7 @@ import {
   type TargetType,
   type VolumeType,
 } from "./reducer";
+import { numberInputGuardProps, sanitizeLiveNumber } from "./sanitize-live-number";
 
 /**
  * Flattens the builder's internal {meta, blocks} state into the flat
@@ -283,9 +285,15 @@ export default function WorkoutBuilder({
               dispatch({
                 type: "UPDATE_META_FIELD",
                 field: "estimatedDurationMinutes",
-                value: e.target.value === "" ? null : Number(e.target.value),
+                // Same DURATION_MINUTES_DIGIT_LIMIT
+                // validateBuilderPayload checks this field against.
+                value: sanitizeLiveNumber(e.target.value, {
+                  min: 1,
+                  digitLimit: DURATION_MINUTES_DIGIT_LIMIT,
+                }),
               })
             }
+            {...numberInputGuardProps()}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>

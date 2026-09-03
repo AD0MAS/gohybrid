@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { formatDistanceMetres, formatDurationSeconds, formatWeightKg } from "@/lib/units";
+import {
+  formatDistanceMetres,
+  formatDurationSeconds,
+  formatWeightKg,
+  secondsPerKmToSecondsPerMile,
+} from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
@@ -182,11 +187,36 @@ export default async function WorkoutDetailPage(
 
                       const target = item.targetPreset
                         ? TARGET_PRESET_LABELS[item.targetPreset].label
-                        : item.targetType
-                          ? item.targetValue != null
-                            ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
-                            : TARGET_TYPE_LABELS[item.targetType].label
-                          : null;
+                        : item.targetType === "pace_500m" ||
+                            item.targetType === "pace_km"
+                          ? item.targetValue == null
+                            ? TARGET_TYPE_LABELS[item.targetType].label
+                            : (() => {
+                                // Mirrors formatItemSummary in
+                                // ItemEditor.tsx: pace_500m always reads
+                                // /500m; pace_km reads /km for a metric
+                                // user, /mi (converted) for an imperial one.
+                                const useMiles =
+                                  item.targetType === "pace_km" &&
+                                  unitSystem === "imperial";
+                                const seconds = useMiles
+                                  ? secondsPerKmToSecondsPerMile(
+                                      Number(item.targetValue)
+                                    )
+                                  : Number(item.targetValue);
+                                const unitLabel =
+                                  item.targetType === "pace_500m"
+                                    ? "/500m"
+                                    : useMiles
+                                      ? "/mi"
+                                      : "/km";
+                                return `${formatDurationSeconds(seconds)} ${unitLabel}`;
+                              })()
+                          : item.targetType
+                            ? item.targetValue != null
+                              ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
+                              : TARGET_TYPE_LABELS[item.targetType].label
+                            : null;
 
                       const weight =
                         item.weightKg != null
