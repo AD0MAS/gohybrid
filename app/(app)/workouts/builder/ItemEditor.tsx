@@ -5,6 +5,8 @@ import {
   formatDistanceMetres,
   formatDurationSeconds,
   formatWeightKg,
+  secondsPerKmToSecondsPerMile,
+  secondsPerMileToSecondsPerKm,
 } from "@/lib/units";
 import DistanceInput from "../../_components/DistanceInput";
 import DurationInput from "../../_components/DurationInput";
@@ -34,11 +36,86 @@ type ItemEditorProps = {
   autoOpen: boolean;
   catalog: readonly CatalogExercise[];
   volumeTypeOptions: readonly VolumeType[];
+  /** Accepted (BlockEditor passes it through) but not destructured below —
+   * the Target select's six modes are a fixed set the UI defines itself
+   * (see TargetMode), not generated from this list. Still part of the type
+   * so BlockEditor's own unchanged prop-drilling keeps typechecking. */
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
   dispatch: Dispatch<BuilderAction>;
 };
+
+/**
+ * The six mutually exclusive Target modes the builder's single Target
+ * select offers, replacing the old separate preset/type/value controls.
+ * "none" and "intensity_zone" don't correspond 1:1 to a TargetType enum
+ * value (a preset, not a type); the other four line up with one TargetType
+ * value each, except "pace", which covers both pace_500m and pace_km (see
+ * PaceDisplayUnit below). Purely a UI grouping — never stored itself.
+ * Initially seeded from item.targetPreset/targetType by deriveTargetMode,
+ * then held as ItemEditor's own local state (see its doc comment there) —
+ * "intensity_zone" with no preset chosen yet is indistinguishable from
+ * "none" in stored data, so it can't be re-derived on every render.
+ */
+type TargetMode =
+  | "none"
+  | "intensity_zone"
+  | "rpe"
+  | "pace"
+  | "cal_per_hour"
+  | "watts";
+
+/**
+ * The unit the Pace mode's value box is currently shown in. Never stored —
+ * local useState in ItemEditor, seeded from the saved item's target_type
+ * and the unitSystem prop (see ItemEditor's own paceDisplayUnit
+ * initializer). "500m" is target_type = pace_500m's only unit; "km"/"mi"
+ * are both target_type = pace_km, converted for display via
+ * secondsPerKmToSecondsPerMile — same canonical-value-plus-display-unit
+ * split as DistanceInput's own unit select.
+ */
+type PaceDisplayUnit = "500m" | "km" | "mi";
+
+/** Derives which of the six Target modes a *freshly loaded* item is in from
+ * its stored fields — used only to seed ItemEditor's local targetMode state
+ * once (see its doc comment), never called again afterwards. An item whose
+ * targetPreset and targetType are both empty reads as "none" here, which is
+ * correct for a genuinely untouched item; the "Intensity zone chosen, no
+ * zone picked yet" case that also has both empty only exists as UI-session
+ * state, never as something LOAD_WORKOUT could hand back. */
+function deriveTargetMode(item: BuilderItem): TargetMode {
+  if (item.targetPreset !== "") return "intensity_zone";
+  if (item.targetType === "rpe") return "rpe";
+  if (item.targetType === "pace_500m" || item.targetType === "pace_km") {
+    return "pace";
+  }
+  if (item.targetType === "cal_per_hour") return "cal_per_hour";
+  if (item.targetType === "watts") return "watts";
+  return "none";
+}
+
+/** Converts a stored pace target_value (always seconds-per-500m for
+ * pace_500m, always seconds-per-km for pace_km — see secondsPerKmToSecondsPerMile's
+ * doc comment) into the seconds figure the currently selected display unit
+ * should show. Read-side counterpart to paceValueFromDisplay below. */
+function paceValueForDisplay(
+  targetValue: number | null,
+  unit: PaceDisplayUnit
+): number | null {
+  if (targetValue == null) return null;
+  return unit === "mi" ? secondsPerKmToSecondsPerMile(targetValue) : targetValue;
+}
+
+/** Inverse of paceValueForDisplay — converts a seconds figure typed in the
+ * currently selected display unit back into the canonical stored value. */
+function paceValueFromDisplay(
+  seconds: number | null,
+  unit: PaceDisplayUnit
+): number | null {
+  if (seconds == null) return null;
+  return unit === "mi" ? secondsPerMileToSecondsPerKm(seconds) : seconds;
+}
 
 /**
  * One-line rendering of what's configured on an item so far, in a fixed
@@ -90,6 +167,20 @@ function formatItemSummary(
   const target = (() => {
     if (item.targetPreset !== "") {
       return TARGET_PRESET_LABELS[item.targetPreset].label;
+    }
+    if (item.targetType === "pace_500m" || item.targetType === "pace_km") {
+      if (item.targetValue == null) {
+        return TARGET_TYPE_LABELS[item.targetType].label;
+      }
+      // Same "on opening" default as ItemEditor's own paceDisplayUnit
+      // initializer: pace_500m always reads as /500m; pace_km reads as
+      // /km for a metric user, /mi for an imperial one.
+      const useMiles = item.targetType === "pace_km" && unitSystem === "imperial";
+      const seconds = useMiles
+        ? secondsPerKmToSecondsPerMile(item.targetValue)
+        : item.targetValue;
+      const unitLabel = item.targetType === "pace_500m" ? "/500m" : useMiles ? "/mi" : "/km";
+      return `${formatDurationSeconds(seconds)} ${unitLabel}`;
     }
     if (item.targetType !== "") {
       const label = TARGET_TYPE_LABELS[item.targetType].label;
@@ -153,12 +244,20 @@ export default function ItemEditor({
   autoOpen,
   catalog,
   volumeTypeOptions,
-  targetTypeOptions,
   targetPresetOptions,
   unitSystem,
   dispatch,
 }: ItemEditorProps) {
   const [open, setOpen] = useState(autoOpen);
+  // Display-only, never stored — see PaceDisplayUnit's doc comment. Read
+  // once at mount, same as `open` above: reopening later via Configure is
+  // under the user's own control, not synced to prop changes.
+  const [paceDisplayUnit, setPaceDisplayUnit] = useState<PaceDisplayUnit>(
+    () => {
+      if (item.targetType === "pace_500m") return "500m";
+      return unitSystem === "imperial" ? "mi" : "km";
+    }
+  );
   const exercise = catalog.find(
     (candidate) => candidate.id === item.exerciseId
   );
@@ -166,6 +265,93 @@ export default function ItemEditor({
   const itemName = exercise?.name || item.customName || "New item";
   const summary = formatItemSummary(item, unitSystem, isHyroxStation);
   const hasNotes = item.notes.trim() !== "";
+  /**
+   * Which section the Target select shows. Seeded once from item state via
+   * deriveTargetMode (same "read once at mount" pattern as `open` and
+   * `paceDisplayUnit` above), not re-derived on every render — because
+   * "Intensity zone selected, no zone chosen yet" and "None" are now the
+   * *same* stored state (targetPreset/targetType both empty; see the
+   * Intensity zone sub-select's placeholder option below), so item state
+   * alone can no longer tell them apart. Local state is what remembers
+   * which of the two the user actually picked. Every branch of
+   * handleTargetModeChange below keeps this in sync with whatever it
+   * dispatches, the same way setPaceDisplayUnit does.
+   */
+  const [targetMode, setTargetMode] = useState<TargetMode>(() =>
+    deriveTargetMode(item)
+  );
+
+  /**
+   * Switches Target mode. "none" and "intensity_zone" dispatch the exact
+   * same action — clear targetPreset — since entering Intensity zone no
+   * longer eagerly picks a preset (see the sub-select's placeholder
+   * option); only the local `targetMode` state (set above, unconditionally)
+   * tells the two apart afterwards. The other four modes dispatch
+   * targetType, relying on the reducer's own targetPreset/targetType
+   * exclusivity (reducer.ts) to clear whatever the previous mode owned —
+   * no new reducer logic needed either way.
+   */
+  function handleTargetModeChange(mode: TargetMode) {
+    setTargetMode(mode);
+    if (mode === "none" || mode === "intensity_zone") {
+      dispatch({
+        type: "UPDATE_ITEM_FIELD",
+        blockId,
+        itemId: item.id,
+        field: "targetPreset",
+        value: "",
+      });
+      return;
+    }
+    const targetType: TargetType =
+      mode === "pace"
+        ? paceDisplayUnit === "500m"
+          ? "pace_500m"
+          : "pace_km"
+        : mode;
+    dispatch({
+      type: "UPDATE_ITEM_FIELD",
+      blockId,
+      itemId: item.id,
+      field: "targetType",
+      value: targetType,
+    });
+  }
+
+  /**
+   * Switches the Pace value box's display unit. Crossing between the
+   * "500m" group and the "km"/"mi" group is a real target_type change
+   * (pace_500m and pace_km are not interconvertible — see
+   * secondsPerKmToSecondsPerMile's doc comment), so that dispatches and the
+   * reducer clears the stored value. Switching between "km" and "mi" is a
+   * pure display change: both read/write the same canonical
+   * seconds-per-km value, so nothing is dispatched — only local state
+   * changes, and the DurationInput below (keyed on paceDisplayUnit) remounts
+   * to re-seed itself from the newly converted display value.
+   */
+  function handlePaceUnitChange(unit: PaceDisplayUnit) {
+    const targetType: TargetType = unit === "500m" ? "pace_500m" : "pace_km";
+    if (targetType !== item.targetType) {
+      dispatch({
+        type: "UPDATE_ITEM_FIELD",
+        blockId,
+        itemId: item.id,
+        field: "targetType",
+        value: targetType,
+      });
+    }
+    setPaceDisplayUnit(unit);
+  }
+
+  function handlePaceValueChange(seconds: number | null) {
+    dispatch({
+      type: "UPDATE_ITEM_FIELD",
+      blockId,
+      itemId: item.id,
+      field: "targetValue",
+      value: paceValueFromDisplay(seconds, paceDisplayUnit),
+    });
+  }
 
   return (
     <li className="flex items-start justify-between gap-3 rounded-lg border border-hairline bg-surface-1 p-5">
@@ -319,66 +505,129 @@ export default function ItemEditor({
           )}
 
           <label className="flex flex-col gap-1 text-sm">
-            Target preset{" "}
-            <span className="text-xs text-ink-subtle">(optional)</span>
+            Target <span className="text-xs text-ink-subtle">(optional)</span>
             <select
-              value={item.targetPreset}
+              value={targetMode}
               onChange={(e) =>
-                dispatch({
-                  type: "UPDATE_ITEM_FIELD",
-                  blockId,
-                  itemId: item.id,
-                  field: "targetPreset",
-                  value: e.target.value as TargetPreset | "",
-                })
+                handleTargetModeChange(e.target.value as TargetMode)
               }
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
-              <option value="">None</option>
-              {targetPresetOptions.map((value) => (
-                <option key={value} value={value}>
-                  {TARGET_PRESET_LABELS[value].label}
-                </option>
-              ))}
+              <option value="none">None</option>
+              <option value="intensity_zone">Intensity zone</option>
+              <option value="rpe">{TARGET_TYPE_LABELS.rpe.label}</option>
+              <option value="pace">Pace</option>
+              <option value="cal_per_hour">
+                {TARGET_TYPE_LABELS.cal_per_hour.label}
+              </option>
+              <option value="watts">{TARGET_TYPE_LABELS.watts.label}</option>
             </select>
           </label>
 
-          <p className="text-xs text-ink-subtle">
-            Or set a target type and value instead of a preset:
-          </p>
-
-          <label className="flex flex-col gap-1 text-sm">
-            Target type{" "}
-            <span className="text-xs text-ink-subtle">(optional)</span>
-            <select
-              value={item.targetType}
-              onChange={(e) =>
-                dispatch({
-                  type: "UPDATE_ITEM_FIELD",
-                  blockId,
-                  itemId: item.id,
-                  field: "targetType",
-                  value: e.target.value as TargetType | "",
-                })
-              }
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            >
-              <option value="">None</option>
-              {targetTypeOptions.map((value) => (
-                <option key={value} value={value}>
-                  {TARGET_TYPE_LABELS[value].label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {item.targetType !== "" && (
+          {targetMode === "intensity_zone" && (
             <label className="flex flex-col gap-1 text-sm">
-              Target value{" "}
+              Intensity zone
+              <select
+                value={item.targetPreset}
+                onChange={(e) =>
+                  dispatch({
+                    type: "UPDATE_ITEM_FIELD",
+                    blockId,
+                    itemId: item.id,
+                    field: "targetPreset",
+                    value: e.target.value as TargetPreset | "",
+                  })
+                }
+                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              >
+                <option value="" disabled>
+                  Select a zone
+                </option>
+                {targetPresetOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {TARGET_PRESET_LABELS[value].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {targetMode === "rpe" && (
+            <label className="flex flex-col gap-1 text-sm">
+              {TARGET_TYPE_LABELS.rpe.label}{" "}
               <span className="text-xs text-ink-subtle">(optional)</span>
               <input
                 type="number"
-                step="any"
+                min={1}
+                max={10}
+                step={1}
+                value={item.targetValue ?? ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "UPDATE_ITEM_FIELD",
+                    blockId,
+                    itemId: item.id,
+                    field: "targetValue",
+                    // Clamped on every keystroke, not just guarded by the
+                    // min/max attributes above — those only affect the
+                    // native spinner/blur validation, which noValidate on
+                    // the builder's <form> turns off, and typing "11" or
+                    // "-5" directly bypasses them regardless. Same
+                    // clamp-while-typing approach DurationInput's own boxes
+                    // use for their 0-59 range (clampBox in
+                    // app/(app)/_components/DurationInput.tsx): parse,
+                    // fall back to empty/null on a non-finite result,
+                    // truncate, then Math.min(Math.max(...)) into range.
+                    value: (() => {
+                      if (e.target.value === "") return null;
+                      const parsed = Number(e.target.value);
+                      if (!Number.isFinite(parsed)) return null;
+                      return Math.min(Math.max(Math.trunc(parsed), 1), 10);
+                    })(),
+                  })
+                }
+                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              />
+            </label>
+          )}
+
+          {targetMode === "pace" && (
+            <label className="flex flex-col gap-1 text-sm">
+              Pace <span className="text-xs text-ink-subtle">(optional)</span>
+              <div className="flex items-center gap-2">
+                <DurationInput
+                  key={paceDisplayUnit}
+                  maxUnit="minutes"
+                  valueSeconds={paceValueForDisplay(
+                    item.targetValue,
+                    paceDisplayUnit
+                  )}
+                  onChange={handlePaceValueChange}
+                />
+                <select
+                  value={paceDisplayUnit}
+                  onChange={(e) =>
+                    handlePaceUnitChange(e.target.value as PaceDisplayUnit)
+                  }
+                  aria-label="Pace unit"
+                  className="h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                >
+                  <option value="500m">/500m</option>
+                  <option value="km">/km</option>
+                  <option value="mi">/mi</option>
+                </select>
+              </div>
+            </label>
+          )}
+
+          {(targetMode === "cal_per_hour" || targetMode === "watts") && (
+            <label className="flex flex-col gap-1 text-sm">
+              {TARGET_TYPE_LABELS[targetMode].label}{" "}
+              <span className="text-xs text-ink-subtle">(optional)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
                 value={item.targetValue ?? ""}
                 onChange={(e) =>
                   dispatch({

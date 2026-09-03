@@ -49,6 +49,20 @@ export const ITEM_CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxD
 // integer digits + 2 decimals is exactly workout_items.volume_value's
 // numeric(6,2) capacity.
 export const ITEM_DISTANCE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 2 };
+// workout_items.target_value shares the same numeric(6,2) column as
+// volume_value, so it shares its 4-integer-digit ceiling regardless of
+// which target_type it holds. Cal/h and watts are both plain rate numbers
+// with no legitimate fractional value — same reasoning as
+// ITEM_CALORIES_DIGIT_LIMIT above, kept as its own constant rather than
+// reused since target_value and volume_value are unrelated fields whose
+// bounds must not drift together (see BODY_WEIGHT vs LIFTED_WEIGHT above).
+export const ITEM_TARGET_RATE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
+// Pace, stored in seconds: shares ITEM_DISTANCE_DIGIT_LIMIT's shape for the
+// same reason that one needed maxDecimals > 0 — a pace typed in /mi
+// converts to a non-integer number of seconds-per-km via
+// secondsPerMileToSecondsPerKm (lib/units.ts), and the numeric(6,2) column
+// has room for it.
+export const ITEM_PACE_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 2 };
 
 /**
  * Rounds `raw` to `limit.maxDecimals` and rejects it if the result needs

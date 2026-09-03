@@ -20,6 +20,8 @@ import {
   DURATION_MINUTES_DIGIT_LIMIT,
   ITEM_CALORIES_DIGIT_LIMIT,
   ITEM_DISTANCE_DIGIT_LIMIT,
+  ITEM_PACE_DIGIT_LIMIT,
+  ITEM_TARGET_RATE_DIGIT_LIMIT,
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
 } from "./numeric-limits";
@@ -227,6 +229,13 @@ function parseBuilderItem(
   if (volumeValue === INVALID) {
     return { error: `${context} volume value must be a number.` };
   }
+  // Checked regardless of volume_type — a negative duration/distance/reps/
+  // calories is meaningless the same way for all four, and the UI's own
+  // inputs (DurationInput/DistanceInput/the plain number box) can't produce
+  // one, but this validator is the real gate, not them.
+  if (volumeValue !== null && volumeValue < 0) {
+    return { error: `${context} volume value must be zero or greater.` };
+  }
   // Digit limit per volume_type — "duration" is DurationInput's own
   // composed whole-seconds count (its own boxes already cap it), so it's
   // skipped here. These limits are narrower than personal_records/goals'
@@ -255,9 +264,58 @@ function parseBuilderItem(
     return { error: `${context} has an invalid target type.` };
   }
 
-  const targetValue = parseOptionalNumber(item.targetValue);
+  let targetValue = parseOptionalNumber(item.targetValue);
   if (targetValue === INVALID) {
     return { error: `${context} target value must be a number.` };
+  }
+  // Range per target_type, checked before the digit-limit pass below —
+  // checkDigitLimit only bounds digit *count*, not sign, so -11 (two
+  // digits) previously passed it untouched regardless of type. The native
+  // number inputs carry matching min/max/step, but noValidate is
+  // deliberately set on the builder's <form> (so a required-and-hidden
+  // field can't silently block a submit — see WorkoutBuilder's own doc
+  // comment), which also disables native min/max enforcement; this
+  // validator is what actually gates a submit.
+  if (targetValue !== null && targetType === "rpe") {
+    if (!Number.isInteger(targetValue) || targetValue < 1 || targetValue > 10) {
+      return { error: `${context} RPE must be a whole number from 1 to 10.` };
+    }
+  }
+  if (
+    targetValue !== null &&
+    (targetType === "pace_500m" || targetType === "pace_km") &&
+    targetValue <= 0
+  ) {
+    // Strictly greater than zero, not >= 0 like the other target types — a
+    // pace of zero (zero seconds per 500m/km) isn't a slow pace, it's not a
+    // pace at all.
+    return { error: `${context} pace must be greater than zero.` };
+  }
+  if (
+    targetValue !== null &&
+    (targetType === "cal_per_hour" || targetType === "watts") &&
+    targetValue < 0
+  ) {
+    return { error: `${context} target value must be zero or greater.` };
+  }
+  // Digit limit per target_type — "rpe" is excluded on purpose: its bound
+  // is the fixed 1-10 range checked above, not a digit-count bound, so it
+  // never reaches this mechanism. Cal/h and watts share
+  // ITEM_TARGET_RATE_DIGIT_LIMIT; both pace types share
+  // ITEM_PACE_DIGIT_LIMIT (see lib/numeric-limits.ts for why each is its
+  // own constant despite sharing target_value's column).
+  if (targetValue !== null && targetType !== null && targetType !== "rpe") {
+    const { limit, label } =
+      targetType === "cal_per_hour"
+        ? { limit: ITEM_TARGET_RATE_DIGIT_LIMIT, label: `${context} target value (cal/h)` }
+        : targetType === "watts"
+          ? { limit: ITEM_TARGET_RATE_DIGIT_LIMIT, label: `${context} target value (watts)` }
+          : { limit: ITEM_PACE_DIGIT_LIMIT, label: `${context} target value (pace)` };
+    const digitCheck = checkDigitLimit(targetValue, limit, label);
+    if (!digitCheck.ok) {
+      return { error: digitCheck.error };
+    }
+    targetValue = digitCheck.value;
   }
 
   const targetPreset = parseOptionalEnumValue(
@@ -278,6 +336,9 @@ function parseBuilderItem(
   if (weightKg === INVALID) {
     return { error: `${context} weight must be a number.` };
   }
+  if (weightKg !== null && weightKg < 0) {
+    return { error: `${context} weight must be zero or greater.` };
+  }
   // Always entered directly in kg (ItemEditor's "Weight in kg" field) —
   // unlike a personal record/goal's weight, there's no unit system to
   // phrase the message in.
@@ -296,6 +357,11 @@ function parseBuilderItem(
   const restSeconds = parseOptionalNumber(item.restSeconds);
   if (restSeconds === INVALID) {
     return { error: `${context} rest seconds must be a number.` };
+  }
+  // >= 0, not > 0 — unlike a block's timing fields, zero rest is a
+  // meaningful choice (back-to-back sets), not a missing value.
+  if (restSeconds !== null && restSeconds < 0) {
+    return { error: `${context} rest must be zero or greater.` };
   }
 
   const notes =
@@ -344,20 +410,32 @@ function parseBuilderBlock(
   if (durationSeconds === INVALID) {
     return { error: `Block ${index + 1} duration must be a number.` };
   }
+  if (durationSeconds !== null && durationSeconds <= 0) {
+    return { error: `Block ${index + 1} duration must be positive.` };
+  }
 
   const rounds = parseOptionalNumber(block.rounds);
   if (rounds === INVALID || (rounds !== null && !Number.isInteger(rounds))) {
     return { error: `Block ${index + 1} rounds must be a whole number.` };
+  }
+  if (rounds !== null && rounds <= 0) {
+    return { error: `Block ${index + 1} rounds must be positive.` };
   }
 
   const workSeconds = parseOptionalNumber(block.workSeconds);
   if (workSeconds === INVALID) {
     return { error: `Block ${index + 1} work seconds must be a number.` };
   }
+  if (workSeconds !== null && workSeconds <= 0) {
+    return { error: `Block ${index + 1} work time must be positive.` };
+  }
 
   const restSeconds = parseOptionalNumber(block.restSeconds);
   if (restSeconds === INVALID) {
     return { error: `Block ${index + 1} rest seconds must be a number.` };
+  }
+  if (restSeconds !== null && restSeconds <= 0) {
+    return { error: `Block ${index + 1} rest time must be positive.` };
   }
 
   const intervalSeconds = parseOptionalNumber(block.intervalSeconds);
@@ -366,33 +444,40 @@ function parseBuilderBlock(
       error: `Block ${index + 1} interval seconds must be a number.`,
     };
   }
+  if (intervalSeconds !== null && intervalSeconds <= 0) {
+    return { error: `Block ${index + 1} interval must be positive.` };
+  }
 
   // Per-block-type required timing fields (GOHYBRID_PLAN.md §5): for_time
   // and general have no required timing fields, so they fall through here
-  // untouched. "Required" also means positive — a zero or negative
-  // duration/interval/work/rest is the same kind of meaningless block as a
-  // missing one.
-  if (blockType === "amrap" && (durationSeconds === null || durationSeconds <= 0)) {
+  // untouched. Positivity is already guaranteed by the blanket checks
+  // above whenever a field is non-null, so these only need to check for
+  // presence — a for_time/general block with a stray zero/negative value
+  // in a field it doesn't use (unreachable through the UI, since the
+  // reducer clears every timing field on a block_type change, but this
+  // validator is the real gate for a direct API call too) is caught above
+  // regardless of block type.
+  if (blockType === "amrap" && durationSeconds === null) {
     return { error: `Block ${index + 1}: an AMRAP block needs a duration.` };
   }
 
   if (blockType === "on_off") {
-    if (workSeconds === null || workSeconds <= 0) {
+    if (workSeconds === null) {
       return { error: `Block ${index + 1}: an on/off block needs a work time.` };
     }
-    if (restSeconds === null || restSeconds <= 0) {
+    if (restSeconds === null) {
       return { error: `Block ${index + 1}: an on/off block needs a rest time.` };
     }
-    if (rounds === null || rounds <= 0) {
+    if (rounds === null) {
       return { error: `Block ${index + 1}: an on/off block needs a number of rounds.` };
     }
   }
 
   if (blockType === "emom") {
-    if (intervalSeconds === null || intervalSeconds <= 0) {
+    if (intervalSeconds === null) {
       return { error: `Block ${index + 1}: an EMOM block needs an interval.` };
     }
-    if (rounds === null || rounds <= 0) {
+    if (rounds === null) {
       return { error: `Block ${index + 1}: an EMOM block needs a number of rounds.` };
     }
   }

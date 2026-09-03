@@ -64,6 +64,28 @@ export function kmToMetres(km: number): number {
   return km * METRES_PER_KM;
 }
 
+/**
+ * Pace conversion — seconds per kilometre <-> seconds per mile. Unlike
+ * DistanceInput's m/km/ft/mi, which all convert into and out of one
+ * canonical metres value, pace_500m and pace_km are deliberately NOT
+ * interconvertible (GOHYBRID_PLAN.md builder spec: "/500m is its own value,
+ * no conversion" — a rower thinking in pace-per-500m and a runner thinking
+ * in pace-per-km aren't the same mode). Only /km and /mi share one stored
+ * quantity (target_type = pace_km, target_value always seconds-per-km), the
+ * same way DistanceInput's m/km or ft/mi pairs do, so only that pair gets a
+ * conversion function. The ratio is the same METRES_PER_MILE/METRES_PER_KM
+ * used for distance — a pace is time per unit distance, so scaling the unit
+ * distance by that ratio scales the time the same way.
+ */
+export function secondsPerKmToSecondsPerMile(secondsPerKm: number): number {
+  return secondsPerKm * (METRES_PER_MILE / METRES_PER_KM);
+}
+
+/** Inverse of secondsPerKmToSecondsPerMile. */
+export function secondsPerMileToSecondsPerKm(secondsPerMile: number): number {
+  return secondsPerMile * (METRES_PER_KM / METRES_PER_MILE);
+}
+
 function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }

@@ -6,6 +6,12 @@ import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import { deleteWorkout, scheduleWorkout, toggleFavorite } from "../actions";
+import { BLOCK_TYPE_LABELS } from "../builder/block-type-labels";
+import { TARGET_PRESET_LABELS } from "../builder/target-preset-labels";
+import { TARGET_TYPE_LABELS } from "../builder/target-type-labels";
+import { VOLUME_TYPE_LABELS } from "../builder/volume-type-labels";
+import { DIFFICULTY_LABELS } from "../difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import DeleteWorkoutModal from "./DeleteWorkoutModal";
 import FavoriteToggle from "../FavoriteToggle";
@@ -75,8 +81,8 @@ export default async function WorkoutDetailPage(
         )}
         <p className="text-sm text-ink-subtle">
           {[
-            workout.primaryType,
-            workout.difficulty,
+            PRIMARY_TYPE_LABELS[workout.primaryType].label,
+            DIFFICULTY_LABELS[workout.difficulty].label,
             workout.estimatedDurationMinutes != null &&
               `${workout.estimatedDurationMinutes} min`,
           ]
@@ -135,7 +141,7 @@ export default async function WorkoutDetailPage(
               >
                 <p className="font-medium text-ink">
                   {block.title ? `${block.title} — ` : ""}
-                  {block.blockType}
+                  {BLOCK_TYPE_LABELS[block.blockType].label}
                 </p>
                 {timing.length > 0 && (
                   <p className="text-sm text-ink-subtle">{timing.join(" · ")}</p>
@@ -157,7 +163,7 @@ export default async function WorkoutDetailPage(
                       let volume: string | null = null;
                       if (item.volumeType) {
                         if (item.volumeValue == null) {
-                          volume = `${item.volumeType} (open ended)`;
+                          volume = `${VOLUME_TYPE_LABELS[item.volumeType].label} (open ended)`;
                         } else if (item.volumeType === "distance") {
                           const d = formatDistanceMetres(
                             Number(item.volumeValue),
@@ -170,17 +176,17 @@ export default async function WorkoutDetailPage(
                             Number(item.volumeValue)
                           );
                         } else {
-                          volume = `${item.volumeValue} ${item.volumeType}`;
+                          volume = `${item.volumeValue} ${VOLUME_TYPE_LABELS[item.volumeType].label}`;
                         }
                       }
 
-                      const target =
-                        item.targetPreset ??
-                        (item.targetType
+                      const target = item.targetPreset
+                        ? TARGET_PRESET_LABELS[item.targetPreset].label
+                        : item.targetType
                           ? item.targetValue != null
-                            ? `${item.targetValue} ${item.targetType}`
-                            : item.targetType
-                          : null);
+                            ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
+                            : TARGET_TYPE_LABELS[item.targetType].label
+                          : null;
 
                       const weight =
                         item.weightKg != null
