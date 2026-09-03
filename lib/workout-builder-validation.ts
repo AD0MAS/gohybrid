@@ -134,6 +134,105 @@ const UUID_REGEX =
  * value — signals "the caller provided something, but it's not valid". */
 const INVALID = Symbol("invalid");
 
+/** The subset of a block's editable fields BlockEditor's modal holds as a
+ * draft — title is deliberately excluded, since it has no validation rule
+ * (parseBuilderBlock only ever trims it). */
+export type BuilderBlockDraft = {
+  blockType: (typeof blockTypeEnum.enumValues)[number];
+  durationSeconds: number | null;
+  rounds: number | null;
+  workSeconds: number | null;
+  restSeconds: number | null;
+  intervalSeconds: number | null;
+};
+
+/** Per-field validation errors for a single block draft. Every key is
+ * optional; an empty object means the draft is valid. Unlike
+ * parseBuilderBlock's single combined error string, this reports every
+ * failing field at once, so BlockEditor's modal can show them all
+ * simultaneously under their own fields instead of one at a time across
+ * repeated Save clicks. */
+export type BuilderBlockDraftErrors = {
+  blockType?: string;
+  durationSeconds?: string;
+  rounds?: string;
+  workSeconds?: string;
+  restSeconds?: string;
+  intervalSeconds?: string;
+};
+
+/**
+ * Validates one block's own fields in isolation — the same rules
+ * parseBuilderBlock applies to a block within the full payload (see its
+ * own comment above), reworded for a single field rather than prefixed
+ * with "Block N", and with no item-level rules (BlockEditor's draft never
+ * touches items — ItemEditor's own draft/validation is a separate step).
+ * Used by BlockEditor's modal for immediate, per-field feedback on Save;
+ * validateBuilderPayload remains the actual gate run against the whole
+ * tree when the workout itself is saved.
+ */
+export function validateBuilderBlockDraft(
+  draft: BuilderBlockDraft,
+  blockTypeOptions: readonly string[]
+): BuilderBlockDraftErrors {
+  const errors: BuilderBlockDraftErrors = {};
+
+  if (!isOneOf(draft.blockType, blockTypeOptions)) {
+    errors.blockType = "Invalid block type.";
+  }
+
+  if (draft.durationSeconds !== null && draft.durationSeconds <= 0) {
+    errors.durationSeconds = "Duration must be positive.";
+  }
+
+  if (draft.rounds !== null) {
+    if (!Number.isInteger(draft.rounds)) {
+      errors.rounds = "Rounds must be a whole number.";
+    } else if (draft.rounds <= 0) {
+      errors.rounds = "Rounds must be positive.";
+    }
+  }
+
+  if (draft.workSeconds !== null && draft.workSeconds <= 0) {
+    errors.workSeconds = "Work time must be positive.";
+  }
+
+  if (draft.restSeconds !== null && draft.restSeconds <= 0) {
+    errors.restSeconds = "Rest time must be positive.";
+  }
+
+  if (draft.intervalSeconds !== null && draft.intervalSeconds <= 0) {
+    errors.intervalSeconds = "Interval must be positive.";
+  }
+
+  if (draft.blockType === "amrap" && draft.durationSeconds === null) {
+    errors.durationSeconds = "An AMRAP block needs a duration.";
+  }
+
+  if (draft.blockType === "on_off") {
+    if (draft.workSeconds === null) {
+      errors.workSeconds = "An on/off block needs a work time.";
+    }
+    if (draft.restSeconds === null) {
+      errors.restSeconds = "An on/off block needs a rest time.";
+    }
+    if (draft.rounds === null) {
+      errors.rounds = "An on/off block needs a number of rounds.";
+    }
+  }
+
+  if (draft.blockType === "emom") {
+    if (draft.intervalSeconds === null) {
+      errors.intervalSeconds = "An EMOM block needs an interval.";
+    }
+    if (draft.rounds === null) {
+      errors.rounds = "An EMOM block needs a number of rounds.";
+    }
+  }
+
+  return errors;
+}
+
 /**
  * Validates the workout's selected tag ids. Like `exerciseId` on an item,
  * a tag id is only checked for being a syntactically valid UUID here, not
