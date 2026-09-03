@@ -9,7 +9,16 @@ import {
 
 type NumberFieldProps = {
   name: string;
-  step: number;
+  /** "any" disables the browser's native step-based validation (and
+   * rounds the spinner arrows' increment to 1, its documented default)
+   * while leaving the decimal budget entirely to `digitLimit` — used for
+   * a field whose legitimate values don't fall on a fixed increment (e.g.
+   * a weight that can land on any 0.1, not just multiples of 2.5). A
+   * numeric step still both sets the spinner increment AND rejects any
+   * value off that increment via native constraint validation, so it's
+   * only safe for a field whose whole legitimate range genuinely is one
+   * fixed increment (e.g. whole-number counts at step 1). */
+  step: number | "any";
   min?: number;
   required?: boolean;
   digitLimit: DigitLimit;

@@ -3,27 +3,6 @@ import type { CatalogExercise } from "./reducer";
 
 const CUSTOM_VALUE = "custom";
 
-/**
- * The builder's own <optgroup> order — Runs, Rest, HYROX, Exercises —
- * distinct from groupExercisesForSelect's HYROX/Exercises/Runs/Rest
- * (lib/exercise-groups.ts), which PersonalRecordFields/GoalFields also
- * render unmodified. The reorder lives here rather than in that shared
- * function so those two forms keep their existing order; only the builder
- * (this component, plus the "Custom (new)…" option rendered ahead of every
- * group below) needed Quick Add first, then Run, then Rest — items a
- * workout reaches for constantly — ahead of HYROX and the general
- * Exercises catch-all.
- */
-const PICKER_GROUP_ORDER = ["Runs", "Rest", "HYROX", "Exercises"];
-
-function orderGroupsForPicker<T extends { label: string }>(
-  groups: readonly T[]
-): T[] {
-  return PICKER_GROUP_ORDER.map((label) =>
-    groups.find((group) => group.label === label)
-  ).filter((group): group is T => group !== undefined);
-}
-
 type ExercisePickerProps = {
   exerciseId: string | null;
   customName: string | null;
@@ -52,11 +31,12 @@ type ExercisePickerProps = {
  * state (this component now writes to ItemEditor's draft instead, via
  * onChangeExerciseId/onChangeCustomName, so it must keep that guarantee
  * itself). A single <select> lists the full catalog, grouped via
- * <optgroup> by groupExercisesForSelect (lib/exercise-groups.ts) — the
- * same HYROX/Exercises/Runs/Rest grouping PersonalRecordFields/GoalFields
- * use, reordered to Runs/Rest/HYROX/Exercises for this picker specifically
- * (see orderGroupsForPicker above) — plus a "Custom (new)…" option first.
- * There's no "Previously used" group
+ * <optgroup> by groupExercisesForSelect (lib/exercise-groups.ts) — Runs,
+ * Rest, HYROX, Exercises, the same order and Rest inclusion
+ * PersonalRecordFields/GoalFields also want minus their own
+ * `includeRest: false` (a rest exercise can't have a personal record or
+ * be a goal's target) — plus a "Custom (new)…" option first. There's no
+ * "Previously used" group
  * here: that comes from a user's personal_records history, which the
  * builder has no reason to fetch. Choosing "Custom (new)…" reveals a text
  * input for the name; choosing a catalog
@@ -76,7 +56,7 @@ export default function ExercisePicker({
   error,
 }: ExercisePickerProps) {
   const selectValue = exerciseId ?? (customName !== null ? CUSTOM_VALUE : "");
-  const groups = orderGroupsForPicker(groupExercisesForSelect(catalog));
+  const groups = groupExercisesForSelect(catalog);
 
   function handleSelectChange(value: string) {
     if (value === CUSTOM_VALUE) {

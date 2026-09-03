@@ -423,22 +423,36 @@ function GoalFormFields({
   }
 
   let valueUnit: string;
-  let valueStep: number;
+  let valueStep: number | "any";
+  let valueMin: number;
   let valueDigitLimit: DigitLimit;
   switch (goalType) {
     case "session_count":
       valueUnit = "sessions";
       valueStep = 1;
+      // A target of 0 sessions isn't a goal.
+      valueMin = 1;
       valueDigitLimit = GOAL_COUNT_DIGIT_LIMIT;
       break;
     case "streak":
       valueUnit = "days";
       valueStep = 1;
+      // A target of 0 days isn't a goal either.
+      valueMin = 1;
       valueDigitLimit = GOAL_COUNT_DIGIT_LIMIT;
       break;
     case "body_metric":
       valueUnit = formatBodyMetricValue(targetMetricType, 0, unitSystem).unit;
-      valueStep = targetMetricType === "resting_hr" ? 1 : 0.1;
+      // "any" for weight/body_fat — both allow any 0.1 (BODY_WEIGHT_DIGIT_
+      // LIMIT/BODY_FAT_DIGIT_LIMIT's maxDecimals: 1), and step 0.1 made the
+      // spinner arrows crawl one-tenth at a time. Resting HR stays a whole
+      // number at step 1.
+      valueStep = targetMetricType === "resting_hr" ? 1 : "any";
+      // min: 1 for all three, mirrors BodyMetricFields exactly — these are
+      // the same physical quantities (a body weight/body fat %/resting
+      // heart rate), just targeted rather than logged, and a target of 0
+      // is exactly as meaningless either way.
+      valueMin = 1;
       valueDigitLimit =
         targetMetricType === "weight"
           ? BODY_WEIGHT_DIGIT_LIMIT
@@ -455,8 +469,23 @@ function GoalFormFields({
         unitSystem,
         isHyroxStation
       ).unit;
-      valueStep =
-        targetRecordType === "weight" ? 2.5 : targetRecordType === "calories" ? 10 : 1;
+      // "any" for weight — LIFTED_WEIGHT_DIGIT_LIMIT allows any 0.1, and
+      // step 2.5 rejected a typed 82.5's own neighbours. Calories/reps are
+      // whole-number counts, so step 1 (not "any") is both correct and
+      // sufficient for them; step 10 previously made the browser reject a
+      // typed value like 25 as invalid ("nearest valid values are 20 and
+      // 30") — never intentional, calories aren't multiples of 10.
+      valueStep = targetRecordType === "weight" ? "any" : 1;
+      // Mirrors PersonalRecordFields' own valueMin exactly, including
+      // keeping weight at 0: raising it reproduces the spinner-arrow bug
+      // (arrows counting up from the min instead of whole numbers), and
+      // there's no 0-to-null correction to lean on here either — a
+      // personal_record goal's target is required, with no "blank means
+      // bodyweight" reading, so a typed 0 is a genuine error. It's
+      // rejected by validateGoalInput's own "must be greater than 0"
+      // message instead (lib/goals-validation.ts). Reps/calories keep
+      // min: 1.
+      valueMin = targetRecordType === "weight" ? 0 : 1;
       valueDigitLimit =
         targetRecordType === "weight"
           ? LIFTED_WEIGHT_DIGIT_LIMIT
@@ -469,9 +498,8 @@ function GoalFormFields({
   // Mirrors the switch above, as a boolean rather than a step size: only
   // a non-resting_hr body metric or a weight personal record ever takes a
   // decimal point here (session_count/streak/reps/calories are whole
-  // numbers despite calories' 10-unit step). Unused when targetRecordType
-  // is "time"/"distance" — those render DurationInput/DistanceInput
-  // instead of this plain number input.
+  // numbers). Unused when targetRecordType is "time"/"distance" — those
+  // render DurationInput/DistanceInput instead of this plain number input.
   const allowDecimalTargetValue =
     goalType === "body_metric"
       ? targetMetricType !== "resting_hr"
@@ -566,7 +594,7 @@ function GoalFormFields({
                 ))}
               </optgroup>
             )}
-            {groupExercisesForSelect(catalog).map((group) => (
+            {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
               <optgroup key={group.label} label={group.label}>
                 {group.exercises.map((exercise) => (
                   <option key={exercise.id} value={exercise.id}>
@@ -683,7 +711,7 @@ function GoalFormFields({
           key={valueKind}
           name="targetValue"
           step={valueStep}
-          min={goalType === "session_count" || goalType === "streak" ? 1 : 0}
+          min={valueMin}
           required
           digitLimit={valueDigitLimit}
           allowDecimal={allowDecimalTargetValue}

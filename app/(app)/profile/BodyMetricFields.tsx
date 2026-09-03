@@ -215,9 +215,13 @@ function BodyMetricFormFields({
     entry && entry.metricType === metricType
       ? formatBodyMetricValue(entry.metricType, entry.value, unitSystem).value
       : undefined;
-  // A scale reads to 0.1 kg/lb; body fat % follows the same precision;
-  // resting HR is always a whole beats-per-minute reading.
-  const valueStep = metricType === "resting_hr" ? 1 : 0.1;
+  // A scale reads to 0.1 kg/lb; body fat % follows the same precision —
+  // both use "any" to disable native step validation (BODY_WEIGHT_DIGIT_
+  // LIMIT/BODY_FAT_DIGIT_LIMIT already bound the decimal budget to 1 place;
+  // step 0.1 additionally made the spinner arrows crawl one-tenth at a
+  // time). Resting HR is always a whole beats-per-minute reading, so it
+  // keeps a real step of 1.
+  const valueStep: number | "any" = metricType === "resting_hr" ? 1 : "any";
   const valueDigitLimit =
     metricType === "weight"
       ? BODY_WEIGHT_DIGIT_LIMIT
@@ -248,7 +252,12 @@ function BodyMetricFormFields({
         key={metricType}
         name="value"
         step={valueStep}
-        min={0}
+        // min: 1 for all three — a body weight, body fat %, or resting
+        // heart rate of 0 is meaningless (fix 3: the same "correct the
+        // value while typing" approach as the builder's own numeric
+        // fields), so a typed 0 is corrected to 1 before it ever reaches
+        // this component's state.
+        min={1}
         required
         digitLimit={valueDigitLimit}
         allowDecimal={metricType !== "resting_hr"}

@@ -361,7 +361,9 @@ export default function ItemEditor({
    * "dispatch everything from the draft" approach as BlockEditor's
    * handleSave — volumeType first, since UPDATE_ITEM_FIELD always nulls
    * volumeValue whenever volumeType is dispatched, then volumeValue
-   * rebuilds it from the draft.
+   * rebuilds it from the draft. weightKg is the one field dispatched from
+   * a locally normalized value rather than straight off the draft — see
+   * its own comment just below.
    *
    * exerciseId/customName and targetType/targetPreset/targetValue can't
    * use that same "dispatch everything" approach, though: unlike
@@ -377,6 +379,18 @@ export default function ItemEditor({
    * same way choosing "none" already clears them in the reducer).
    */
   function handleSave(draft: ItemDraft) {
+    // A typed 0 means the same thing as leaving the field blank (a
+    // bodyweight movement, not a genuine zero-kilogram load), so it's
+    // normalized to null right here, before it ever reaches the reducer —
+    // mirrors parseBuilderItem's own conversion (lib/workout-builder-
+    // validation.ts), which only runs when the whole workout is saved and
+    // so left "0 kg" sitting in the summary row between an item Save and
+    // the next workout Save. parseBuilderItem's conversion stays: it's
+    // still what a direct POST /api/workouts/full or PATCH
+    // /api/workouts/[id]/full call goes through, and that path never
+    // touches this component at all.
+    const weightKg = draft.weightKg === 0 ? null : draft.weightKg;
+
     if (draft.exerciseId !== null) {
       dispatch({
         type: "UPDATE_ITEM_FIELD",
@@ -460,7 +474,7 @@ export default function ItemEditor({
       blockId,
       itemId: item.id,
       field: "weightKg",
-      value: draft.weightKg,
+      value: weightKg,
     });
     dispatch({
       type: "UPDATE_ITEM_FIELD",
@@ -899,7 +913,7 @@ function ItemEditorModalFields({
                 <input
                   type="number"
                   min={1}
-                  step={draft.volumeType === "calories" ? 10 : 1}
+                  step={1}
                   value={draft.volumeValue ?? ""}
                   onChange={(e) =>
                     updateVolumeValue(
@@ -1094,22 +1108,35 @@ function ItemEditorModalFields({
             </span>
             <input
               type="number"
-              min={1}
-              step={2.5}
+              min={0}
+              step="any"
               value={draft.weightKg ?? ""}
               onChange={(e) =>
                 updateWeightKg(
-                  // min: 1 — a typed 0 becomes 1 (fix 3). "0 kg" reads
-                  // oddly and means the same thing as leaving the field
-                  // blank; a bodyweight movement is already expressed by
-                  // leaving it blank (formatItemSummary already omits an
-                  // unset weight). The field itself stays optional/
+                  // min: 0, not a positive floor — weight has no minimum.
+                  // A typed 0 is a legitimate value here (0.5 kg's own
+                  // neighbour), unlike sets/reps/etc where 0 is meaningless
+                  // — a raised min would clamp it away and, since the
+                  // spinner counts up from whatever min is, make the arrows
+                  // produce 1.1/2.1/3.1 instead of whole numbers. "0 kg"
+                  // reading oddly (same meaning as leaving the field blank)
+                  // is instead handled where the value is actually saved:
+                  // ItemEditor's handleSave normalizes an exact 0 to null
+                  // right before dispatching the draft (so the summary row
+                  // never shows it either), and parseBuilderItem
+                  // (lib/workout-builder-validation.ts) does the same for a
+                  // direct POST /api/workouts/full or PATCH
+                  // /api/workouts/[id]/full call, which never reaches this
+                  // component at all. The field itself stays optional/
                   // empty-able — min only bounds what a *typed* value
-                  // becomes, never forces one. LIFTED_WEIGHT_DIGIT_LIMIT
-                  // allows one decimal (12.5 kg) — the one field here
-                  // where a decimal point stays valid.
+                  // becomes, never forces one. step="any" disables native
+                  // step validation —
+                  // LIFTED_WEIGHT_DIGIT_LIMIT allows any 0.1 (12.5 kg
+                  // included), and the old step 2.5 rejected a typed 82.5's
+                  // own neighbours; the spinner arrows default to
+                  // incrementing by 1, per the HTML spec.
                   sanitizeNumberInputChange(e, {
-                    min: 1,
+                    min: 0,
                     digitLimit: LIFTED_WEIGHT_DIGIT_LIMIT,
                     allowDecimal: true,
                   })

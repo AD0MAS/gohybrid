@@ -366,10 +366,26 @@ function PersonalRecordFormFields({
           isHyroxStation
         ).value
       : undefined;
-  // Weight moves in plate increments; reps and calories are whole-number
-  // counts (distance/time route through their own inputs above).
-  const valueStep =
-    recordType === "weight" ? 2.5 : recordType === "calories" ? 10 : 1;
+  // "any" disables native step validation for weight — LIFTED_WEIGHT_DIGIT_
+  // LIMIT allows any 0.1 (a plate increment like 2.5 rejected a typed 82.5's
+  // own neighbours), and the spinner arrows default to incrementing by 1
+  // regardless, per the HTML spec. Reps and calories are whole-number
+  // counts (distance/time route through their own inputs above), so step 1
+  // is both correct AND sufficient — "any" would be unnecessary for them.
+  const valueStep: number | "any" = recordType === "weight" ? "any" : 1;
+  // Weight stays at min: 0, not a positive floor — raising it would
+  // reproduce the exact bug ItemEditor's own weight field had: the spinner
+  // arrows count up from whatever min is, so min: 0.1 turned them into
+  // 1.1/2.1/3.1 instead of whole numbers. Unlike ItemEditor's weight,
+  // though, there's no 0-to-null correction here to compensate — this
+  // field is `required` and has no "blank means bodyweight" reading, so a
+  // typed 0 is a genuine error, not a value to silently convert. It's
+  // rejected by validatePersonalRecordInput's own "must be greater than 0"
+  // message instead (lib/personal-records-validation.ts) — the Server
+  // Action is still the gate. Reps/calories keep min: 1 — whole-count
+  // subjects with no equivalent "let the validator catch it" reason to
+  // relax back to 0.
+  const valueMin = recordType === "weight" ? 0 : 1;
   // Only reached for weight/reps/calories — time/distance render
   // DurationInput/DistanceInput above instead, which carry their own limit.
   const valueDigitLimit =
@@ -409,7 +425,7 @@ function PersonalRecordFormFields({
             ))}
           </optgroup>
         )}
-        {groupExercisesForSelect(catalog).map((group) => (
+        {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
           <optgroup key={group.label} label={group.label}>
             {group.exercises.map((exercise) => (
               <option key={exercise.id} value={exercise.id}>
@@ -477,7 +493,7 @@ function PersonalRecordFormFields({
           key={recordType}
           name="value"
           step={valueStep}
-          min={0}
+          min={valueMin}
           required
           digitLimit={valueDigitLimit}
           allowDecimal={recordType === "weight"}

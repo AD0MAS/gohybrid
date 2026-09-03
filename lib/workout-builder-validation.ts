@@ -691,6 +691,19 @@ function parseBuilderItem(
     }
     weightKg = digitCheck.value;
   }
+  // Fix 1: a typed 0 means the same thing as leaving the field blank — a
+  // bodyweight movement, not a genuine zero-kilogram load — so it's
+  // normalized to null right here, the one place a value reaches
+  // regardless of entry path (the builder's own Save re-validates through
+  // here via validateBuilderPayload, and so does a direct POST
+  // /api/workouts/full or PATCH /api/workouts/[id]/full call, which never
+  // goes through the builder's draft state or reducer at all). Putting the
+  // conversion in ItemEditorModalFields' save handler or at dispatch would
+  // only ever run for the interactive builder UI, leaving a hand-built API
+  // request free to persist a literal 0.
+  if (weightKg === 0) {
+    weightKg = null;
+  }
 
   const restSeconds = parseOptionalNumber(item.restSeconds);
   if (restSeconds === INVALID) {
