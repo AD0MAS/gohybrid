@@ -7,10 +7,16 @@ import {
   formatWeightKg,
   secondsPerKmToSecondsPerMile,
 } from "@/lib/units";
+import { isValidDateString } from "@/lib/scheduled-workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import { deleteWorkout, scheduleWorkout, toggleFavorite } from "../actions";
+import BackLink from "../../_components/BackLink";
+import {
+  resolveBackDestination,
+  type BackDestination,
+} from "../../_components/back-destination";
 import { BLOCK_TYPE_LABELS } from "../builder/block-type-labels";
 import { TARGET_PRESET_LABELS } from "../builder/target-preset-labels";
 import { TARGET_TYPE_LABELS } from "../builder/target-type-labels";
@@ -21,6 +27,59 @@ import { TAG_COLOR_CLASSES } from "../tag-colors";
 import DeleteWorkoutModal from "./DeleteWorkoutModal";
 import FavoriteToggle from "../FavoriteToggle";
 import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
+
+const DEFAULT_BACK: BackDestination = {
+  href: "/workouts/library",
+  label: "My Workouts",
+};
+
+/** Where the `from` search param can send the back link, keyed by the value
+ * each entry point passes — see resolveBackDestination for why `from` is
+ * looked up here rather than trusted directly. "workouts" is a base value
+ * only: resolveBack below rebuilds its href with the week strip's `week`/
+ * `day` restored, once each is independently re-validated. */
+const BACK_SOURCES: Record<string, BackDestination> = {
+  home: { href: "/", label: "Home" },
+  workouts: { href: "/workouts", label: "Workouts" },
+};
+
+function firstValue(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/**
+ * Resolves the back link, same map-lookup contract as resolveBackDestination
+ * — but when `from=workouts`, the week strip's selected week/day are also
+ * restored onto the fixed /workouts base, so returning to the strip doesn't
+ * lose which day was open. `week`/`day` are re-validated here (an integer,
+ * and lib/scheduled-workouts-validation's YYYY-MM-DD check) rather than
+ * trusted as received, so a malformed pair degrades to a bare /workouts
+ * instead of ever being passed through unchecked.
+ */
+function resolveBack(
+  searchParams: Record<string, string | string[] | undefined>
+): BackDestination {
+  const from = firstValue(searchParams.from);
+  const base = resolveBackDestination(from, BACK_SOURCES, DEFAULT_BACK);
+
+  if (from !== "workouts") {
+    return base;
+  }
+
+  const rawWeek = firstValue(searchParams.week);
+  const week = rawWeek !== undefined && Number.isInteger(Number(rawWeek))
+    ? rawWeek
+    : undefined;
+  const rawDay = firstValue(searchParams.day);
+  const day = isValidDateString(rawDay) ? rawDay : undefined;
+
+  const query = new URLSearchParams();
+  if (week !== undefined) query.set("week", week);
+  if (day !== undefined) query.set("day", day);
+  const qs = query.toString();
+
+  return { href: qs ? `/workouts?${qs}` : base.href, label: base.label };
+}
 
 /**
  * Workout detail page: the workout's own fields, then each block (title,
@@ -33,13 +92,17 @@ import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
  *
  * A missing id, a malformed id, and an id belonging to another user all
  * render the same not-found page, so this page never confirms whether a
- * given id exists.
+ * given id exists. Reachable from Home's Upcoming, /workouts/library, and
+ * the week strip on /workouts, so the back link's target depends on the
+ * `from` search param each sets — see resolveBack above.
  */
 export default async function WorkoutDetailPage(
   props: PageProps<"/workouts/[id]">
 ) {
   const { id } = await props.params;
   const user = await requireUser();
+  const searchParams = await props.searchParams;
+  const back = resolveBack(searchParams);
 
   if (!isValidUuid(id)) {
     notFound();
@@ -61,6 +124,7 @@ export default async function WorkoutDetailPage(
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
+          <BackLink href={back.href} label={back.label} />
           <h1 className="truncate text-xl font-semibold text-ink">
             {workout.title}
           </h1>

@@ -13,6 +13,7 @@ import { requireUser } from "@/lib/auth";
 import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
+import BackLink from "../_components/BackLink";
 
 /** Scheduled-workout titles shown per day cell (desktop text list) before
  * collapsing the rest into a "+N more" indicator. */
@@ -120,7 +121,10 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <h1 className="text-xl font-semibold text-ink">Calendar</h1>
+      <div className="flex items-center gap-2">
+        <BackLink href="/workouts" label="Workouts" />
+        <h1 className="text-xl font-semibold text-ink">Calendar</h1>
+      </div>
 
       <div className="flex items-center justify-between">
         <Link

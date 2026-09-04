@@ -4,8 +4,25 @@ import { formatRelativeDay } from "@/lib/dates";
 import { getSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone, toClockTimeInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
+import BackLink from "../_components/BackLink";
+import {
+  resolveBackDestination,
+  type BackDestination,
+} from "../_components/back-destination";
 import ConfirmModal from "../_components/ConfirmModal";
 import { deleteAllSessions, deleteSession } from "./actions";
+
+const DEFAULT_BACK: BackDestination = {
+  href: "/workouts/library",
+  label: "My Workouts",
+};
+
+/** Where the `from` search param can send the back link, keyed by the value
+ * each entry point passes — see resolveBackDestination for why `from` is
+ * looked up here rather than trusted directly. */
+const BACK_SOURCES: Record<string, BackDestination> = {
+  home: { href: "/", label: "Home" },
+};
 
 /**
  * Training History: a chronological list of the authenticated user's
@@ -13,16 +30,25 @@ import { deleteAllSessions, deleteSession } from "./actions";
  * workout_title and workout_primary_type from each session's own snapshot
  * columns rather than joining against `workouts`, so a session survives
  * its workout being edited or deleted (see GOHYBRID_PLAN.md §7).
+ *
+ * Reachable from both /workouts/library (its corner button) and Home (the
+ * recent-activity "Full history" link), so the back link's target depends
+ * on the `from` search param each sets — see BACK_SOURCES/DEFAULT_BACK.
  */
-export default async function HistoryPage() {
+export default async function HistoryPage(props: PageProps<"/history">) {
   const user = await requireUser();
+  const searchParams = await props.searchParams;
+  const back = resolveBackDestination(searchParams.from, BACK_SOURCES, DEFAULT_BACK);
   const { today, timezone } = await getUserContext(user.id);
   const sessions = await getSessionsForUser(user.id);
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">Training History</h1>
+        <div className="flex items-center gap-2">
+          <BackLink href={back.href} label={back.label} />
+          <h1 className="text-xl font-semibold text-ink">Training History</h1>
+        </div>
 
         {sessions.length > 0 && (
           <ConfirmModal

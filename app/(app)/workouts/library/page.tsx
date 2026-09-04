@@ -1,10 +1,11 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { getTagCatalog } from "@/lib/tags";
 import { getWorkoutsForUser } from "@/lib/workouts";
 import { parseWorkoutListSearchParams } from "@/lib/workouts-filters";
+import BackLink from "../../_components/BackLink";
 import { toggleFavorite } from "../actions";
 import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import FavoriteToggle from "../FavoriteToggle";
@@ -52,11 +53,21 @@ export default async function WorkoutLibraryPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-ink">My Workouts</h1>
+        <div className="flex items-center gap-2">
+          <BackLink href="/workouts" label="Workouts" />
+          <h1 className="text-xl font-semibold text-ink">My Workouts</h1>
+        </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/workouts/new"
-            className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            href="/workouts/new?from=library"
+            aria-label="New workout"
+            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:hidden"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <Link
+            href="/workouts/new?from=library"
+            className="hidden h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:flex"
           >
             New workout
           </Link>

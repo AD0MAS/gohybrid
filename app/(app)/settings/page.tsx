@@ -1,6 +1,7 @@
 import { signOut } from "@/app/(auth)/actions";
 import { requireUser } from "@/lib/auth";
 import { getUserSettings } from "@/lib/user-settings";
+import BackLink from "../_components/BackLink";
 import SettingsFields from "./SettingsFields";
 
 /**
@@ -21,7 +22,10 @@ export default async function SettingsPage() {
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-        <h1 className="text-xl font-semibold text-ink">Settings</h1>
+        <div className="flex items-center gap-2">
+          <BackLink href="/profile" label="Profile" />
+          <h1 className="text-xl font-semibold text-ink">Settings</h1>
+        </div>
 
         <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6">
           <h2 className="text-lg font-semibold text-ink">Account</h2>

@@ -212,7 +212,7 @@ export default async function WeekStrip({
                     className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
                   >
                     <Link
-                      href={`/workouts/${entry.workout.id}`}
+                      href={`/workouts/${entry.workout.id}?from=workouts&week=${view.weekOffset}&day=${entry.scheduledDate}`}
                       className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                     >
                       {entry.workout.title}
