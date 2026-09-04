@@ -175,6 +175,17 @@ type AddBlockAction = { type: "ADD_BLOCK"; id: string };
 type RemoveBlockAction = { type: "REMOVE_BLOCK"; blockId: string };
 
 /**
+ * Inserts a copy of one block directly after the original, with a fresh
+ * crypto.randomUUID() for the block itself and for every item inside it.
+ * Generated inside the reducer, not by the caller — unlike AddBlockAction's
+ * id, a duplicate's ids are never used to drive autoOpen (a duplicate
+ * arrives already configured), and a block duplicate needs an unknown
+ * number of item ids, one per item, which the reducer already knows how to
+ * mint fresh (see LOAD_WORKOUT below).
+ */
+type DuplicateBlockAction = { type: "DUPLICATE_BLOCK"; blockId: string };
+
+/**
  * Sets one field of one block. Setting `blockType` also resets every
  * timing field on that block to null, since which fields are valid
  * depends on the new type (GOHYBRID_PLAN.md §5) and stale values from the
@@ -207,6 +218,18 @@ type AddItemAction = { type: "ADD_ITEM"; blockId: string; id: string };
 /** Removes one item from a block by its client-side id. */
 type RemoveItemAction = {
   type: "REMOVE_ITEM";
+  blockId: string;
+  itemId: string;
+};
+
+/**
+ * Inserts a copy of one item directly after the original, within the same
+ * block, with a fresh crypto.randomUUID(). Mirrors DuplicateBlockAction's
+ * reducer-side id generation for consistency, even though a single item
+ * only ever needs one id.
+ */
+type DuplicateItemAction = {
+  type: "DUPLICATE_ITEM";
   blockId: string;
   itemId: string;
 };
@@ -294,9 +317,11 @@ export type BuilderAction =
   | UpdateMetaFieldAction
   | AddBlockAction
   | RemoveBlockAction
+  | DuplicateBlockAction
   | UpdateBlockFieldAction
   | AddItemAction
   | RemoveItemAction
+  | DuplicateItemAction
   | UpdateItemFieldAction
   | LoadWorkoutAction
   | ToggleTagAction;
@@ -396,6 +421,32 @@ export function builderReducer(
         blocks: state.blocks.filter((block) => block.id !== action.blockId),
       };
 
+    case "DUPLICATE_BLOCK": {
+      const index = state.blocks.findIndex(
+        (block) => block.id === action.blockId
+      );
+      if (index === -1) return state;
+
+      const original = state.blocks[index];
+      const duplicate: BuilderBlock = {
+        ...original,
+        id: crypto.randomUUID(),
+        items: original.items.map((item) => ({
+          ...item,
+          id: crypto.randomUUID(),
+        })),
+      };
+
+      return {
+        ...state,
+        blocks: [
+          ...state.blocks.slice(0, index + 1),
+          duplicate,
+          ...state.blocks.slice(index + 1),
+        ],
+      };
+    }
+
     case "UPDATE_BLOCK_FIELD":
       return {
         ...state,
@@ -441,6 +492,33 @@ export function builderReducer(
                 items: block.items.filter((item) => item.id !== action.itemId),
               }
         ),
+      };
+
+    case "DUPLICATE_ITEM":
+      return {
+        ...state,
+        blocks: state.blocks.map((block) => {
+          if (block.id !== action.blockId) return block;
+
+          const index = block.items.findIndex(
+            (item) => item.id === action.itemId
+          );
+          if (index === -1) return block;
+
+          const duplicate: BuilderItem = {
+            ...block.items[index],
+            id: crypto.randomUUID(),
+          };
+
+          return {
+            ...block,
+            items: [
+              ...block.items.slice(0, index + 1),
+              duplicate,
+              ...block.items.slice(index + 1),
+            ],
+          };
+        }),
       };
 
     case "UPDATE_ITEM_FIELD":

@@ -1,5 +1,5 @@
 import { useRef, useState, type Dispatch } from "react";
-import { Pencil, StickyNote, X } from "lucide-react";
+import { Copy, Pencil, StickyNote, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import {
   ITEM_CALORIES_DIGIT_LIMIT,
@@ -500,13 +500,16 @@ export default function ItemEditor({
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{itemName}</p>
         {(summary || hasNotes) && (
-          <p className="flex items-center gap-1.5 text-sm text-ink-subtle">
+          <p className="text-sm text-ink-subtle">
             {summary}
             {hasNotes && (
-              <StickyNote
-                className="h-3.5 w-3.5 shrink-0"
-                aria-label="Has notes"
-              />
+              <>
+                {summary && " "}
+                <StickyNote
+                  className="inline h-3.5 w-3.5 align-middle"
+                  aria-label="Has notes"
+                />
+              </>
             )}
           </p>
         )}
@@ -520,6 +523,16 @@ export default function ItemEditor({
           className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            dispatch({ type: "DUPLICATE_ITEM", blockId, itemId: item.id })
+          }
+          aria-label="Duplicate item"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <Copy className="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           type="button"

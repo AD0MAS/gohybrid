@@ -1,5 +1,5 @@
 import { useRef, useState, type Dispatch } from "react";
-import { Pencil, X } from "lucide-react";
+import { Copy, Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import { REPS_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { formatDurationSeconds } from "@/lib/units";
@@ -225,6 +225,14 @@ export default function BlockEditor({
             className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => dispatch({ type: "DUPLICATE_BLOCK", blockId: block.id })}
+            aria-label="Duplicate block"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            <Copy className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
