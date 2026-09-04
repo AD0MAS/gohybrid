@@ -234,6 +234,10 @@ export async function unscheduleForUser(
  * read in this codebase (lib/user-settings.ts). Used when the caller only
  * knows a workout and a day, not a specific scheduled_workouts id; see
  * linkScheduledWorkoutToSession below for the case where it does.
+ *
+ * Also clears is_skipped: the candidate search has no isSkipped filter, so
+ * finishing an unplanned workout on a day that has a skipped entry can link
+ * to it. A row must never be both skipped and completed.
  */
 export async function linkScheduledWorkoutForDateToSession(
   userId: string,
@@ -258,7 +262,7 @@ export async function linkScheduledWorkoutForDateToSession(
 
   const [linked] = await executor
     .update(scheduledWorkouts)
-    .set({ sessionId })
+    .set({ sessionId, isSkipped: false })
     .where(sql`${scheduledWorkouts.id} = (${candidate})`)
     .returning();
 
@@ -275,6 +279,10 @@ export async function linkScheduledWorkoutForDateToSession(
  * (still race-free: two concurrent "mark done" clicks on the same id just
  * both succeed idempotently). Accepts an optional transaction handle for
  * the same reason linkScheduledWorkoutForDateToSession does.
+ *
+ * Also clears is_skipped — the id passed in may be a previously skipped
+ * entry (e.g. skipped, then marked done); a row must never be both skipped
+ * and completed.
  */
 export async function linkScheduledWorkoutToSession(
   userId: string,
@@ -284,7 +292,7 @@ export async function linkScheduledWorkoutToSession(
 ) {
   const [linked] = await executor
     .update(scheduledWorkouts)
-    .set({ sessionId })
+    .set({ sessionId, isSkipped: false })
     .where(
       and(
         eq(scheduledWorkouts.id, scheduledWorkoutId),

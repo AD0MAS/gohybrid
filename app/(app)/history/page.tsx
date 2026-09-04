@@ -5,7 +5,7 @@ import { getSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone, toClockTimeInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
-import { deleteSession } from "./actions";
+import { deleteAllSessions, deleteSession } from "./actions";
 
 /**
  * Training History: a chronological list of the authenticated user's
@@ -21,7 +21,20 @@ export default async function HistoryPage() {
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <h1 className="text-xl font-semibold text-ink">Training History</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-ink">Training History</h1>
+
+        {sessions.length > 0 && (
+          <ConfirmModal
+            trigger="Clear history"
+            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-danger hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            title="Clear history"
+            description="Deleting every session removes all training history and empties your stats and the activity heatmap. Workouts completed without being planned disappear from the calendar; planned workouts revert to Planned."
+            confirmLabel="Delete"
+            action={deleteAllSessions}
+          />
+        )}
+      </div>
 
       {sessions.length === 0 ? (
         <p className="text-sm text-ink-subtle">

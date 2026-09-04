@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { deleteSessionForUser } from "@/lib/sessions";
+import { deleteAllSessionsForUser, deleteSessionForUser } from "@/lib/sessions";
 
 /**
  * Deletes one of the authenticated user's workout sessions, bound with the
@@ -28,6 +28,25 @@ export async function deleteSession(id: string) {
   if (!deleted) {
     throw new Error("Session not found.");
   }
+
+  revalidatePath("/history");
+  revalidatePath("/");
+  revalidatePath("/stats");
+  revalidatePath("/workouts");
+  revalidatePath("/calendar");
+  revalidatePath("/profile");
+}
+
+/**
+ * Deletes every one of the authenticated user's workout sessions — the
+ * /history "Clear history" action. Same revalidation list as deleteSession,
+ * for the same reason: every route that reads workout_sessions, directly or
+ * via scheduled_workouts' session_id, needs a fresh render.
+ */
+export async function deleteAllSessions() {
+  const user = await requireUser();
+
+  await deleteAllSessionsForUser(user.id);
 
   revalidatePath("/history");
   revalidatePath("/");

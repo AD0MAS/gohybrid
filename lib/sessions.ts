@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { scheduledWorkouts, workoutSessions, workouts } from "@/db/schema";
 import {
@@ -158,15 +158,18 @@ export async function getRecentSessionsForUser(userId: string, limit: number) {
  * WHERE clause, same pattern as deleteBodyMetricForUser/
  * deletePersonalRecordForUser.
  *
- * A user-planned scheduled_workouts entry that pointed at this session needs
- * no cleanup: scheduled_workouts.session_id is ON DELETE SET NULL (see
- * GOHYBRID_PLAN.md §6A), so it automatically goes back to Planned — the plan
- * was deliberate and should survive the session. A *backfilled* entry
- * (is_backfilled true — see createSessionForWorkout) only ever existed to
- * represent this session, so it must disappear with it instead: it's deleted
- * explicitly, in the same transaction, before the session itself — deleting
- * the session first would let ON DELETE SET NULL clear session_id before
- * this query could find the row to remove.
+ * A user-planned scheduled_workouts entry that pointed at this session goes
+ * back to Planned: scheduled_workouts.session_id is ON DELETE SET NULL (see
+ * GOHYBRID_PLAN.md §6A) — the plan was deliberate and should survive the
+ * session. That FK only clears session_id, though, so is_skipped is cleared
+ * explicitly here too — a skipped entry marked done and then unlinked must
+ * land on Planned, not Skipped (a row is never both). This runs before the
+ * session delete, while the row can still be found by session_id. A
+ * *backfilled* entry (is_backfilled true — see createSessionForWorkout) only
+ * ever existed to represent this session, so it must disappear with it
+ * instead: it's deleted explicitly, in the same transaction, before the
+ * session itself — deleting the session first would let ON DELETE SET NULL
+ * clear session_id before this query could find the row to remove.
  */
 export async function deleteSessionForUser(
   id: string,
@@ -183,6 +186,16 @@ export async function deleteSessionForUser(
         )
       );
 
+    await tx
+      .update(scheduledWorkouts)
+      .set({ isSkipped: false })
+      .where(
+        and(
+          eq(scheduledWorkouts.sessionId, id),
+          eq(scheduledWorkouts.userId, userId)
+        )
+      );
+
     const deleted = await tx
       .delete(workoutSessions)
       .where(
@@ -191,5 +204,45 @@ export async function deleteSessionForUser(
       .returning({ id: workoutSessions.id });
 
     return deleted.length > 0;
+  });
+}
+
+/**
+ * Deletes every workout session owned by `userId` — the /history "Clear
+ * history" action. Same asymmetry as deleteSessionForUser, just scoped to
+ * the whole user instead of one id: backfilled scheduled_workouts rows are
+ * deleted explicitly, before the sessions, so ON DELETE SET NULL can't clear
+ * session_id out from under this query first. Every statement here is a
+ * single set-based DELETE/UPDATE filtered on user_id — no per-session loop —
+ * so this is a fixed number of round trips regardless of history size.
+ * User-planned entries revert to Planned via the FK, with is_skipped cleared
+ * explicitly alongside it (same reasoning as deleteSessionForUser — a row
+ * skipped and then marked done must not come back as Skipped) — by the time
+ * that update runs, every remaining sessionId match is a user-planned entry,
+ * since backfilled ones were already deleted above.
+ */
+export async function deleteAllSessionsForUser(userId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(scheduledWorkouts)
+      .where(
+        and(
+          eq(scheduledWorkouts.userId, userId),
+          eq(scheduledWorkouts.isBackfilled, true),
+          isNotNull(scheduledWorkouts.sessionId)
+        )
+      );
+
+    await tx
+      .update(scheduledWorkouts)
+      .set({ isSkipped: false })
+      .where(
+        and(
+          eq(scheduledWorkouts.userId, userId),
+          isNotNull(scheduledWorkouts.sessionId)
+        )
+      );
+
+    await tx.delete(workoutSessions).where(eq(workoutSessions.userId, userId));
   });
 }
