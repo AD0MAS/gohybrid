@@ -24,8 +24,9 @@ export type EventFormState =
  * "nothing has happened yet" apart from "saved", closing itself only once
  * a save actually went through. Genuine unexpected failures (e.g. a DB
  * error from createEventForUser) still throw and belong to the error
- * boundary. Revalidates /profile (the Events section) and / (Home's
- * next-event line) on success.
+ * boundary. Revalidates /profile (the Events section), / (Home's
+ * next-event line), /calendar and /workouts (both now render events
+ * alongside scheduled workouts — WeekStrip and the month grid) on success.
  */
 export async function addEvent(
   _prevState: EventFormState,
@@ -53,6 +54,8 @@ export async function addEvent(
 
   revalidatePath("/profile");
   revalidatePath("/");
+  revalidatePath("/calendar");
+  revalidatePath("/workouts");
   return { status: "success" };
 }
 
@@ -64,7 +67,9 @@ export async function addEvent(
  * entry-populated form instead of an empty one. Ownership is enforced by
  * updateEventForUser's WHERE clause; a null result (wrong id or another
  * user's row) throws, same as deleteEvent, since a forged id can't
- * silently no-op. Revalidates /profile and / on success.
+ * silently no-op. Revalidates /profile, /, /calendar and /workouts on
+ * success — same set as addEvent, since WeekStrip's per-row edit trigger
+ * calls this too.
  */
 export async function updateEvent(
   id: string,
@@ -96,14 +101,21 @@ export async function updateEvent(
 
   revalidatePath("/profile");
   revalidatePath("/");
+  revalidatePath("/calendar");
+  revalidatePath("/workouts");
   return { status: "success" };
 }
 
 /**
  * Deletes one of the authenticated user's events, bound with the id via
- * .bind(null, id) from /profile. Ownership is enforced by
- * deleteEventForUser's WHERE clause. Throws if nothing matched, so a
- * forged id can't silently no-op. Revalidates /profile and / on success.
+ * .bind(null, id) from /profile and, now, from WeekStrip's event cards —
+ * same one-click form with no confirmation step either place, since an
+ * event delete has no destructive side effect the way removing a
+ * Completed scheduled workout does (that one also deletes a
+ * workout_session, which is why it goes through ConfirmModal instead).
+ * Ownership is enforced by deleteEventForUser's WHERE clause. Throws if
+ * nothing matched, so a forged id can't silently no-op. Revalidates
+ * /profile, /, /calendar and /workouts on success.
  */
 export async function deleteEvent(id: string) {
   const user = await requireUser();
@@ -116,4 +128,6 @@ export async function deleteEvent(id: string) {
 
   revalidatePath("/profile");
   revalidatePath("/");
+  revalidatePath("/calendar");
+  revalidatePath("/workouts");
 }

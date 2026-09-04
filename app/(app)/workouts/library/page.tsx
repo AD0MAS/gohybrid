@@ -6,7 +6,9 @@ import { getTagCatalog } from "@/lib/tags";
 import { getWorkoutsForUser } from "@/lib/workouts";
 import { parseWorkoutListSearchParams } from "@/lib/workouts-filters";
 import { toggleFavorite } from "../actions";
+import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import FavoriteToggle from "../FavoriteToggle";
+import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import WorkoutFilters from "./WorkoutFilters";
 
@@ -120,7 +122,8 @@ export default async function WorkoutLibraryPage(
                 </div>
               </div>
               <p className="text-sm text-ink-subtle">
-                {workout.primaryType} · {workout.difficulty}
+                {PRIMARY_TYPE_LABELS[workout.primaryType].label} ·{" "}
+                {DIFFICULTY_LABELS[workout.difficulty].label}
               </p>
               {workout.workoutTags.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-1">

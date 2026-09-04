@@ -6,14 +6,18 @@ import {
   unscheduleWorkout,
 } from "../upcoming-actions";
 import ConfirmModal from "../_components/ConfirmModal";
+import EventCard from "../_components/EventCard";
 import {
   formatDayHeading,
   getDayNumber,
   WEEKDAY_INITIALS,
 } from "@/lib/dates";
+import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
 import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
+import { DIFFICULTY_LABELS } from "./difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
 import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 const REMOVE_BUTTON_CLASSES =
@@ -49,20 +53,25 @@ type WeekStripProps = {
 /**
  * Workouts page "this week" strip (Roxfit pattern): seven day cells, Monday
  * first, with prev/next week navigation and the selected day's scheduled
- * workouts underneath. Entirely a Server Component — every interaction
- * (changing week, picking a day) is a plain navigation to a new `week`/`day`
- * search param combination, resolved by resolveWeekStripView, so nothing
- * here needs client-side state. `today` comes from getUserContext, so it's
- * always the viewing user's own calendar day, not the database's UTC one.
+ * workouts and events underneath. Entirely a Server Component — every
+ * interaction (changing week, picking a day) is a plain navigation to a new
+ * `week`/`day` search param combination, resolved by resolveWeekStripView,
+ * so nothing here needs client-side state beyond EventCard's own modal (a
+ * small client boundary it owns itself — see its own doc comment for why it
+ * has to be a client component and why that couldn't stay inline here: a
+ * Server Component can only pass serializable props to a Client Component,
+ * and the event card's "click anywhere opens edit" behaviour needs a
+ * function). `today` comes from getUserContext, so it's always the viewing
+ * user's own calendar day, not the database's UTC one.
  *
- * Each entry also carries the same Mark done / Mark skipped / Remove
- * controls as UpcomingList (GOHYBRID_PLAN.md §5A), bound to the identical
- * Server Actions in app/(app)/upcoming-actions.ts — this is the only place
- * that can reach a *past* scheduled entry (UpcomingList only ever lists
- * today-or-later, not-yet-completed ones), so it's also the only place a
- * past-dated entry can be completed, skipped or removed. Which controls
- * show depends on status: Planned gets all three; Completed gets only
- * Remove (un-completing would mean deleting a session, which belongs to
+ * Each scheduled-workout entry also carries the same Mark done / Mark
+ * skipped / Remove controls as UpcomingList (GOHYBRID_PLAN.md §5A), bound to
+ * the identical Server Actions in app/(app)/upcoming-actions.ts — this is
+ * the only place that can reach a *past* scheduled entry (UpcomingList only
+ * ever lists today-or-later, not-yet-completed ones), so it's also the only
+ * place a past-dated entry can be completed, skipped or removed. Which
+ * controls show depends on status: Planned gets all three; Completed gets
+ * only Remove (un-completing would mean deleting a session, which belongs to
  * /history, not here); Skipped gets Mark done and Remove (un-skipping is
  * just marking it done or removing it).
  *
@@ -74,6 +83,13 @@ type WeekStripProps = {
  * UpcomingList never needs this: getUpcomingForUser filters to session_id
  * IS NULL, so a Completed entry can never reach it — this is the only place
  * Remove can act on one.
+ *
+ * Events (change 2) render as their own cards via EventCard
+ * (app/(app)/_components/EventCard.tsx) — same shape as a workout card
+ * (hover state, chevron, a bottom Remove action) but with no status pill or
+ * Mark done/skipped, and no confirmation on Remove (see EventCard's own doc
+ * comment for both, and for why it needed its own file rather than living
+ * inline here the way it first did).
  */
 export default async function WeekStrip({
   userId,
@@ -81,11 +97,10 @@ export default async function WeekStrip({
 }: WeekStripProps) {
   const { today } = await getUserContext(userId);
   const view = resolveWeekStripView(searchParams, today);
-  const scheduled = await getScheduledForUserInRange(
-    userId,
-    view.weekDates[0],
-    view.weekDates[6]
-  );
+  const [scheduled, events] = await Promise.all([
+    getScheduledForUserInRange(userId, view.weekDates[0], view.weekDates[6]),
+    getEventsForUserInRange(userId, view.weekDates[0], view.weekDates[6]),
+  ]);
 
   const byDate = new Map<string, typeof scheduled>();
   for (const entry of scheduled) {
@@ -94,8 +109,18 @@ export default async function WeekStrip({
     byDate.set(entry.scheduledDate, list);
   }
 
+  const eventsByDate = new Map<string, typeof events>();
+  for (const event of events) {
+    const list = eventsByDate.get(event.eventDate) ?? [];
+    list.push(event);
+    eventsByDate.set(event.eventDate, list);
+  }
+
   const selectedEntries = view.selectedDate
     ? (byDate.get(view.selectedDate) ?? [])
+    : [];
+  const selectedEvents = view.selectedDate
+    ? (eventsByDate.get(view.selectedDate) ?? [])
     : [];
 
   const weekHref = (offset: number) =>
@@ -126,7 +151,9 @@ export default async function WeekStrip({
       <div className="grid grid-cols-7 gap-1">
         {view.weekDates.map((date, i) => {
           const isSelected = date === view.selectedDate;
-          const hasScheduled = (byDate.get(date)?.length ?? 0) > 0;
+          const hasScheduled =
+            (byDate.get(date)?.length ?? 0) > 0 ||
+            (eventsByDate.get(date)?.length ?? 0) > 0;
 
           return (
             <Link
@@ -166,7 +193,7 @@ export default async function WeekStrip({
             {formatDayHeading(view.selectedDate)}
           </h3>
 
-          {selectedEntries.length === 0 ? (
+          {selectedEntries.length === 0 && selectedEvents.length === 0 ? (
             <p className="text-sm text-ink-subtle">
               Nothing scheduled on this day.
             </p>
@@ -207,8 +234,8 @@ export default async function WeekStrip({
                         {status}
                       </span>
                       {[
-                        entry.workout.primaryType,
-                        entry.workout.difficulty,
+                        PRIMARY_TYPE_LABELS[entry.workout.primaryType].label,
+                        DIFFICULTY_LABELS[entry.workout.difficulty].label,
                         entry.workout.estimatedDurationMinutes != null &&
                           `${entry.workout.estimatedDurationMinutes} min`,
                         entry.scheduledTime != null &&
@@ -281,6 +308,10 @@ export default async function WeekStrip({
                   </li>
                 );
               })}
+
+              {selectedEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
             </ul>
           )}
         </div>

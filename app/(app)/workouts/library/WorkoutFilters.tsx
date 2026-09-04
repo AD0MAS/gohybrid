@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import type { CatalogTag, Difficulty, PrimaryType } from "../builder/reducer";
+import { DIFFICULTY_LABELS } from "../difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
 
@@ -160,7 +162,7 @@ export default function WorkoutFilters({
           <option value="">All types</option>
           {primaryTypeOptions.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {PRIMARY_TYPE_LABELS[option].label}
             </option>
           ))}
         </select>
@@ -175,7 +177,7 @@ export default function WorkoutFilters({
           <option value="">All difficulties</option>
           {difficultyOptions.map((option) => (
             <option key={option} value={option}>
-              {option}
+              {DIFFICULTY_LABELS[option].label}
             </option>
           ))}
         </select>

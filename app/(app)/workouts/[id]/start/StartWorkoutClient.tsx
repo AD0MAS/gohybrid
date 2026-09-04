@@ -4,7 +4,16 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { unitSystemEnum } from "@/db/schema";
 import type { getWorkoutForUser } from "@/lib/workouts";
-import { formatDistanceMetres, formatDurationSeconds, formatWeightKg } from "@/lib/units";
+import {
+  formatDistanceMetres,
+  formatDurationSeconds,
+  formatWeightKg,
+  secondsPerKmToSecondsPerMile,
+} from "@/lib/units";
+import { BLOCK_TYPE_LABELS } from "../../builder/block-type-labels";
+import { TARGET_PRESET_LABELS } from "../../builder/target-preset-labels";
+import { TARGET_TYPE_LABELS } from "../../builder/target-type-labels";
+import { VOLUME_TYPE_LABELS } from "../../builder/volume-type-labels";
 import { finishWorkout } from "./actions";
 
 type Workout = NonNullable<Awaited<ReturnType<typeof getWorkoutForUser>>>;
@@ -30,11 +39,18 @@ function storageKey(workoutId: string) {
 /**
  * Builds the same "Sets: … · Volume: … · Target: … · Weight: … · Rest: …"
  * line the workout detail page shows, omitting whichever fields aren't set
- * on this item. Weight and a distance volume are converted for display via
- * lib/units.ts — pure, DB-free functions, so calling them here (rather
- * than pre-formatting server-side, as lib/progress.ts does for the
- * Progress Chart) is fine: `unitSystem` is already available as a prop,
- * and nothing here needs another query.
+ * on this item — kept in agreement with that page's own inline formatting
+ * field-for-field, label map for label map, including the pace mm:ss
+ * conversion (pace_500m always /500m; pace_km reads /km for a metric user,
+ * /mi, converted via secondsPerKmToSecondsPerMile, for an imperial one).
+ * The two can't share one function: this file is a Client Component and
+ * the detail page is a Server Component, so a helper either duplicates
+ * (as here) or needs a shared home decided separately — flagged as a
+ * code-review item, not fixed in this pass. Weight and a distance volume
+ * are converted for display via lib/units.ts — pure, DB-free functions, so
+ * calling them here (rather than pre-formatting server-side, as
+ * lib/progress.ts does for the Progress Chart) is fine: `unitSystem` is
+ * already available as a prop, and nothing here needs another query.
  */
 function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
   const isHyroxStation = item.exercise?.isHyroxStation ?? false;
@@ -42,7 +58,7 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
   let volume: string | null = null;
   if (item.volumeType) {
     if (item.volumeValue == null) {
-      volume = `${item.volumeType} (open ended)`;
+      volume = `${VOLUME_TYPE_LABELS[item.volumeType].label} (open ended)`;
     } else if (item.volumeType === "distance") {
       const d = formatDistanceMetres(
         Number(item.volumeValue),
@@ -53,17 +69,34 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
     } else if (item.volumeType === "duration") {
       volume = formatDurationSeconds(Number(item.volumeValue));
     } else {
-      volume = `${item.volumeValue} ${item.volumeType}`;
+      volume = `${item.volumeValue} ${VOLUME_TYPE_LABELS[item.volumeType].label}`;
     }
   }
 
-  const target =
-    item.targetPreset ??
-    (item.targetType
-      ? item.targetValue != null
-        ? `${item.targetValue} ${item.targetType}`
-        : item.targetType
-      : null);
+  const target = item.targetPreset
+    ? TARGET_PRESET_LABELS[item.targetPreset].label
+    : item.targetType === "pace_500m" || item.targetType === "pace_km"
+      ? item.targetValue == null
+        ? TARGET_TYPE_LABELS[item.targetType].label
+        : (() => {
+            const useMiles =
+              item.targetType === "pace_km" && unitSystem === "imperial";
+            const seconds = useMiles
+              ? secondsPerKmToSecondsPerMile(Number(item.targetValue))
+              : Number(item.targetValue);
+            const unitLabel =
+              item.targetType === "pace_500m"
+                ? "/500m"
+                : useMiles
+                  ? "/mi"
+                  : "/km";
+            return `${formatDurationSeconds(seconds)} ${unitLabel}`;
+          })()
+      : item.targetType
+        ? item.targetValue != null
+          ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
+          : TARGET_TYPE_LABELS[item.targetType].label
+        : null;
 
   const weight =
     item.weightKg != null
@@ -235,7 +268,7 @@ export default function StartWorkoutClient({
               >
                 <p className="font-medium">
                   {block.title ? `${block.title} — ` : ""}
-                  {block.blockType}
+                  {BLOCK_TYPE_LABELS[block.blockType].label}
                 </p>
                 {timing.length > 0 && (
                   <p className="text-sm text-ink-subtle">{timing.join(" · ")}</p>

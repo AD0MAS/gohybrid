@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
+import { DIFFICULTY_LABELS } from "../../difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "../../primary-type-labels";
 import StartWorkoutClient from "./StartWorkoutClient";
 
 /**
@@ -43,8 +45,8 @@ export default async function StartWorkoutPage(
           <h1 className="text-xl font-semibold text-ink">{workout.title}</h1>
           <p className="text-sm text-ink-subtle">
             {[
-              workout.primaryType,
-              workout.difficulty,
+              PRIMARY_TYPE_LABELS[workout.primaryType].label,
+              DIFFICULTY_LABELS[workout.difficulty].label,
               workout.estimatedDurationMinutes != null &&
                 `${workout.estimatedDurationMinutes} min`,
             ]

@@ -1,6 +1,7 @@
 import { getSessionCountsByPrimaryTypeForUser } from "@/lib/activity";
 import { getWeekStartsEndingAt } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
+import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
 
 type DistributionChartProps = {
   userId: string;
@@ -77,7 +78,7 @@ export default async function DistributionChart({
                   fontSize={11}
                   fill="var(--color-ink-muted)"
                 >
-                  {row.primaryType}
+                  {PRIMARY_TYPE_LABELS[row.primaryType].label}
                 </text>
                 {barWidth > 0 && (
                   <rect

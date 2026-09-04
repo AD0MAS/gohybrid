@@ -5,6 +5,8 @@ import type { unitSystemEnum } from "@/db/schema";
 import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
 import { DURATION_MINUTES_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
+import { DIFFICULTY_LABELS } from "../difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import { createFullWorkout, updateFullWorkout } from "./actions";
 import BlockEditor from "./BlockEditor";
@@ -255,7 +257,7 @@ export default function WorkoutBuilder({
             </option>
             {primaryTypeOptions.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {PRIMARY_TYPE_LABELS[value].label}
               </option>
             ))}
           </select>
@@ -280,7 +282,7 @@ export default function WorkoutBuilder({
             </option>
             {difficultyOptions.map((value) => (
               <option key={value} value={value}>
-                {value}
+                {DIFFICULTY_LABELS[value].label}
               </option>
             ))}
           </select>

@@ -27,10 +27,13 @@ const METRES_PER_KM = 1000;
 export const DISTANCE_INPUT_UNITS = ["m", "km", "ft", "mi"] as const;
 export type DistanceInputUnit = (typeof DISTANCE_INPUT_UNITS)[number];
 
-// Below this, a distance reads more naturally in feet than miles; at or
-// above it, miles. Applied to the METRIC value, before any conversion —
-// see formatDistanceMetres.
-const FEET_TO_MILES_THRESHOLD_METRES = 1000;
+// Below this, a distance reads more naturally in the smaller unit (m or
+// ft) than the larger one (km or mi); at or above it, the larger unit.
+// Shared by both unit systems in formatDistanceMetres — one threshold,
+// same cutoff distance either way, just a different pair of units either
+// side of it. Renamed from FEET_TO_MILES_THRESHOLD_METRES now that it
+// also decides m vs. km, not only ft vs. mi.
+const DISTANCE_UNIT_SWITCH_THRESHOLD_METRES = 1000;
 
 export function kgToLb(kg: number): number {
   return kg / KG_PER_LB;
@@ -117,19 +120,27 @@ export function formatWeightKg(
  * `isHyroxStation` overrides the unit system entirely: an official HYROX
  * station's distance is always shown in metres, because the event itself
  * is defined in metric worldwide, even for competitors in imperial
- * locales. Otherwise, under imperial, the metric value decides feet vs.
- * miles (FEET_TO_MILES_THRESHOLD_METRES) — a 50 m distance reads far more
- * naturally as "164 ft" than "0.03 mi".
+ * locales. Otherwise the metric value decides which of the unit system's
+ * own pair to use — m vs. km under metric, ft vs. mi under imperial — via
+ * the shared DISTANCE_UNIT_SWITCH_THRESHOLD_METRES: a 50 m distance reads
+ * far more naturally as "50 m"/"164 ft" than "0.05 km"/"0.03 mi", and an
+ * 8000 m one as "8 km"/"5 mi" rather than "8000 m"/"26247 ft".
  */
 export function formatDistanceMetres(
   value: number,
   unitSystem: UnitSystem,
   isHyroxStation: boolean
 ): DisplayValue {
-  if (unitSystem === "metric" || isHyroxStation) {
+  if (isHyroxStation) {
     return { value: round1(value), unit: "m" };
   }
-  if (value < FEET_TO_MILES_THRESHOLD_METRES) {
+  if (unitSystem === "metric") {
+    if (value < DISTANCE_UNIT_SWITCH_THRESHOLD_METRES) {
+      return { value: round1(value), unit: "m" };
+    }
+    return { value: round1(metresToKm(value)), unit: "km" };
+  }
+  if (value < DISTANCE_UNIT_SWITCH_THRESHOLD_METRES) {
     return { value: round1(metresToFeet(value)), unit: "ft" };
   }
   return { value: round1(metresToMiles(value)), unit: "mi" };

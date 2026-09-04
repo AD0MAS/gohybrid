@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, lte } from "drizzle-orm";
 import { db } from "@/db";
 import { events, eventTypeEnum } from "@/db/schema";
 import { diffInDays } from "./dates";
@@ -50,6 +50,32 @@ export async function getPastEventsForUser(
     .from(events)
     .where(and(eq(events.userId, userId), lt(events.eventDate, today)))
     .orderBy(desc(events.eventDate));
+}
+
+/**
+ * Lists `userId`'s events with an event_date between `from` and `to` (both
+ * YYYY-MM-DD, inclusive), soonest first — follows the shape of
+ * getScheduledForUserInRange (lib/scheduled-workouts.ts) so /calendar and
+ * WeekStrip can fetch events for their date range the same way they fetch
+ * scheduled workouts. A plain date-range query with no other filtering,
+ * same as that function.
+ */
+export async function getEventsForUserInRange(
+  userId: string,
+  from: string,
+  to: string
+): Promise<Event[]> {
+  return db
+    .select()
+    .from(events)
+    .where(
+      and(
+        eq(events.userId, userId),
+        gte(events.eventDate, from),
+        lte(events.eventDate, to)
+      )
+    )
+    .orderBy(asc(events.eventDate));
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
 import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
@@ -16,6 +16,18 @@ type EventFormProps = {
    * edit trigger + the same form pre-filled from this event, submitting to
    * updateEvent instead of addEvent. */
   entry?: Event;
+  /** Replaces the built-in Pencil/Add-event trigger button with a
+   * caller-supplied element — e.g. EventCard's whole card
+   * (app/(app)/_components/EventCard.tsx), made clickable the same
+   * stretched-link way workout cards are (see its own doc comment). Only
+   * ever passed by a client-component caller — a function prop can't cross
+   * from a Server Component into EventForm (a "use client" boundary), so a
+   * Server Component wanting a custom trigger must render a client
+   * component of its own that calls this, rather than passing renderTrigger
+   * itself. Called with `openFresh` rather than the raw setter, so a
+   * caller-supplied trigger reseeds the form from `entry` fresh on every
+   * open exactly like the built-in Pencil button does. */
+  renderTrigger?: (open: () => void) => ReactNode;
 };
 
 /**
@@ -80,7 +92,7 @@ type EventFormProps = {
  * from useActionState (which stays untouched, so the sync block above can
  * still tell success/error apart by identity).
  */
-export default function EventForm({ entry }: EventFormProps) {
+export default function EventForm({ entry, renderTrigger }: EventFormProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateEvent.bind(null, entry.id) : addEvent;
   const [state, formAction] = useActionState(action, initialState);
@@ -113,7 +125,9 @@ export default function EventForm({ entry }: EventFormProps) {
   return (
     <>
       <FormSuccessBanner trigger={successCount} />
-      {entry ? (
+      {renderTrigger ? (
+        renderTrigger(openFresh)
+      ) : entry ? (
         <button
           type="button"
           onClick={openFresh}
