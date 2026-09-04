@@ -79,13 +79,13 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         </Link>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-x-auto text-center text-xs text-ink-subtle">
+      <div className="grid grid-cols-7 gap-1 overflow-x-auto text-center text-xs text-ink-subtle">
         {WEEKDAY_INITIALS.map((initial, i) => (
           <span key={i}>{initial}</span>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-x-auto">
+      <div className="grid grid-cols-7 gap-1 overflow-x-auto">
         {view.gridDates.map((date) => {
           const inMonth = getMonthString(date) === view.month;
           const isToday = inMonth && date === today;
@@ -97,13 +97,13 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
             <Link
               key={date}
               href={inMonth ? weekStripHref(date) : monthHref(getMonthString(date))}
-              className={`flex min-h-20 flex-col gap-0.5 border border-hairline p-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+              className={`flex min-h-20 flex-col gap-0.5 rounded-lg border border-hairline bg-surface-1 p-1 text-xs hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                 inMonth ? "text-ink" : "text-ink-tertiary"
               }`}
             >
               <span
                 className={`flex h-5 w-5 items-center justify-center rounded-full ${
-                  isToday ? "bg-surface-2 text-ink outline outline-1 outline-accent" : ""
+                  isToday ? "bg-surface-3 text-ink outline outline-1 outline-accent" : ""
                 }`}
               >
                 {getDayNumber(date)}
