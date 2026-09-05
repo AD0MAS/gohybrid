@@ -1,6 +1,9 @@
-import { requireUser } from "@/lib/auth";
 import { getUserContext } from "@/lib/user-settings";
 import BodyMetricFields from "./BodyMetricFields";
+
+type BodyMetricFormProps = {
+  userId: string;
+};
 
 /**
  * Fetches today's date and unitSystem (via getUserContext — cached, shared
@@ -11,10 +14,11 @@ import BodyMetricFields from "./BodyMetricFields";
  * fetch itself doesn't need to move to the client. `unitSystem` only
  * drives the input's displayed unit — the actual metric conversion happens
  * server-side in addBodyMetric (body-metrics-actions.ts), never here.
+ * `userId` arrives as a prop from ProfilePage rather than a local
+ * requireUser() call — same pattern as /stats.
  */
-export default async function BodyMetricForm() {
-  const user = await requireUser();
-  const { today, unitSystem } = await getUserContext(user.id);
+export default async function BodyMetricForm({ userId }: BodyMetricFormProps) {
+  const { today, unitSystem } = await getUserContext(userId);
 
   return <BodyMetricFields today={today} unitSystem={unitSystem} />;
 }

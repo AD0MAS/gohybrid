@@ -1,6 +1,5 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
 import { formatRelativeDay } from "@/lib/dates";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
@@ -12,6 +11,7 @@ import {
 } from "./upcoming-actions";
 
 type UpcomingListProps = {
+  userId: string;
   limit: number;
 };
 
@@ -26,15 +26,14 @@ type UpcomingListProps = {
  *
  * A reusable component, not a page (GOHYBRID_PLAN.md §5A): Home and
  * Workouts both render this list at a different length, and a dedicated
- * /schedule route would be a third place carrying the same query. It
- * fetches its own data from `limit` rather than taking entries as a prop
- * so both call sites can render it without threading the query through
- * their own page component.
+ * /schedule route would be a third place carrying the same query. It takes
+ * `userId` as a prop from the page (same pattern as /stats) rather than
+ * calling requireUser() itself, and `limit` so both call sites can render
+ * it without threading the query through their own page component.
  */
-export default async function UpcomingList({ limit }: UpcomingListProps) {
-  const user = await requireUser();
-  const { today } = await getUserContext(user.id);
-  const upcoming = await getUpcomingForUser(user.id, limit);
+export default async function UpcomingList({ userId, limit }: UpcomingListProps) {
+  const { today } = await getUserContext(userId);
+  const upcoming = await getUpcomingForUser(userId, limit);
 
   return (
     <section className="flex flex-col gap-3">

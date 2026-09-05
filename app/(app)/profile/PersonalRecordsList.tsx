@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import {
   getDistinctCustomNamesForUser,
@@ -11,31 +10,37 @@ import { getUserContext } from "@/lib/user-settings";
 import PersonalRecordFields from "./PersonalRecordFields";
 import { deletePersonalRecord } from "./personal-records-actions";
 
+type PersonalRecordsListProps = {
+  userId: string;
+};
+
 /**
  * Existing personal records, grouped by subject (exercise or custom name)
  * via groupPersonalRecordsBySubject, with the current best shown
  * prominently and the rest of that subject's history underneath — each row
- * deletable. Fetches its own data given `userId` via requireUser(), same
- * self-fetching convention as BodyMetricsList. Each value is converted for
- * display via formatPersonalRecordValue and the viewing user's unitSystem
- * (getUserContext) — the stored value stays kg/m/reps/seconds regardless.
- * `isHyroxStation` is constant across a group (it's a property of the
- * subject's exercise, not the individual record), so it's read once from
- * `group.best.exercise` and reused for every entry in that group. Each
- * row's Edit trigger embeds a PersonalRecordFields instance directly
- * (entry={entry}) — same one-modal-per-row wiring as GoalsList/EventsList,
- * since PersonalRecordFields already owns its own open/close state and
- * useActionState call. `catalog` and `today` are fetched here too (not
- * just in PersonalRecordForm) so every row's embedded PersonalRecordFields
- * has what it needs, same as PersonalRecordForm's own fetch.
+ * deletable. `userId` arrives as a prop from ProfilePage rather than a
+ * local requireUser() call — same pattern as /stats. Each value is
+ * converted for display via formatPersonalRecordValue and the viewing
+ * user's unitSystem (getUserContext) — the stored value stays
+ * kg/m/reps/seconds regardless. `isHyroxStation` is constant across a
+ * group (it's a property of the subject's exercise, not the individual
+ * record), so it's read once from `group.best.exercise` and reused for
+ * every entry in that group. Each row's Edit trigger embeds a
+ * PersonalRecordFields instance directly (entry={entry}) — same one-modal-
+ * per-row wiring as GoalsList/EventsList, since PersonalRecordFields
+ * already owns its own open/close state and useActionState call. `catalog`
+ * and `today` are fetched here too (not just in PersonalRecordForm) so
+ * every row's embedded PersonalRecordFields has what it needs, same as
+ * PersonalRecordForm's own fetch.
  */
-export default async function PersonalRecordsList() {
-  const user = await requireUser();
+export default async function PersonalRecordsList({
+  userId,
+}: PersonalRecordsListProps) {
   const [records, catalog, customNames, { today, unitSystem }] = await Promise.all([
-    getPersonalRecordsForUser(user.id),
+    getPersonalRecordsForUser(userId),
     getExerciseCatalog(),
-    getDistinctCustomNamesForUser(user.id),
-    getUserContext(user.id),
+    getDistinctCustomNamesForUser(userId),
+    getUserContext(userId),
   ]);
 
   if (records.length === 0) {

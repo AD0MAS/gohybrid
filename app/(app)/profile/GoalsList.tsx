@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
@@ -8,12 +7,14 @@ import GoalFields from "./GoalFields";
 import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
+type GoalsListProps = {
+  userId: string;
+};
+
 /**
  * Active goals with a resolved current value and progress bar each, plus
  * archived goals collapsed behind a native `<details>` disclosure — no
- * client JavaScript needed for that toggle. Fetches its own data given
- * `userId` via requireUser(), same self-fetching convention as
- * PersonalRecordsList/BodyMetricsList. Archived goals skip the
+ * client JavaScript needed for that toggle. Archived goals skip the
  * current-value resolution (and so show no progress bar): they're hidden
  * by default and their progress isn't the point once archived. A
  * body_metric/personal_record goal whose source has no rows yet resolves to
@@ -23,7 +24,9 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  * otherwise compute. Both
  * "today" and the source queries' timezone come from getUserContext
  * (cached, so this and EventsList/BodyMetricForm/PersonalRecordForm share
- * one pair of queries per request). Each row's Edit trigger embeds a
+ * one pair of queries per request). `userId` arrives as a prop from
+ * ProfilePage rather than a local requireUser() call — same pattern as
+ * /stats. Each row's Edit trigger embeds a
  * GoalFields instance directly (entry={goal}) rather than lifting a single
  * shared modal's state up into a client wrapper — GoalFields already owns
  * its own open/close state and useActionState call, so one instance per
@@ -32,14 +35,13 @@ import { deleteGoal, setGoalArchived } from "./goals-actions";
  * every row's embedded GoalFields has what it needs for personal_record
  * goals, same as GoalForm's own fetch.
  */
-export default async function GoalsList() {
-  const user = await requireUser();
+export default async function GoalsList({ userId }: GoalsListProps) {
   const [allGoals, catalog, customNames, { today, timezone, unitSystem }] =
     await Promise.all([
-      getGoalsForUser(user.id, true),
+      getGoalsForUser(userId, true),
       getExerciseCatalog(),
-      getDistinctCustomNamesForUser(user.id),
-      getUserContext(user.id),
+      getDistinctCustomNamesForUser(userId),
+      getUserContext(userId),
     ]);
 
   const activeGoals = allGoals.filter((g) => !g.isArchived);
@@ -57,7 +59,7 @@ export default async function GoalsList() {
     activeGoals.map(async (goal) => {
       const current = await resolveGoalCurrentValue(
         goal,
-        user.id,
+        userId,
         today,
         timezone
       );

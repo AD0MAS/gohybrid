@@ -19,8 +19,8 @@ export default async function Home() {
       <h1 className="text-xl font-semibold">Home</h1>
 
       <HomeSummaryCards userId={user.id} />
-      <UpcomingList limit={UPCOMING_LIMIT} />
-      <RecentActivity />
+      <UpcomingList userId={user.id} limit={UPCOMING_LIMIT} />
+      <RecentActivity userId={user.id} />
     </main>
   );
 }

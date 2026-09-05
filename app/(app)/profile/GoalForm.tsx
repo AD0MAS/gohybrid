@@ -1,8 +1,11 @@
-import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import GoalFields from "./GoalFields";
+
+type GoalFormProps = {
+  userId: string;
+};
 
 /**
  * Fetches the data the add-goal form needs (the exercise catalog — each
@@ -22,13 +25,17 @@ import GoalFields from "./GoalFields";
  * (this user's distinct past custom_name values) mirrors
  * PersonalRecordForm's own fetch, for the same "previously used" group in
  * GoalFields' personal_record target-exercise <select>.
+ *
+ * `userId` arrives as a prop from ProfilePage rather than a local
+ * requireUser() call — the page authenticates once and passes it down to
+ * every section, same pattern as /stats (see SummaryCards etc.), instead
+ * of each section re-checking auth on its own.
  */
-export default async function GoalForm() {
-  const user = await requireUser();
+export default async function GoalForm({ userId }: GoalFormProps) {
   const [catalog, customNames, { unitSystem }] = await Promise.all([
     getExerciseCatalog(),
-    getDistinctCustomNamesForUser(user.id),
-    getUserContext(user.id),
+    getDistinctCustomNamesForUser(userId),
+    getUserContext(userId),
   ]);
 
   return (

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
 import { formatRelativeDay } from "@/lib/dates";
 import { getRecentSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
@@ -7,19 +6,23 @@ import { getUserContext } from "@/lib/user-settings";
 
 const RECENT_ACTIVITY_LIMIT = 5;
 
+type RecentActivityProps = {
+  userId: string;
+};
+
 /**
  * Home's recent activity: the last 5 completed workout sessions, newest
  * first, read-only. Renders workout_title and workout_primary_type from
  * each session's own snapshot columns (GOHYBRID_PLAN.md §7), same as
  * Training History — but this is a fixed five-row list with no actions,
  * not the full chronological list, so it stays its own component rather
- * than a shared one with /history.
+ * than a shared one with /history. `userId` arrives as a prop from Home
+ * rather than a local requireUser() call — same pattern as /stats.
  */
-export default async function RecentActivity() {
-  const user = await requireUser();
-  const { today, timezone } = await getUserContext(user.id);
+export default async function RecentActivity({ userId }: RecentActivityProps) {
+  const { today, timezone } = await getUserContext(userId);
   const sessions = await getRecentSessionsForUser(
-    user.id,
+    userId,
     RECENT_ACTIVITY_LIMIT
   );
 

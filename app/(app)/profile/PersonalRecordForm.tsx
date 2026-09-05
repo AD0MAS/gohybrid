@@ -1,8 +1,11 @@
-import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import PersonalRecordFields from "./PersonalRecordFields";
+
+type PersonalRecordFormProps = {
+  userId: string;
+};
 
 /**
  * Fetches the data the add-record form needs (the exercise catalog — each
@@ -16,14 +19,17 @@ import PersonalRecordFields from "./PersonalRecordFields";
  * wrapper stays a Server Component so the data fetching itself doesn't
  * need to move to the client. `unitSystem` only drives the input's
  * displayed unit — the actual metric conversion happens server-side in
- * addPersonalRecord (personal-records-actions.ts), never here.
+ * addPersonalRecord (personal-records-actions.ts), never here. `userId`
+ * arrives as a prop from ProfilePage rather than a local requireUser()
+ * call — same pattern as /stats.
  */
-export default async function PersonalRecordForm() {
-  const user = await requireUser();
+export default async function PersonalRecordForm({
+  userId,
+}: PersonalRecordFormProps) {
   const [catalog, customNames, { today, unitSystem }] = await Promise.all([
     getExerciseCatalog(),
-    getDistinctCustomNamesForUser(user.id),
-    getUserContext(user.id),
+    getDistinctCustomNamesForUser(userId),
+    getUserContext(userId),
   ]);
 
   return (

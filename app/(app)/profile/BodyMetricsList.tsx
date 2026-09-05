@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import { bodyMetricTypeEnum } from "@/db/schema";
-import { requireUser } from "@/lib/auth";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
@@ -8,27 +7,30 @@ import BodyMetricFields from "./BodyMetricFields";
 import { deleteBodyMetric } from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 
+type BodyMetricsListProps = {
+  userId: string;
+};
+
 /**
  * Existing body metrics, grouped by metric type (weight, body fat,
  * resting HR — in that fixed enum order) and newest-measured first within
- * each group, with a delete action per row. Fetches its own data given
- * `userId` via requireUser(), same self-fetching convention as
- * WeekStrip/UpcomingList. getBodyMetricsForUser already returns rows
- * newest-measured-first, so grouping here doesn't need to re-sort. Each
- * entry's value is converted for display via formatBodyMetricValue and
- * the viewing user's unitSystem (getUserContext) — the stored value stays
- * kg/%/bpm regardless. Each row's Edit trigger embeds a BodyMetricFields
- * instance directly (entry={entry}) — same one-modal-per-row wiring as
- * GoalsList/EventsList, since BodyMetricFields already owns its own
- * open/close state and useActionState call. `today` is fetched here too
- * (not just in BodyMetricForm) so every row's embedded BodyMetricFields
- * has the same max-date bound on its measuredAt input as the create form.
+ * each group, with a delete action per row. `userId` arrives as a prop from
+ * ProfilePage rather than a local requireUser() call — same pattern as
+ * /stats. getBodyMetricsForUser already returns rows newest-measured-first,
+ * so grouping here doesn't need to re-sort. Each entry's value is converted
+ * for display via formatBodyMetricValue and the viewing user's unitSystem
+ * (getUserContext) — the stored value stays kg/%/bpm regardless. Each row's
+ * Edit trigger embeds a BodyMetricFields instance directly (entry={entry})
+ * — same one-modal-per-row wiring as GoalsList/EventsList, since
+ * BodyMetricFields already owns its own open/close state and
+ * useActionState call. `today` is fetched here too (not just in
+ * BodyMetricForm) so every row's embedded BodyMetricFields has the same
+ * max-date bound on its measuredAt input as the create form.
  */
-export default async function BodyMetricsList() {
-  const user = await requireUser();
+export default async function BodyMetricsList({ userId }: BodyMetricsListProps) {
   const [metrics, { today, unitSystem }] = await Promise.all([
-    getBodyMetricsForUser(user.id),
-    getUserContext(user.id),
+    getBodyMetricsForUser(userId),
+    getUserContext(userId),
   ]);
 
   if (metrics.length === 0) {

@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { requireUser } from "@/lib/auth";
 import {
   daysUntil,
   formatCountdown,
@@ -11,25 +10,28 @@ import EventForm from "./EventForm";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { deleteEvent } from "./events-actions";
 
+type EventsListProps = {
+  userId: string;
+};
+
 /**
  * Upcoming events soonest first, each with its countdown (via daysUntil +
  * formatCountdown), type and location, plus past events collapsed behind a
  * native `<details>` disclosure — same JS-free toggle GoalsList uses for
- * archived goals. Fetches its own data given `userId` via requireUser(),
- * same self-fetching convention as GoalsList/PersonalRecordsList. The
- * countdown is computed from getUserContext()'s `today` (cached, shared
- * with GoalsList/BodyMetricForm/PersonalRecordForm), not a client-side
+ * archived goals. `userId` arrives as a prop from ProfilePage rather than a
+ * local requireUser() call — same pattern as /stats. The countdown is
+ * computed from getUserContext()'s `today` (cached, shared with
+ * GoalsList/BodyMetricForm/PersonalRecordForm), not a client-side
  * `new Date()` — see daysUntil in lib/events.ts. Each row's Edit trigger
  * embeds an EventForm instance directly (entry={event}) — same one-modal-
  * per-row wiring as GoalsList, since EventForm already owns its own
  * open/close state and useActionState call.
  */
-export default async function EventsList() {
-  const user = await requireUser();
-  const { today } = await getUserContext(user.id);
+export default async function EventsList({ userId }: EventsListProps) {
+  const { today } = await getUserContext(userId);
   const [upcoming, past] = await Promise.all([
-    getUpcomingEventsForUser(user.id, today),
-    getPastEventsForUser(user.id, today),
+    getUpcomingEventsForUser(userId, today),
+    getPastEventsForUser(userId, today),
   ]);
 
   if (upcoming.length === 0 && past.length === 0) {

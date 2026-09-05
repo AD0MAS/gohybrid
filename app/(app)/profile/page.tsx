@@ -26,7 +26,7 @@ const SECTION_CLASSES =
  * that /workouts and /workouts/library adopt next.
  */
 export default async function ProfilePage() {
-  await requireUser();
+  const user = await requireUser();
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -47,9 +47,9 @@ export default async function ProfilePage() {
               <Target className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Goals</h2>
             </div>
-            <GoalForm />
+            <GoalForm userId={user.id} />
           </div>
-          <GoalsList />
+          <GoalsList userId={user.id} />
         </section>
 
         <section className={SECTION_CLASSES}>
@@ -60,7 +60,7 @@ export default async function ProfilePage() {
             </div>
             <EventForm />
           </div>
-          <EventsList />
+          <EventsList userId={user.id} />
         </section>
 
         <section className={SECTION_CLASSES}>
@@ -69,9 +69,9 @@ export default async function ProfilePage() {
               <Scale className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Body Metrics</h2>
             </div>
-            <BodyMetricForm />
+            <BodyMetricForm userId={user.id} />
           </div>
-          <BodyMetricsList />
+          <BodyMetricsList userId={user.id} />
         </section>
 
         <section className={SECTION_CLASSES}>
@@ -80,9 +80,9 @@ export default async function ProfilePage() {
               <Trophy className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Personal Records</h2>
             </div>
-            <PersonalRecordForm />
+            <PersonalRecordForm userId={user.id} />
           </div>
-          <PersonalRecordsList />
+          <PersonalRecordsList userId={user.id} />
         </section>
       </div>
     </main>
