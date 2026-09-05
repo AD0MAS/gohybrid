@@ -128,6 +128,47 @@ async function checkGoalNotAlreadyMet(
 }
 
 /**
+ * Converts one raw `targetValue` form field into metric, dispatching on
+ * which of a goal's four target types is active. The primitive conversions
+ * (convertWeightInputToKg/convertDistanceInputToMetres) already live in
+ * lib/units.ts; which one applies, and under what unit, depends on
+ * goalType/targetMetricType/targetRecordType/targetValueUnit — goal-specific
+ * dispatch, not a unit concern, so it stays here rather than lib/units.ts,
+ * same reasoning as checkGoalNotAlreadyMet above. Shared by addGoal and
+ * updateGoal, which used to each carry an identical closure-based copy of
+ * this same body, capturing these same five values from their own scope
+ * instead of taking them as parameters.
+ */
+function convertGoalValue(
+  raw: FormDataEntryValue | null,
+  goalType: FormDataEntryValue | null,
+  targetMetricType: FormDataEntryValue | null,
+  targetRecordType: FormDataEntryValue | null,
+  targetValueUnit: FormDataEntryValue | null,
+  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+): unknown {
+  if (typeof raw !== "string" || raw === "") return raw;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return raw;
+
+  if (goalType === "body_metric" && targetMetricType === "weight") {
+    return convertWeightInputToKg(parsed, unitSystem);
+  }
+  if (goalType === "personal_record") {
+    if (targetRecordType === "weight") {
+      return convertWeightInputToKg(parsed, unitSystem);
+    }
+    if (
+      targetRecordType === "distance" &&
+      isOneOf(targetValueUnit, DISTANCE_INPUT_UNITS)
+    ) {
+      return convertDistanceInputToMetres(parsed, targetValueUnit);
+    }
+  }
+  return parsed;
+}
+
+/**
  * Creates a new goal for the authenticated user. Passed to useActionState
  * in GoalFields, so a validation failure is an expected outcome of a form
  * submission — it returns { status: "error", error } for the form to
@@ -185,28 +226,6 @@ export async function addGoal(
 
   const targetValueUnit = formData.get("targetValueUnit");
 
-  function convertGoalValue(raw: FormDataEntryValue | null): unknown {
-    if (typeof raw !== "string" || raw === "") return raw;
-    const parsed = Number(raw);
-    if (!Number.isFinite(parsed)) return raw;
-
-    if (goalType === "body_metric" && targetMetricType === "weight") {
-      return convertWeightInputToKg(parsed, unitSystem);
-    }
-    if (goalType === "personal_record") {
-      if (targetRecordType === "weight") {
-        return convertWeightInputToKg(parsed, unitSystem);
-      }
-      if (
-        targetRecordType === "distance" &&
-        isOneOf(targetValueUnit, DISTANCE_INPUT_UNITS)
-      ) {
-        return convertDistanceInputToMetres(parsed, targetValueUnit);
-      }
-    }
-    return parsed;
-  }
-
   const rawTargetCustomName = formData.get("targetCustomName");
   const targetCustomName =
     typeof rawTargetCustomName === "string" && rawTargetCustomName.trim() !== ""
@@ -219,7 +238,14 @@ export async function addGoal(
       goalType,
       direction: formData.get("direction"),
       period: formData.get("period"),
-      targetValue: convertGoalValue(formData.get("targetValue")),
+      targetValue: convertGoalValue(
+        formData.get("targetValue"),
+        goalType,
+        targetMetricType,
+        targetRecordType,
+        targetValueUnit,
+        unitSystem
+      ),
       targetPrimaryType: formData.get("targetPrimaryType"),
       targetMetricType,
       targetExerciseId,
@@ -336,28 +362,6 @@ export async function updateGoal(
 
   const targetValueUnit = formData.get("targetValueUnit");
 
-  function convertGoalValue(raw: FormDataEntryValue | null): unknown {
-    if (typeof raw !== "string" || raw === "") return raw;
-    const parsed = Number(raw);
-    if (!Number.isFinite(parsed)) return raw;
-
-    if (goalType === "body_metric" && targetMetricType === "weight") {
-      return convertWeightInputToKg(parsed, unitSystem);
-    }
-    if (goalType === "personal_record") {
-      if (targetRecordType === "weight") {
-        return convertWeightInputToKg(parsed, unitSystem);
-      }
-      if (
-        targetRecordType === "distance" &&
-        isOneOf(targetValueUnit, DISTANCE_INPUT_UNITS)
-      ) {
-        return convertDistanceInputToMetres(parsed, targetValueUnit);
-      }
-    }
-    return parsed;
-  }
-
   const rawTargetCustomName = formData.get("targetCustomName");
   const targetCustomName =
     typeof rawTargetCustomName === "string" && rawTargetCustomName.trim() !== ""
@@ -370,7 +374,14 @@ export async function updateGoal(
       goalType,
       direction: formData.get("direction"),
       period: formData.get("period"),
-      targetValue: convertGoalValue(formData.get("targetValue")),
+      targetValue: convertGoalValue(
+        formData.get("targetValue"),
+        goalType,
+        targetMetricType,
+        targetRecordType,
+        targetValueUnit,
+        unitSystem
+      ),
       targetPrimaryType: formData.get("targetPrimaryType"),
       targetMetricType,
       targetExerciseId,

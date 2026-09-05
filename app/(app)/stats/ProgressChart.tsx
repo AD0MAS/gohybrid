@@ -14,8 +14,19 @@ import { formatDayMonthShort } from "@/lib/dates";
 import type { ProgressSeries } from "@/lib/progress";
 import { formatDurationSeconds } from "@/lib/units";
 
+/**
+ * A ProgressSeries with its display label attached — lib/progress.ts
+ * identifies a series by its raw subject only (metricType/recordType), never
+ * a label (labels are UI copy, not lib/'s concern — see that file's own
+ * comment); app/(app)/stats/page.tsx resolves the label via
+ * BODY_METRIC_LABELS/PERSONAL_RECORD_LABELS before handing series to this
+ * component, so the chart only ever renders data it's already been given,
+ * same principle as every value on a series' points.
+ */
+export type LabeledProgressSeries = ProgressSeries & { label: string };
+
 type ProgressChartProps = {
-  series: ProgressSeries[];
+  series: LabeledProgressSeries[];
 };
 
 /**

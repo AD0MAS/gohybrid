@@ -5,7 +5,7 @@ import {
 } from "@/lib/activity";
 import { getFirstDayOfMonth, getMondayOfWeek, getMonthString } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
-import SummaryCard from "./SummaryCard";
+import SummaryCard from "../_components/SummaryCard";
 
 type SummaryCardsProps = {
   userId: string;

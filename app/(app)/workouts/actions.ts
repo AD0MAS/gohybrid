@@ -5,41 +5,8 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { scheduleWorkoutForUser } from "@/lib/scheduled-workouts";
 import { validateScheduleInput } from "@/lib/scheduled-workouts-validation";
-import {
-  createWorkoutForUser,
-  deleteWorkoutForUser,
-  toggleFavoriteForUser,
-} from "@/lib/workouts";
-import { validateWorkoutInput } from "@/lib/workouts-validation";
+import { deleteWorkoutForUser, toggleFavoriteForUser } from "@/lib/workouts";
 import { echoFormValues } from "@/lib/form-state";
-
-/**
- * Creates a workout for the authenticated user from a /workouts/new form
- * submission, using the same validation rules as POST /api/workouts (see
- * validateWorkoutInput). On success, revalidates /workouts/library and
- * redirects there. On failure, redirects back to /workouts/new with the
- * error message attached as a query parameter so the page can display it.
- */
-export async function createWorkout(formData: FormData) {
-  const user = await requireUser();
-
-  const result = validateWorkoutInput({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    primaryType: formData.get("primaryType"),
-    difficulty: formData.get("difficulty"),
-    estimatedDurationMinutes: formData.get("estimatedDurationMinutes"),
-  });
-
-  if (!result.success) {
-    redirect(`/workouts/new?error=${encodeURIComponent(result.error)}`);
-  }
-
-  await createWorkoutForUser(user.id, result.data);
-
-  revalidatePath("/workouts/library");
-  redirect("/workouts/library");
-}
 
 /**
  * Deletes one of the authenticated user's workouts, bound with the

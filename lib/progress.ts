@@ -1,6 +1,8 @@
-import { BODY_METRIC_LABELS } from "@/app/(app)/profile/body-metric-labels";
-import { PERSONAL_RECORD_LABELS } from "@/app/(app)/profile/personal-record-labels";
-import type { unitSystemEnum } from "@/db/schema";
+import type {
+  bodyMetricTypeEnum,
+  personalRecordTypeEnum,
+  unitSystemEnum,
+} from "@/db/schema";
 import {
   getPersonalRecordsForUser,
   groupPersonalRecordsBySubject,
@@ -15,15 +17,24 @@ import {
 } from "@/lib/units";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
+type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
 
 export type ProgressPoint = {
   date: string;
   value: number;
 };
 
+/**
+ * A chartable series, identified by its raw subject rather than a display
+ * label — labels are UI copy (BODY_METRIC_LABELS/PERSONAL_RECORD_LABELS,
+ * both under app/(app)/profile/), and this is lib/, so attaching one is left
+ * to the caller (see app/(app)/stats/page.tsx's labelProgressSeries). `kind`
+ * discriminates which subject fields are present, mirroring the two loops
+ * in getProgressSeriesForUser below.
+ */
 export type ProgressSeries = {
   key: string;
-  label: string;
   unit: string;
   /** True only for a personal-record "time" series — its points are raw
    * seconds, which ProgressChart must render as durations (formatDurationSeconds)
@@ -33,7 +44,10 @@ export type ProgressSeries = {
    * series' unit string ever changes for an unrelated reason. */
   isDuration: boolean;
   points: ProgressPoint[];
-};
+} & (
+  | { kind: "body_metric"; metricType: BodyMetricType }
+  | { kind: "personal_record"; subjectLabel: string; recordType: PersonalRecordType }
+);
 
 function roundForDisplay(value: number): number {
   return Math.round(value * 10) / 10;
@@ -97,28 +111,22 @@ export async function getProgressSeriesForUser(
 
   const series: ProgressSeries[] = [];
 
-  const metricsByType = new Map<string, ProgressPoint[]>();
+  const metricsByType = new Map<BodyMetricType, ProgressPoint[]>();
   for (const metric of metrics) {
     const points = metricsByType.get(metric.metricType) ?? [];
     points.push({ date: metric.measuredAt, value: metric.value });
     metricsByType.set(metric.metricType, points);
   }
   for (const [metricType, rawPoints] of metricsByType) {
-    const { label } = BODY_METRIC_LABELS[
-      metricType as keyof typeof BODY_METRIC_LABELS
-    ];
     const sorted = sortByDate(rawPoints);
     const formatted = sorted.map((p) => ({
       date: p.date,
-      ...formatBodyMetricValue(
-        metricType as Parameters<typeof formatBodyMetricValue>[0],
-        p.value,
-        unitSystem
-      ),
+      ...formatBodyMetricValue(metricType, p.value, unitSystem),
     }));
     series.push({
       key: `metric:${metricType}`,
-      label,
+      kind: "body_metric",
+      metricType,
       unit: formatted[0]?.unit ?? "",
       isDuration: false,
       points: formatted.map((p) => ({ date: p.date, value: p.value })),
@@ -166,7 +174,9 @@ export async function getProgressSeriesForUser(
 
     series.push({
       key: `pr:${group.subjectKey}`,
-      label: `${group.subjectLabel} (${PERSONAL_RECORD_LABELS[group.recordType].label})`,
+      kind: "personal_record",
+      subjectLabel: group.subjectLabel,
+      recordType: group.recordType,
       unit,
       isDuration: group.recordType === "time",
       points,
