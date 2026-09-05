@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import { EVENT_TYPE_LABELS } from "../profile/event-labels";
 import EventForm from "../profile/EventForm";
@@ -80,9 +81,9 @@ export default function EventCard({ event }: EventCardProps) {
 
       <div className="relative z-10 mt-2 flex gap-4">
         <form action={deleteEvent.bind(null, event.id)}>
-          <button type="submit" className={REMOVE_BUTTON_CLASSES}>
+          <SubmitButton className={REMOVE_BUTTON_CLASSES}>
             Remove
-          </button>
+          </SubmitButton>
         </form>
       </div>
       <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />

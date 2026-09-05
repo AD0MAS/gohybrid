@@ -40,7 +40,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
           <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Log in
           </SubmitButton>
-          <FormPendingBanner />
+          <FormPendingBanner label="Signing in…" />
         </form>
 
         <p className="text-sm text-ink-subtle">

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Flag, Scale, Target, Trophy } from "lucide-react";
+import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import BodyMetricForm from "./BodyMetricForm";
 import BodyMetricsList from "./BodyMetricsList";
@@ -24,12 +25,23 @@ const SECTION_CLASSES =
  * details and sign-out live on /settings instead, reached via the
  * Settings corner button — the first use of the corner-button pattern
  * that /workouts and /workouts/library adopt next.
+ *
+ * `?saved=1` marks a landing from saveSettings' redirect (settings/
+ * actions.ts) — the only way this page is ever reached with that param, so
+ * RedirectSuccessBanner (app/_components/FormStatus.tsx) only shows on that
+ * arrival, never a plain visit to /profile.
  */
-export default async function ProfilePage() {
+export default async function ProfilePage(props: PageProps<"/profile">) {
   const user = await requireUser();
+  const searchParams = await props.searchParams;
+  const saved =
+    (Array.isArray(searchParams.saved)
+      ? searchParams.saved[0]
+      : searchParams.saved) === "1";
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <RedirectSuccessBanner show={saved} label="Saved" paramName="saved" />
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-ink">Profile</h1>

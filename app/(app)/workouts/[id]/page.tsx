@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import {
   formatDistanceMetres,
@@ -95,6 +96,13 @@ function resolveBack(
  * given id exists. Reachable from Home's Upcoming, /workouts/library, and
  * the week strip on /workouts, so the back link's target depends on the
  * `from` search param each sets — see resolveBack above.
+ *
+ * `?saved=1` marks a landing from createFullWorkout/updateFullWorkout's
+ * redirect (builder/actions.ts) — none of this page's other entry points
+ * (`from=home`, `from=workouts&week=...&day=...`, or no param at all from
+ * the library) ever set it, so RedirectSuccessBanner (app/_components/
+ * FormStatus.tsx) only shows right after a builder Save, never on a plain
+ * visit.
  */
 export default async function WorkoutDetailPage(
   props: PageProps<"/workouts/[id]">
@@ -103,6 +111,7 @@ export default async function WorkoutDetailPage(
   const user = await requireUser();
   const searchParams = await props.searchParams;
   const back = resolveBack(searchParams);
+  const saved = firstValue(searchParams.saved) === "1";
 
   if (!isValidUuid(id)) {
     notFound();
@@ -121,6 +130,7 @@ export default async function WorkoutDetailPage(
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <RedirectSuccessBanner show={saved} label="Saved" paramName="saved" />
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">

@@ -89,7 +89,7 @@ export default function ScheduleWorkoutForm({
 
   return (
     <>
-      <FormSuccessBanner trigger={successCount} />
+      <FormSuccessBanner trigger={successCount} label="Scheduled" />
       <button
         type="button"
         onClick={openFresh}
@@ -142,7 +142,7 @@ export default function ScheduleWorkoutForm({
           <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Schedule
           </SubmitButton>
-          <FormPendingBanner />
+          <FormPendingBanner label="Scheduling…" />
         </form>
       </Modal>
     </>

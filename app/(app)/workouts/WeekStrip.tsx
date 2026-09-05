@@ -7,6 +7,7 @@ import {
 } from "../upcoming-actions";
 import ConfirmModal from "../_components/ConfirmModal";
 import EventCard from "../_components/EventCard";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import {
   formatDayHeading,
   getDayNumber,
@@ -263,12 +264,9 @@ export default async function WeekStrip({
                         <form
                           action={markScheduledWorkoutDone.bind(null, entry.id)}
                         >
-                          <button
-                            type="submit"
-                            className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                          >
+                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                             Mark done
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
                       {status === "Planned" && (
@@ -279,12 +277,9 @@ export default async function WeekStrip({
                             true
                           )}
                         >
-                          <button
-                            type="submit"
-                            className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                          >
+                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                             Mark skipped
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
                       {status === "Completed" ? (
@@ -298,9 +293,9 @@ export default async function WeekStrip({
                         />
                       ) : (
                         <form action={unscheduleWorkout.bind(null, entry.id)}>
-                          <button type="submit" className={REMOVE_BUTTON_CLASSES}>
+                          <SubmitButton className={REMOVE_BUTTON_CLASSES}>
                             Remove
-                          </button>
+                          </SubmitButton>
                         </form>
                       )}
                     </div>

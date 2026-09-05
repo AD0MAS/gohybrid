@@ -101,9 +101,12 @@ type WorkoutBuilderProps = {
  * SubmitButton kept for this reason. No BlockEditor/ItemEditor button is
  * `type="submit"`, so pressing Enter in a text field is the only other way
  * to trigger it. No FormSuccessBanner: both
- * createFullWorkout and updateFullWorkout redirect() on success, so the
+ * createFullWorkout and updateFullWorkout redirect() on success, so this
  * component unmounts before any success state could render — same
- * reasoning as SettingsFields.
+ * reasoning as SettingsFields. The workout detail page shows the success
+ * confirmation instead, via RedirectSuccessBanner reading the `?saved=1`
+ * both actions append to their redirect target (see app/_components/
+ * FormStatus.tsx and workouts/[id]/page.tsx).
  *
  * `noValidate` on the <form> is required, not cosmetic: BlockEditor's Rounds
  * input is natively `required` for on_off/emom, and Modal never unmounts a
@@ -396,7 +399,7 @@ export default function WorkoutBuilder({
       >
         Save
       </PendingSubmitButton>
-      <PendingBanner pending={isSaving} />
+      <PendingBanner pending={isSaving} label="Saving…" />
     </form>
   );
 }

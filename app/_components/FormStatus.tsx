@@ -15,7 +15,7 @@ const BANNER_CLASSES =
  * nested below it. Purely a visual cue — SubmitButton (below) is what
  * actually stops a double click from firing the action twice.
  */
-export function FormPendingBanner({ label = "Saving…" }: { label?: string }) {
+export function FormPendingBanner({ label }: { label: string }) {
   const { pending } = useFormStatus();
   if (!pending) return null;
 
@@ -36,13 +36,20 @@ export function FormPendingBanner({ label = "Saving…" }: { label?: string }) {
 export function SubmitButton({
   children,
   className,
+  ariaLabel,
 }: {
   children: React.ReactNode;
   className: string;
+  ariaLabel?: string;
 }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className={className}>
+    <button
+      type="submit"
+      disabled={pending}
+      className={className}
+      aria-label={ariaLabel}
+    >
       {children}
     </button>
   );
@@ -59,10 +66,10 @@ export function SubmitButton({
  */
 export function PendingBanner({
   pending,
-  label = "Saving…",
+  label,
 }: {
   pending: boolean;
-  label?: string;
+  label: string;
 }) {
   if (!pending) return null;
 
@@ -141,10 +148,10 @@ export function PendingSubmitButton({
  */
 export function FormSuccessBanner({
   trigger,
-  label = "Saved",
+  label,
 }: {
   trigger: number;
-  label?: string;
+  label: string;
 }) {
   const [prevTrigger, setPrevTrigger] = useState(trigger);
   const [visible, setVisible] = useState(false);
@@ -159,6 +166,72 @@ export function FormSuccessBanner({
     const timeout = setTimeout(() => setVisible(false), 2000);
     return () => clearTimeout(timeout);
   }, [visible, trigger]);
+
+  if (!visible) return null;
+
+  return (
+    <p role="status" className={`${BANNER_CLASSES} border-success/40 bg-surface-2 text-success`}>
+      {label}
+    </p>
+  );
+}
+
+/**
+ * Success confirmation for an action that redirects on success instead of
+ * staying mounted (saveSettings → /profile, createFullWorkout/
+ * updateFullWorkout → /workouts/[id]) — the case FormSuccessBanner above
+ * can't cover, since its whole API is "notice `trigger` changed," and a
+ * redirect target mounts fresh exactly once with the query param already
+ * set. There's nothing to detect a change from, so instead of retrofitting
+ * FormSuccessBanner (and risking its existing callers, which stay on the
+ * trigger-based model), this is a separate component with the identical
+ * markup/classes so the two are visually indistinguishable.
+ *
+ * The destination page (a Server Component) reads its own searchParams,
+ * decides whether the value it got back is the one it's looking for, and
+ * passes only a plain `show` boolean in — this component never calls
+ * useSearchParams itself, which keeps it a true leaf (no Suspense boundary
+ * needed) and keeps "what counts as a valid param value" a decision the
+ * page makes, not something guessed from inside a shared component.
+ *
+ * `useState(show)` — not `useState(false)` — so the banner is already
+ * visible on the very first paint instead of flashing in a frame late.
+ * `show` itself never changes after mount (the page it's rendered on
+ * doesn't re-run this component's props reactively — a fresh navigation
+ * mounts a fresh instance), so unlike FormSuccessBanner there's no
+ * "retrigger on a later change" case to support.
+ *
+ * The query param is stripped via a raw `history.replaceState` call, not
+ * `router.replace()`: the App Router treats a changed search string as a
+ * new dynamic request and refetches the route's RSC payload, which would
+ * mean a second server round trip purely to make the address bar match
+ * what's already on screen. `replaceState` edits the address bar only, with
+ * no navigation, no fetch, and — because it replaces rather than pushes —
+ * no new history entry for the back button to land on. It runs inside the
+ * same mount effect that starts the 2-second auto-hide timer, so a reload
+ * a moment later (before the timer even fires) already sees a clean URL.
+ */
+export function RedirectSuccessBanner({
+  show,
+  label,
+  paramName,
+}: {
+  show: boolean;
+  label: string;
+  paramName: string;
+}) {
+  const [visible, setVisible] = useState(show);
+
+  useEffect(() => {
+    if (!show) return;
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete(paramName);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+
+    const timeout = setTimeout(() => setVisible(false), 2000);
+    return () => clearTimeout(timeout);
+  }, [show, paramName]);
 
   if (!visible) return null;
 

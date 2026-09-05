@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import { getExerciseCatalog } from "@/lib/exercises";
 import {
   getDistinctCustomNamesForUser,
@@ -87,13 +88,12 @@ export default async function PersonalRecordsList({
                   entry={group.best}
                 />
                 <form action={deletePersonalRecord.bind(null, group.best.id)}>
-                  <button
-                    type="submit"
-                    aria-label="Delete"
+                  <SubmitButton
+                    ariaLabel="Delete"
                     className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             </div>
@@ -130,13 +130,12 @@ export default async function PersonalRecordsList({
                           entry={entry}
                         />
                         <form action={deletePersonalRecord.bind(null, entry.id)}>
-                          <button
-                            type="submit"
-                            aria-label="Delete"
+                          <SubmitButton
+                            ariaLabel="Delete"
                             className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                           >
                             <X className="h-4 w-4" aria-hidden="true" />
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </li>

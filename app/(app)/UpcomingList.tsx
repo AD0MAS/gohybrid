@@ -1,5 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import { formatRelativeDay } from "@/lib/dates";
 import { getUpcomingForUser } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
@@ -78,30 +79,21 @@ export default async function UpcomingList({ userId, limit }: UpcomingListProps)
 
               <div className="relative z-10 mt-2 flex gap-4">
                 <form action={markScheduledWorkoutDone.bind(null, entry.id)}>
-                  <button
-                    type="submit"
-                    className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                  >
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Mark done
-                  </button>
+                  </SubmitButton>
                 </form>
                 <form
                   action={markScheduledWorkoutSkipped.bind(null, entry.id, true)}
                 >
-                  <button
-                    type="submit"
-                    className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                  >
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Mark skipped
-                  </button>
+                  </SubmitButton>
                 </form>
                 <form action={unscheduleWorkout.bind(null, entry.id)}>
-                  <button
-                    type="submit"
-                    className="text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                  >
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Remove
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
               <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />

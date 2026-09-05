@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 
 type DeleteWorkoutModalProps = {
   deleteAction: () => Promise<void>;
@@ -47,12 +48,9 @@ export default function DeleteWorkoutModal({
               </button>
 
               <form action={deleteAction}>
-                <button
-                  type="submit"
-                  className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                >
+                <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                   Delete
-                </button>
+                </SubmitButton>
               </form>
             </div>
           </div>

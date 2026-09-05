@@ -69,7 +69,7 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
   const workout = await createFullWorkoutForUser(user.id, result.data);
 
   revalidatePath("/workouts/library");
-  redirect(`/workouts/${workout.id}`);
+  redirect(`/workouts/${workout.id}?saved=1`);
 }
 
 /**
@@ -99,5 +99,5 @@ export async function updateFullWorkout(id: string, payload: RawBuilderPayload) 
 
   revalidatePath("/workouts/library");
   revalidatePath(`/workouts/${id}`);
-  redirect(`/workouts/${id}`);
+  redirect(`/workouts/${id}?saved=1`);
 }

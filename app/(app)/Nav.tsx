@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Dumbbell, Home, LogOut, User } from "lucide-react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
@@ -66,13 +67,10 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
             {userEmail}
           </span>
           <form action={signOutAction}>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            >
+            <SubmitButton className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
               <LogOut className="h-4 w-4" />
               Sign out
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </nav>

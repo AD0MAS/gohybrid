@@ -124,7 +124,7 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
 
   return (
     <>
-      <FormSuccessBanner trigger={successCount} />
+      <FormSuccessBanner trigger={successCount} label="Saved" />
       {renderTrigger ? (
         renderTrigger(openFresh)
       ) : entry ? (
@@ -201,7 +201,7 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
           <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             {entry ? "Save" : "Add event"}
           </SubmitButton>
-          <FormPendingBanner />
+          <FormPendingBanner label="Saving…" />
         </form>
       </Modal>
     </>

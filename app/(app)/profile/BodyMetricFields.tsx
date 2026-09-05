@@ -119,7 +119,7 @@ export default function BodyMetricFields({
 
   return (
     <>
-      <FormSuccessBanner trigger={successCount} />
+      <FormSuccessBanner trigger={successCount} label="Saved" />
       {entry ? (
         <button
           type="button"
@@ -293,7 +293,7 @@ function BodyMetricFormFields({
       <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add measurement"}
       </SubmitButton>
-      <FormPendingBanner />
+      <FormPendingBanner label="Saving…" />
     </form>
   );
 }

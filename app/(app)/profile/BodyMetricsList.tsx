@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import { bodyMetricTypeEnum } from "@/db/schema";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
@@ -75,13 +76,12 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
                     <div className="flex shrink-0 items-center gap-2">
                       <BodyMetricFields today={today} unitSystem={unitSystem} entry={entry} />
                       <form action={deleteBodyMetric.bind(null, entry.id)}>
-                        <button
-                          type="submit"
-                          aria-label="Delete"
+                        <SubmitButton
+                          ariaLabel="Delete"
                           className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                         >
                           <X className="h-4 w-4" aria-hidden="true" />
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   </li>

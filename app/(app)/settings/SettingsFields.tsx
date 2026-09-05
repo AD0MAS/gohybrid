@@ -95,13 +95,16 @@ export default function SettingsFields({
 
       {/* No FormSuccessBanner here: saveSettings redirects to /profile on
           success (see actions.ts), so useActionState's state never actually
-          resolves to a "saved" value — the redirect itself is the success
-          feedback. The pending banner still matters: it covers the gap
-          between clicking Save and that redirect landing. */}
+          resolves to a "saved" value — this component unmounts before any
+          success state could render. /profile itself shows the success
+          confirmation instead, via RedirectSuccessBanner reading the
+          `?saved=1` the redirect appends (see app/_components/FormStatus.tsx
+          and profile/page.tsx). The pending banner here still matters: it
+          covers the gap between clicking Save and that redirect landing. */}
       <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         Save
       </SubmitButton>
-      <FormPendingBanner />
+      <FormPendingBanner label="Saving…" />
     </form>
   );
 }

@@ -46,5 +46,5 @@ export async function saveSettings(
   revalidatePath("/profile");
   revalidatePath("/");
   revalidatePath("/stats");
-  redirect("/profile");
+  redirect("/profile?saved=1");
 }

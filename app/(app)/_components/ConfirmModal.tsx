@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { SubmitButton } from "@/app/_components/FormStatus";
 import Modal from "./Modal";
 
 type ConfirmModalProps = {
@@ -65,12 +66,9 @@ export default function ConfirmModal({
             </button>
 
             <form action={action}>
-              <button
-                type="submit"
-                className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-              >
+              <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-danger px-4 text-base text-white hover:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                 {confirmLabel}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
