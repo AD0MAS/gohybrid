@@ -163,14 +163,24 @@ export default function PersonalRecordFields({
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={openFresh}
-          className="flex h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          <Plus className="h-4 w-4" />
-          Add record
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={openFresh}
+            aria-label="Add record"
+            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={openFresh}
+            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
+          >
+            <Plus className="h-4 w-4" />
+            Add record
+          </button>
+        </>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit record" : "Add record"}>
