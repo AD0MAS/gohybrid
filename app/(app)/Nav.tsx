@@ -40,9 +40,10 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
   return (
     <>
       <nav className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-hairline bg-canvas p-4 sm:flex">
-        <span className="mb-6 px-3 text-lg font-semibold text-ink">
-          GoHybrid
-        </span>
+        <div className="mb-6 px-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-lockup.svg" alt="GoHybrid" className="h-8 w-auto" />
+        </div>
 
         <ul className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
