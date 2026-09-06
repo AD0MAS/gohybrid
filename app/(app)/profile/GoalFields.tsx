@@ -26,6 +26,10 @@ import {
   RESTING_HR_DIGIT_LIMIT,
 } from "@/lib/numeric-limits";
 import {
+  GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,
+  GOAL_TITLE_MAX_LENGTH,
+} from "@/lib/text-limits";
+import {
   convertDistanceInputToMetres,
   DISTANCE_INPUT_UNITS,
   formatBodyMetricValue,
@@ -523,6 +527,7 @@ function GoalFormFields({
         placeholder="Goal title"
         defaultValue={fieldDefault("title", entry?.title)}
         required
+        maxLength={GOAL_TITLE_MAX_LENGTH}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
@@ -630,6 +635,7 @@ function GoalFormFields({
                 "targetCustomName",
                 entry?.targetCustomName ?? ""
               )}
+              maxLength={GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           )}

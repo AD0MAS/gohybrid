@@ -1,4 +1,5 @@
 import { groupExercisesForSelect } from "@/lib/exercise-groups";
+import { ITEM_CUSTOM_NAME_MAX_LENGTH } from "@/lib/text-limits";
 import type { CatalogExercise } from "./reducer";
 
 const CUSTOM_VALUE = "custom";
@@ -94,6 +95,7 @@ export default function ExercisePicker({
       {selectValue === CUSTOM_VALUE && (
         <input
           type="text"
+          maxLength={ITEM_CUSTOM_NAME_MAX_LENGTH}
           value={customName ?? ""}
           onChange={(e) => onChangeCustomName(e.target.value)}
           placeholder="Custom name"

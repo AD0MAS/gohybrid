@@ -10,6 +10,7 @@ import {
   BODY_WEIGHT_DIGIT_LIMIT,
   RESTING_HR_DIGIT_LIMIT,
 } from "@/lib/numeric-limits";
+import { BODY_METRIC_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import { formatBodyMetricValue } from "@/lib/units";
 import { isOneOf } from "@/lib/workouts-validation";
 import Modal from "../_components/Modal";
@@ -293,6 +294,7 @@ function BodyMetricFormFields({
         name="notes"
         placeholder="Notes (optional)"
         defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+        maxLength={BODY_METRIC_NOTES_MAX_LENGTH}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 

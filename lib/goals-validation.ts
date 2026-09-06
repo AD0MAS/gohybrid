@@ -19,6 +19,11 @@ import {
   RESTING_HR_DIGIT_LIMIT,
 } from "./numeric-limits";
 import { isOneOf, isValidUuid } from "./workouts-validation";
+import {
+  checkTextLength,
+  GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,
+  GOAL_TITLE_MAX_LENGTH,
+} from "./text-limits";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
@@ -191,6 +196,10 @@ export function validateGoalInput(
   if (!title) {
     return { success: false, error: "Title is required." };
   }
+  const titleCheck = checkTextLength(title, GOAL_TITLE_MAX_LENGTH, "Title");
+  if (!titleCheck.ok) {
+    return { success: false, error: titleCheck.error };
+  }
 
   const goalType = input.goalType;
   if (!isOneOf(goalType, goalTypeEnum.enumValues)) {
@@ -301,6 +310,16 @@ export function validateGoalInput(
     typeof rawCustomName === "string" && rawCustomName.trim() !== ""
       ? rawCustomName.trim()
       : null;
+  if (targetCustomName !== null) {
+    const targetCustomNameCheck = checkTextLength(
+      targetCustomName,
+      GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,
+      "Custom name"
+    );
+    if (!targetCustomNameCheck.ok) {
+      return { success: false, error: targetCustomNameCheck.error };
+    }
+  }
 
   const rawTargetRecordType = input.targetRecordType;
   const targetRecordType =

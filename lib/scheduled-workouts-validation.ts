@@ -1,4 +1,5 @@
 import { isValidUuid } from "./workouts-validation";
+import { checkTextLength, SCHEDULE_NOTES_MAX_LENGTH } from "./text-limits";
 
 export type ValidatedScheduleInput = {
   workoutId: string;
@@ -93,6 +94,12 @@ export function validateScheduleInput(
     typeof input.notes === "string" && input.notes.trim() !== ""
       ? input.notes.trim()
       : null;
+  if (notes !== null) {
+    const notesCheck = checkTextLength(notes, SCHEDULE_NOTES_MAX_LENGTH, "Notes");
+    if (!notesCheck.ok) {
+      return { success: false, error: notesCheck.error };
+    }
+  }
 
   return {
     success: true,

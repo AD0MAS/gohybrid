@@ -1,6 +1,12 @@
 import { eventTypeEnum } from "@/db/schema";
 import { isOneOf } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
+import {
+  checkTextLength,
+  EVENT_LOCATION_MAX_LENGTH,
+  EVENT_NOTES_MAX_LENGTH,
+  EVENT_TITLE_MAX_LENGTH,
+} from "./text-limits";
 
 export type ValidatedEventInput = {
   title: string;
@@ -41,6 +47,10 @@ export function validateEventInput(input: RawEventInput): EventValidationResult 
   if (!title) {
     return { success: false, error: "Title is required." };
   }
+  const titleCheck = checkTextLength(title, EVENT_TITLE_MAX_LENGTH, "Title");
+  if (!titleCheck.ok) {
+    return { success: false, error: titleCheck.error };
+  }
 
   const eventType = input.eventType;
   if (!isOneOf(eventType, eventTypeEnum.enumValues)) {
@@ -61,11 +71,27 @@ export function validateEventInput(input: RawEventInput): EventValidationResult 
     typeof input.location === "string" && input.location.trim() !== ""
       ? input.location.trim()
       : null;
+  if (location !== null) {
+    const locationCheck = checkTextLength(
+      location,
+      EVENT_LOCATION_MAX_LENGTH,
+      "Location"
+    );
+    if (!locationCheck.ok) {
+      return { success: false, error: locationCheck.error };
+    }
+  }
 
   const notes =
     typeof input.notes === "string" && input.notes.trim() !== ""
       ? input.notes.trim()
       : null;
+  if (notes !== null) {
+    const notesCheck = checkTextLength(notes, EVENT_NOTES_MAX_LENGTH, "Notes");
+    if (!notesCheck.ok) {
+      return { success: false, error: notesCheck.error };
+    }
+  }
 
   return {
     success: true,

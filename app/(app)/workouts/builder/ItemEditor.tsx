@@ -8,6 +8,7 @@ import {
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
 } from "@/lib/numeric-limits";
+import { ITEM_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
@@ -1183,6 +1184,7 @@ function ItemEditorModalFields({
               Notes<span className="text-xs text-ink-subtle">(optional)</span>
             </span>
             <textarea
+              maxLength={ITEM_NOTES_MAX_LENGTH}
               value={draft.notes}
               onChange={(e) => updateNotes(e.target.value)}
               className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"

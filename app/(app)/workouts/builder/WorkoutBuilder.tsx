@@ -4,6 +4,10 @@ import { useReducer, useState } from "react";
 import type { unitSystemEnum } from "@/db/schema";
 import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
 import { DURATION_MINUTES_DIGIT_LIMIT } from "@/lib/numeric-limits";
+import {
+  WORKOUT_DESCRIPTION_MAX_LENGTH,
+  WORKOUT_TITLE_MAX_LENGTH,
+} from "@/lib/text-limits";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
@@ -212,6 +216,7 @@ export default function WorkoutBuilder({
           <input
             type="text"
             required
+            maxLength={WORKOUT_TITLE_MAX_LENGTH}
             value={state.meta.title}
             onChange={(e) =>
               dispatch({
@@ -229,6 +234,7 @@ export default function WorkoutBuilder({
             Description<span className="text-xs text-ink-subtle">(optional)</span>
           </span>
           <textarea
+            maxLength={WORKOUT_DESCRIPTION_MAX_LENGTH}
             value={state.meta.description}
             onChange={(e) =>
               dispatch({

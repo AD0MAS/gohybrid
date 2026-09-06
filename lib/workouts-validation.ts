@@ -1,4 +1,9 @@
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
+import {
+  checkTextLength,
+  WORKOUT_DESCRIPTION_MAX_LENGTH,
+  WORKOUT_TITLE_MAX_LENGTH,
+} from "./text-limits";
 
 export type ValidatedWorkoutInput = {
   title: string;
@@ -58,6 +63,10 @@ export function validateWorkoutInput(
   if (!title) {
     return { success: false, error: "Title is required." };
   }
+  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
+  if (!titleCheck.ok) {
+    return { success: false, error: titleCheck.error };
+  }
 
   const primaryType = input.primaryType;
   if (!isOneOf(primaryType, workoutPrimaryTypeEnum.enumValues)) {
@@ -83,6 +92,16 @@ export function validateWorkoutInput(
     typeof input.description === "string" && input.description.trim() !== ""
       ? input.description.trim()
       : null;
+  if (description !== null) {
+    const descriptionCheck = checkTextLength(
+      description,
+      WORKOUT_DESCRIPTION_MAX_LENGTH,
+      "Description"
+    );
+    if (!descriptionCheck.ok) {
+      return { success: false, error: descriptionCheck.error };
+    }
+  }
 
   let estimatedDurationMinutes: number | null = null;
   const rawDuration = input.estimatedDurationMinutes;

@@ -25,6 +25,14 @@ import {
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
 } from "./numeric-limits";
+import {
+  BLOCK_TITLE_MAX_LENGTH,
+  checkTextLength,
+  ITEM_CUSTOM_NAME_MAX_LENGTH,
+  ITEM_NOTES_MAX_LENGTH,
+  WORKOUT_DESCRIPTION_MAX_LENGTH,
+  WORKOUT_TITLE_MAX_LENGTH,
+} from "./text-limits";
 
 export type ValidatedBuilderItem = {
   exerciseId: string | null;
@@ -145,8 +153,10 @@ const UUID_REGEX =
 const INVALID = Symbol("invalid");
 
 /** The subset of a block's editable fields BlockEditor's modal holds as a
- * draft — title is deliberately excluded, since it has no validation rule
- * (parseBuilderBlock only ever trims it). */
+ * draft — title is deliberately excluded: its only rule is the
+ * BLOCK_TITLE_MAX_LENGTH cap (lib/text-limits.ts), enforced by the input's
+ * own maxLength and by parseBuilderBlock at the real gate, not by this
+ * per-field draft validator. */
 export type BuilderBlockDraft = {
   blockType: (typeof blockTypeEnum.enumValues)[number];
   durationSeconds: number | null;
@@ -244,8 +254,10 @@ export function validateBuilderBlockDraft(
 }
 
 /** The subset of an item's editable fields ItemEditor's modal holds as a
- * draft — notes is deliberately excluded, since it has no validation rule
- * (parseBuilderItem only ever trims it). */
+ * draft — notes is deliberately excluded: its only rule is the
+ * ITEM_NOTES_MAX_LENGTH cap (lib/text-limits.ts), enforced by the
+ * textarea's own maxLength and by parseBuilderItem at the real gate, not by
+ * this per-field draft validator. */
 export type BuilderItemDraft = {
   exerciseId: string | null;
   customName: string | null;
@@ -508,6 +520,16 @@ function parseBuilderItem(
     typeof item.customName === "string" && item.customName.trim() !== ""
       ? item.customName.trim()
       : null;
+  if (customName !== null) {
+    const customNameCheck = checkTextLength(
+      customName,
+      ITEM_CUSTOM_NAME_MAX_LENGTH,
+      `${context} custom name`
+    );
+    if (!customNameCheck.ok) {
+      return { error: customNameCheck.error };
+    }
+  }
 
   if (exerciseId !== null && customName !== null) {
     return {
@@ -719,6 +741,16 @@ function parseBuilderItem(
     typeof item.notes === "string" && item.notes.trim() !== ""
       ? item.notes.trim()
       : null;
+  if (notes !== null) {
+    const notesCheck = checkTextLength(
+      notes,
+      ITEM_NOTES_MAX_LENGTH,
+      `${context} notes`
+    );
+    if (!notesCheck.ok) {
+      return { error: notesCheck.error };
+    }
+  }
 
   return {
     item: {
@@ -756,6 +788,16 @@ function parseBuilderBlock(
     typeof block.title === "string" && block.title.trim() !== ""
       ? block.title.trim()
       : null;
+  if (title !== null) {
+    const titleCheck = checkTextLength(
+      title,
+      BLOCK_TITLE_MAX_LENGTH,
+      `Block ${index + 1} title`
+    );
+    if (!titleCheck.ok) {
+      return { error: titleCheck.error };
+    }
+  }
 
   const durationSeconds = parseOptionalNumber(block.durationSeconds);
   if (durationSeconds === INVALID) {
@@ -897,6 +939,10 @@ export function validateBuilderPayload(
   if (!title) {
     return { success: false, error: "Title is required." };
   }
+  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
+  if (!titleCheck.ok) {
+    return { success: false, error: titleCheck.error };
+  }
 
   if (!isOneOf(input.primaryType, options.primaryTypeOptions)) {
     return {
@@ -922,6 +968,16 @@ export function validateBuilderPayload(
     typeof input.description === "string" && input.description.trim() !== ""
       ? input.description.trim()
       : null;
+  if (description !== null) {
+    const descriptionCheck = checkTextLength(
+      description,
+      WORKOUT_DESCRIPTION_MAX_LENGTH,
+      "Description"
+    );
+    if (!descriptionCheck.ok) {
+      return { success: false, error: descriptionCheck.error };
+    }
+  }
 
   let estimatedDurationMinutes: number | null = null;
   const rawDuration = input.estimatedDurationMinutes;

@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import { SCHEDULE_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import Modal from "../../_components/Modal";
 import type { ScheduleFormState } from "../actions";
 
@@ -131,6 +132,7 @@ export default function ScheduleWorkoutForm({
               type="text"
               name="notes"
               defaultValue={fieldDefault("notes")}
+              maxLength={SCHEDULE_NOTES_MAX_LENGTH}
               className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>

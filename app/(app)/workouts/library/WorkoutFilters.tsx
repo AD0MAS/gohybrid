@@ -6,6 +6,7 @@ import type { CatalogTag, Difficulty, PrimaryType } from "../builder/reducer";
 import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
+import { WORKOUT_SEARCH_MAX_LENGTH } from "@/lib/text-limits";
 import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
 
 type WorkoutFiltersProps = {
@@ -149,6 +150,7 @@ export default function WorkoutFilters({
           value={qInput}
           onChange={(event) => setQInput(event.target.value)}
           placeholder="Search by title"
+          maxLength={WORKOUT_SEARCH_MAX_LENGTH}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
 

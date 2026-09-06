@@ -13,6 +13,10 @@ import {
 } from "@/lib/numeric-limits";
 import type { PersonalRecord } from "@/lib/personal-records";
 import {
+  RECORD_CUSTOM_NAME_MAX_LENGTH,
+  RECORD_NOTES_MAX_LENGTH,
+} from "@/lib/text-limits";
+import {
   convertDistanceInputToMetres,
   DISTANCE_INPUT_UNITS,
   formatPersonalRecordValue,
@@ -454,6 +458,7 @@ function PersonalRecordFormFields({
           name="customName"
           placeholder="Custom name"
           defaultValue={fieldDefault("customName", entry?.customName ?? "")}
+          maxLength={RECORD_CUSTOM_NAME_MAX_LENGTH}
           className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}
@@ -530,6 +535,7 @@ function PersonalRecordFormFields({
         name="notes"
         placeholder="Notes (optional)"
         defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+        maxLength={RECORD_NOTES_MAX_LENGTH}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 

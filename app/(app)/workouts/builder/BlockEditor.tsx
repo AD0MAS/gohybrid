@@ -2,6 +2,7 @@ import { useRef, useState, type Dispatch } from "react";
 import { Copy, Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import { REPS_DIGIT_LIMIT } from "@/lib/numeric-limits";
+import { BLOCK_TITLE_MAX_LENGTH } from "@/lib/text-limits";
 import { formatDurationSeconds } from "@/lib/units";
 import {
   validateBuilderBlockDraft,
@@ -396,6 +397,7 @@ function BlockEditorModalFields({
         </span>
         <input
           type="text"
+          maxLength={BLOCK_TITLE_MAX_LENGTH}
           value={draft.title}
           onChange={(e) => updateTitle(e.target.value)}
           className="rounded-md border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"

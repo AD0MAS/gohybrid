@@ -5,6 +5,11 @@ import { Pencil, Plus } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
 import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
+import {
+  EVENT_LOCATION_MAX_LENGTH,
+  EVENT_NOTES_MAX_LENGTH,
+  EVENT_TITLE_MAX_LENGTH,
+} from "@/lib/text-limits";
 import Modal from "../_components/Modal";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { addEvent, updateEvent, type EventFormState } from "./events-actions";
@@ -165,6 +170,7 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             placeholder="Event title"
             defaultValue={fieldDefault("title", entry?.title)}
             required
+            maxLength={EVENT_TITLE_MAX_LENGTH}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -193,6 +199,7 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             name="location"
             placeholder="Location (optional)"
             defaultValue={fieldDefault("location", entry?.location ?? "")}
+            maxLength={EVENT_LOCATION_MAX_LENGTH}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
@@ -201,6 +208,7 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             name="notes"
             placeholder="Notes (optional)"
             defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+            maxLength={EVENT_NOTES_MAX_LENGTH}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 

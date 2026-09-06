@@ -9,6 +9,11 @@ import {
 } from "./numeric-limits";
 import { isOneOf, isValidUuid } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
+import {
+  checkTextLength,
+  RECORD_CUSTOM_NAME_MAX_LENGTH,
+  RECORD_NOTES_MAX_LENGTH,
+} from "./text-limits";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 type NonTimeRecordType = Exclude<
@@ -110,6 +115,16 @@ export function validatePersonalRecordInput(
     typeof rawCustomName === "string" && rawCustomName.trim() !== ""
       ? rawCustomName.trim()
       : null;
+  if (customName !== null) {
+    const customNameCheck = checkTextLength(
+      customName,
+      RECORD_CUSTOM_NAME_MAX_LENGTH,
+      "Custom name"
+    );
+    if (!customNameCheck.ok) {
+      return { success: false, error: customNameCheck.error };
+    }
+  }
 
   if (exerciseId !== null && customName !== null) {
     return {
@@ -180,6 +195,12 @@ export function validatePersonalRecordInput(
     typeof input.notes === "string" && input.notes.trim() !== ""
       ? input.notes.trim()
       : null;
+  if (notes !== null) {
+    const notesCheck = checkTextLength(notes, RECORD_NOTES_MAX_LENGTH, "Notes");
+    if (!notesCheck.ok) {
+      return { success: false, error: notesCheck.error };
+    }
+  }
 
   return {
     success: true,
