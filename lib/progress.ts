@@ -3,10 +3,8 @@ import type {
   personalRecordTypeEnum,
   unitSystemEnum,
 } from "@/db/schema";
-import {
-  getPersonalRecordsForUser,
-  groupPersonalRecordsBySubject,
-} from "@/lib/personal-records";
+import { getPersonalRecordsForUser } from "@/lib/personal-records";
+import { groupPersonalRecordsBySubject } from "@/lib/personal-records-grouping";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
 import {
   formatBodyMetricValue,
@@ -81,7 +79,7 @@ function convertToFixedUnit(value: number, unit: string): number {
  * group with data (see GOHYBRID_PLAN.md §5 Layer 4 — progress charts are
  * sourced ONLY from Personal Records/Body Metrics, never from
  * workout_sessions, to avoid "fake analytics"). Grouping reuses
- * groupPersonalRecordsBySubject from lib/personal-records.ts rather than
+ * groupPersonalRecordsBySubject from lib/personal-records-grouping.ts rather than
  * regrouping records here, so subject/record_type identity has one
  * definition. Points are sorted oldest to newest, the opposite of the
  * newest-first lists elsewhere, since charts read left to right. A series

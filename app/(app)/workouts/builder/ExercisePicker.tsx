@@ -83,8 +83,7 @@ export default function ExercisePicker({
             <optgroup key={group.label} label={group.label}>
               {group.exercises.map((exercise) => (
                 <option key={exercise.id} value={exercise.id}>
-                  {exercise.name}
-                  {exercise.equipment ? ` (${exercise.equipment})` : ""}
+                  {`${exercise.name}${exercise.equipment ? ` (${exercise.equipment})` : ""}`}
                 </option>
               ))}
             </optgroup>

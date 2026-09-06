@@ -404,11 +404,24 @@ export async function updateGoal(
     throw new Error("Goal not found.");
   }
 
+  // targetCustomName is compared case-insensitively, not with `!==` like
+  // the other four fields, because it's the one field whose "canonical"
+  // spelling can legitimately drift out from under an untouched goal:
+  // resolveCanonicalCustomName (lib/personal-records.ts) always resolves a
+  // submitted name to the earliest-recorded personal_records row that
+  // matches case-insensitively, and that earliest row can change between
+  // this goal's last save and now (a differently-cased record added or
+  // removed elsewhere). subjectKey (lib/personal-records-grouping.ts) already treats
+  // "5k" and "5K" as one subject for grouping/matching current values — an
+  // exact string comparison here would disagree with that identity and
+  // flag a same-subject goal as changed purely because the on-file spelling
+  // was re-cased, discarding a real start_value over a cosmetic difference.
   const targetSubjectChanged =
     existing.goalType !== result.data.goalType ||
     existing.targetMetricType !== result.data.targetMetricType ||
     existing.targetExerciseId !== result.data.targetExerciseId ||
-    existing.targetCustomName !== result.data.targetCustomName ||
+    (existing.targetCustomName?.toLowerCase() ?? null) !==
+      (result.data.targetCustomName?.toLowerCase() ?? null) ||
     existing.targetRecordType !== result.data.targetRecordType;
 
   // Whether checkGoalNotAlreadyMet needs to re-run at all — see the doc
@@ -448,6 +461,16 @@ export async function updateGoal(
     // comment above. True here always implies alreadyMetInputsChanged was
     // also true, so resolvedCurrent already holds the freshly resolved
     // value and checkGoalNotAlreadyMet doesn't need a second call.
+    //
+    // Fires only when this specific edit's submitted direction is
+    // "decrease" while the row's direction *before this edit* was
+    // something else (necessarily "increase" — those are the only two
+    // values). An increase goal never has a start_value (see the final
+    // `else` below), so there is nothing to preserve: recapturing from
+    // resolvedCurrent here is capturing one for the first time, not
+    // discarding a real anchor. This is intentional, not the accidental
+    // recapture a same-direction, same-subject edit would be — see
+    // targetSubjectChanged above for that guard.
     const becameDecrease = existing.direction !== "decrease";
     startValue =
       targetSubjectChanged || becameDecrease

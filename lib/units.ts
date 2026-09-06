@@ -209,6 +209,34 @@ export function formatDurationSeconds(seconds: number): string {
 }
 
 /**
+ * Formats a pace target ("pace_500m" or "pace_km", target_value always
+ * seconds-per-km — see secondsPerKmToSecondsPerMile's own doc comment)
+ * for display: pace_500m always reads as /500m; pace_km reads as /km for a
+ * metric user, /mi (converted) for an imperial one. Moved here verbatim
+ * from three near-identical copies (ItemEditor's formatItemSummary, the
+ * workout detail page's inline formatting, StartWorkoutClient's
+ * formatItemDetails) — this module has no Server/Client boundary to worry
+ * about, unlike those three call sites (one Server Component, two Client
+ * Components), so it's the one place all of them can share. Callers are
+ * expected to have already checked `targetValue !== null` and narrowed
+ * `targetType` to one of the two pace variants themselves, same as before
+ * this was extracted.
+ */
+export function formatPaceTarget(
+  targetType: "pace_500m" | "pace_km",
+  targetValue: number,
+  unitSystem: UnitSystem
+): string {
+  const useMiles = targetType === "pace_km" && unitSystem === "imperial";
+  const seconds = useMiles
+    ? secondsPerKmToSecondsPerMile(targetValue)
+    : targetValue;
+  const unitLabel =
+    targetType === "pace_500m" ? "/500m" : useMiles ? "/mi" : "/km";
+  return `${formatDurationSeconds(seconds)} ${unitLabel}`;
+}
+
+/**
  * Text-ready version of formatPersonalRecordValue, for display sites that
  * render a record's value as a string (PersonalRecordsList, and GoalsList
  * via formatGoalValueText in goal-labels.ts) — never for the forms, which

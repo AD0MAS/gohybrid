@@ -53,11 +53,11 @@ export default async function WorkoutLibraryPage(
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <BackLink href="/workouts" label="Workouts" />
-          <h1 className="text-xl font-semibold text-ink">My Workouts</h1>
+          <h1 className="truncate text-xl font-semibold text-ink">My Workouts</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/workouts/new?from=library"
             aria-label="New workout"

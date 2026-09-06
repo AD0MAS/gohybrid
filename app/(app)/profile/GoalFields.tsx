@@ -217,26 +217,33 @@ export default function GoalFields({
  * value space as PersonalRecordFields' own subject <select> — see its
  * matching helper's doc comment) for a fresh mount: from `submitted`'s
  * echoed targetExerciseId/targetCustomName while an error is still live for
- * this session, otherwise from `entry`. */
+ * this session, otherwise from `entry`. Both sources go through the same
+ * exerciseId-then-customName resolution — `entry` used to short-circuit on
+ * `entry?.targetExerciseId ?? ""` alone, which returned "" (Custom (new)…)
+ * for any entry targeting a custom name instead of an exercise, since such
+ * an entry's targetExerciseId is null. That desynced the dropdown from the
+ * goal being edited (it opened on "Custom (new)…" instead of highlighting
+ * the existing name under "Previously used") even though the plain text
+ * input next to it still defaulted correctly from entry.targetCustomName —
+ * so a genuinely unmodified Save still round-tripped the same value and
+ * this never corrupted data, but the control itself lied about what was
+ * selected. */
 function deriveSubjectSelection(
   submitted: Record<string, string> | null,
   entry: Goal | undefined,
   catalog: CatalogExercise[],
   customNames: string[]
 ): string {
-  if (submitted) {
-    const exerciseId = submitted.targetExerciseId;
-    if (exerciseId && catalog.some((exercise) => exercise.id === exerciseId)) {
-      return exerciseId;
-    }
-    const customName = submitted.targetCustomName;
-    if (customName) {
-      const match = customNames.find((name) => name === customName);
-      return match ? `${EXISTING_CUSTOM_PREFIX}${match}` : "";
-    }
-    return "";
+  const exerciseId = submitted ? submitted.targetExerciseId : entry?.targetExerciseId;
+  if (exerciseId && catalog.some((exercise) => exercise.id === exerciseId)) {
+    return exerciseId;
   }
-  return entry?.targetExerciseId ?? "";
+  const customName = submitted ? submitted.targetCustomName : entry?.targetCustomName;
+  if (customName) {
+    const match = customNames.find((name) => name === customName);
+    return match ? `${EXISTING_CUSTOM_PREFIX}${match}` : "";
+  }
+  return "";
 }
 
 type GoalFormFieldsProps = {

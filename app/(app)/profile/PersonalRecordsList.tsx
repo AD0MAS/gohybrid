@@ -4,8 +4,8 @@ import { getExerciseCatalog } from "@/lib/exercises";
 import {
   getDistinctCustomNamesForUser,
   getPersonalRecordsForUser,
-  groupPersonalRecordsBySubject,
 } from "@/lib/personal-records";
+import { groupPersonalRecordsBySubject } from "@/lib/personal-records-grouping";
 import { formatPersonalRecordValueText } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import PersonalRecordFields from "./PersonalRecordFields";

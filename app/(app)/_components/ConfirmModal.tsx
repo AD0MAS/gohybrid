@@ -25,10 +25,10 @@ type ConfirmModalProps = {
  * label string, since callers now open this from an icon-only delete
  * button as well as from text triggers — pass `triggerAriaLabel` whenever
  * `trigger` carries no visible text of its own. Extracted here rather than
- * repeated inline because /history's delete confirmation is the second
+ * repeated inline because /history's delete confirmation was the second
  * place needing this exact trigger+confirm+cancel shape (after the
- * hand-rolled DeleteWorkoutModal), and unlike that one, this uses the
- * native-<dialog>-based Modal — see GOHYBRID_PLAN.md step 32.11.
+ * workout detail page's own hand-rolled version, since migrated to this
+ * component) — see GOHYBRID_PLAN.md step 32.11.
  */
 export default function ConfirmModal({
   trigger,

@@ -1,7 +1,7 @@
 import { useRef, useState, type Dispatch } from "react";
 import { Copy, Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
-import { REPS_DIGIT_LIMIT } from "@/lib/numeric-limits";
+import { ROUNDS_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { BLOCK_TITLE_MAX_LENGTH } from "@/lib/text-limits";
 import { formatDurationSeconds } from "@/lib/units";
 import {
@@ -461,13 +461,9 @@ function BlockEditorModalFields({
             onChange={(e) =>
               updateTimingField(
                 "rounds",
-                // No dedicated Rounds constant in lib/numeric-limits.ts —
-                // same reuse of REPS_DIGIT_LIMIT as ItemEditor's Sets
-                // field, for the same reason (a plain whole-number count
-                // with no constant of its own).
                 sanitizeNumberInputChange(e, {
                   min: 1,
-                  digitLimit: REPS_DIGIT_LIMIT,
+                  digitLimit: ROUNDS_DIGIT_LIMIT,
                 })
               )
             }

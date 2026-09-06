@@ -418,7 +418,7 @@ export const bodyMetrics = pgTable(
 
 // A manually entered personal record, kept as history rather than a single
 // current value — the current best per subject is derived (see
-// isBetterRecord/groupPersonalRecordsBySubject in lib/personal-records.ts).
+// isBetterRecord/groupPersonalRecordsBySubject in lib/personal-records-grouping.ts).
 // exercise_id + custom_name mirrors workout_items exactly (GOHYBRID_PLAN.md
 // §6): a record either points at the catalog or carries its own name,
 // neither required at the DB level — "at least one" is application-level
@@ -470,7 +470,7 @@ export const personalRecordsRelations = relations(
 // requires is application-level validation (lib/goals-validation.ts), not a
 // DB constraint (GOHYBRID_PLAN.md §6). direction is stored here even though
 // personal_records derives an equivalent direction from record_type
-// (isBetterRecord in lib/personal-records.ts) — the same metric can be a
+// (isBetterRecord in lib/personal-records-grouping.ts) — the same metric can be a
 // goal in either direction (lose weight vs. gain weight), so for goals it's
 // a user choice, not a property of the data. No is_completed column: a goal
 // is achieved when its computed progress reaches 100%, the same reasoning

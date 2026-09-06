@@ -33,6 +33,15 @@ export const BODY_FAT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 2, maxDecima
 export const RESTING_HR_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 3, maxDecimals: 0 };
 export const LIFTED_WEIGHT_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 1 };
 export const REPS_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
+// workout_items.sets and workout_blocks.rounds are both plain `integer`
+// columns (no numeric(x,y) bound), so these are plausibility-only, same
+// reasoning as DURATION_MINUTES_DIGIT_LIMIT above. Kept as their own
+// constants rather than reusing REPS_DIGIT_LIMIT despite the identical
+// shape: a set count and a round count are different subjects from an
+// item's rep count, and the two must be free to diverge later without
+// dragging each other along (see BODY_WEIGHT vs LIFTED_WEIGHT above).
+export const SETS_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
+export const ROUNDS_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 4, maxDecimals: 0 };
 export const CALORIES_DIGIT_LIMIT: DigitLimit = { maxIntegerDigits: 5, maxDecimals: 0 };
 // maxDecimals 2, not 0: distance is a converted unit (a typed ft/mi value
 // legitimately becomes a fractional number of metres — see

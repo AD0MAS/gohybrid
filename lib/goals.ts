@@ -16,12 +16,12 @@ import {
   type PrimaryTypeSessionCount,
 } from "./activity";
 import { getBodyMetricsForUser, type BodyMetric } from "./body-metrics";
+import { getPersonalRecordsForUser } from "./personal-records";
 import {
-  getPersonalRecordsForUser,
   groupPersonalRecordsBySubject,
   subjectKey,
   type PersonalRecordGroup,
-} from "./personal-records";
+} from "./personal-records-grouping";
 import { getFirstDayOfMonth, getMondayOfWeek, getMonthString } from "./dates";
 import type { ValidatedGoalInput } from "./goals-validation";
 
@@ -241,7 +241,7 @@ export type GoalProgress = {
 /**
  * Pure progress computation for one goal given its already-resolved
  * `currentValue` — no DB access, same principle as computeStreaks
- * (lib/activity.ts) and isBetterRecord (lib/personal-records.ts): the
+ * (lib/activity.ts) and isBetterRecord (lib/personal-records-grouping.ts): the
  * arithmetic can be reasoned about and tested on its own. `percent` is
  * clamped to 0..100 so an overshoot (current past target) or an
  * as-yet-unstarted goal both render sensibly as a progress bar width.
@@ -354,7 +354,7 @@ export type GoalTarget = Pick<
  *     yet.
  *   - personal_record: the current best for the matching subject +
  *     targetRecordType, found via groupPersonalRecordsBySubject and the
- *     same subjectKey format personal-records.ts's own grouping uses; null
+ *     same subjectKey format personal-records-grouping.ts's own grouping uses; null
  *     when there's no record for that subject yet.
  *
  * body_metric/personal_record return null rather than 0 for "no data yet" —

@@ -8,8 +8,8 @@ import type { getWorkoutForUser } from "@/lib/workouts";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
+  formatPaceTarget,
   formatWeightKg,
-  secondsPerKmToSecondsPerMile,
 } from "@/lib/units";
 import { BLOCK_TYPE_LABELS } from "../../builder/block-type-labels";
 import { TARGET_PRESET_LABELS } from "../../builder/target-preset-labels";
@@ -41,20 +41,27 @@ function storageKey(workoutId: string) {
  * Builds the same "Sets: … · Volume: … · Target: … · Weight: … · Rest: …"
  * line the workout detail page shows, omitting whichever fields aren't set
  * on this item — kept in agreement with that page's own inline formatting
- * field-for-field, label map for label map, including the pace mm:ss
- * conversion (pace_500m always /500m; pace_km reads /km for a metric user,
- * /mi, converted via secondsPerKmToSecondsPerMile, for an imperial one).
- * The two can't share one function: this file is a Client Component and
- * the detail page is a Server Component, so a helper either duplicates
- * (as here) or needs a shared home decided separately — flagged as a
- * code-review item, not fixed in this pass. Weight and a distance volume
- * are converted for display via lib/units.ts — pure, DB-free functions, so
- * calling them here (rather than pre-formatting server-side, as
- * lib/progress.ts does for the Progress Chart) is fine: `unitSystem` is
+ * field-for-field, label map for label map, including the pace formatting
+ * (formatPaceTarget, lib/units.ts) both now call. Weight and a distance
+ * volume are converted for display via lib/units.ts — pure, DB-free
+ * functions, so calling them here (rather than pre-formatting server-side,
+ * as lib/progress.ts does for the Progress Chart) is fine: `unitSystem` is
  * already available as a prop, and nothing here needs another query.
  */
 function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
   const isHyroxStation = item.exercise?.isHyroxStation ?? false;
+  const isRestItem = item.exercise?.category === "rest";
+
+  if (isRestItem) {
+    // No "Sets:"/"Rest:" labels — a rest item has no sets, and its own
+    // rest_seconds is its own duration, not rest following some other
+    // exercise. Mirrors formatItemSummary in ItemEditor.tsx.
+    return [
+      item.restSeconds != null
+        ? formatDurationSeconds(item.restSeconds)
+        : "Open ended",
+    ];
+  }
 
   let volume: string | null = null;
   if (item.volumeType) {
@@ -79,20 +86,7 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
     : item.targetType === "pace_500m" || item.targetType === "pace_km"
       ? item.targetValue == null
         ? TARGET_TYPE_LABELS[item.targetType].label
-        : (() => {
-            const useMiles =
-              item.targetType === "pace_km" && unitSystem === "imperial";
-            const seconds = useMiles
-              ? secondsPerKmToSecondsPerMile(Number(item.targetValue))
-              : Number(item.targetValue);
-            const unitLabel =
-              item.targetType === "pace_500m"
-                ? "/500m"
-                : useMiles
-                  ? "/mi"
-                  : "/km";
-            return `${formatDurationSeconds(seconds)} ${unitLabel}`;
-          })()
+        : formatPaceTarget(item.targetType, Number(item.targetValue), unitSystem)
       : item.targetType
         ? item.targetValue != null
           ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`

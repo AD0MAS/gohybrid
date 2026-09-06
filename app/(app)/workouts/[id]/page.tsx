@@ -5,8 +5,8 @@ import { requireUser } from "@/lib/auth";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
+  formatPaceTarget,
   formatWeightKg,
-  secondsPerKmToSecondsPerMile,
 } from "@/lib/units";
 import { isValidDateString } from "@/lib/scheduled-workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
@@ -25,7 +25,7 @@ import { VOLUME_TYPE_LABELS } from "../builder/volume-type-labels";
 import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
-import DeleteWorkoutModal from "./DeleteWorkoutModal";
+import ConfirmModal from "../../_components/ConfirmModal";
 import FavoriteToggle from "../FavoriteToggle";
 import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
 
@@ -150,7 +150,14 @@ export default async function WorkoutDetailPage(
           >
             Edit
           </Link>
-          <DeleteWorkoutModal deleteAction={deleteWorkoutWithId} />
+          <ConfirmModal
+            trigger="Delete"
+            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            title="Delete workout"
+            description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
+            confirmLabel="Delete"
+            action={deleteWorkoutWithId}
+          />
         </div>
       </div>
 
@@ -238,6 +245,7 @@ export default async function WorkoutDetailPage(
 
                       const isHyroxStation =
                         item.exercise?.isHyroxStation ?? false;
+                      const isRestItem = item.exercise?.category === "rest";
 
                       let volume: string | null = null;
                       if (item.volumeType) {
@@ -265,27 +273,11 @@ export default async function WorkoutDetailPage(
                             item.targetType === "pace_km"
                           ? item.targetValue == null
                             ? TARGET_TYPE_LABELS[item.targetType].label
-                            : (() => {
-                                // Mirrors formatItemSummary in
-                                // ItemEditor.tsx: pace_500m always reads
-                                // /500m; pace_km reads /km for a metric
-                                // user, /mi (converted) for an imperial one.
-                                const useMiles =
-                                  item.targetType === "pace_km" &&
-                                  unitSystem === "imperial";
-                                const seconds = useMiles
-                                  ? secondsPerKmToSecondsPerMile(
-                                      Number(item.targetValue)
-                                    )
-                                  : Number(item.targetValue);
-                                const unitLabel =
-                                  item.targetType === "pace_500m"
-                                    ? "/500m"
-                                    : useMiles
-                                      ? "/mi"
-                                      : "/km";
-                                return `${formatDurationSeconds(seconds)} ${unitLabel}`;
-                              })()
+                            : formatPaceTarget(
+                                item.targetType,
+                                Number(item.targetValue),
+                                unitSystem
+                              )
                           : item.targetType
                             ? item.targetValue != null
                               ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
@@ -297,14 +289,26 @@ export default async function WorkoutDetailPage(
                           ? formatWeightKg(Number(item.weightKg), unitSystem)
                           : null;
 
-                      const details = [
-                        `Sets: ${item.sets}`,
-                        volume && `Volume: ${volume}`,
-                        target && `Target: ${target}`,
-                        weight && `Weight: ${weight.value} ${weight.unit}`,
-                        item.restSeconds != null &&
-                          `Rest: ${formatDurationSeconds(item.restSeconds)}`,
-                      ].filter(Boolean);
+                      // A rest item has no sets/volume/target/weight — only
+                      // its own optional rest_seconds, which is its own
+                      // duration rather than rest following some other
+                      // exercise, so it's shown alone with no "Rest:" label
+                      // (the exercise name above already says "Rest").
+                      // Mirrors formatItemSummary in ItemEditor.tsx.
+                      const details = isRestItem
+                        ? [
+                            item.restSeconds != null
+                              ? formatDurationSeconds(item.restSeconds)
+                              : "Open ended",
+                          ]
+                        : [
+                            `Sets: ${item.sets}`,
+                            volume && `Volume: ${volume}`,
+                            target && `Target: ${target}`,
+                            weight && `Weight: ${weight.value} ${weight.unit}`,
+                            item.restSeconds != null &&
+                              `Rest: ${formatDurationSeconds(item.restSeconds)}`,
+                          ].filter(Boolean);
 
                       return (
                         <li

@@ -7,11 +7,13 @@ import {
   ITEM_TARGET_RATE_DIGIT_LIMIT,
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
+  SETS_DIGIT_LIMIT,
 } from "@/lib/numeric-limits";
 import { ITEM_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
+  formatPaceTarget,
   formatWeightKg,
   secondsPerKmToSecondsPerMile,
   secondsPerMileToSecondsPerKm,
@@ -211,15 +213,7 @@ function formatItemSummary(
       if (item.targetValue == null) {
         return TARGET_TYPE_LABELS[item.targetType].label;
       }
-      // Same "on opening" default as ItemEditorModalFields' own
-      // paceDisplayUnit initializer: pace_500m always reads as /500m;
-      // pace_km reads as /km for a metric user, /mi for an imperial one.
-      const useMiles = item.targetType === "pace_km" && unitSystem === "imperial";
-      const seconds = useMiles
-        ? secondsPerKmToSecondsPerMile(item.targetValue)
-        : item.targetValue;
-      const unitLabel = item.targetType === "pace_500m" ? "/500m" : useMiles ? "/mi" : "/km";
-      return `${formatDurationSeconds(seconds)} ${unitLabel}`;
+      return formatPaceTarget(item.targetType, item.targetValue, unitSystem);
     }
     if (item.targetType !== "") {
       const label = TARGET_TYPE_LABELS[item.targetType].label;
@@ -868,13 +862,9 @@ function ItemEditorModalFields({
               value={draft.sets}
               onChange={(e) =>
                 updateSets(
-                  // No dedicated Sets constant in lib/numeric-limits.ts —
-                  // it's a plain whole-number count with the same shape as
-                  // REPS_DIGIT_LIMIT (4 digits, no decimals), reused here
-                  // rather than inventing a near-duplicate constant.
                   sanitizeNumberInputChange(e, {
                     min: 1,
-                    digitLimit: REPS_DIGIT_LIMIT,
+                    digitLimit: SETS_DIGIT_LIMIT,
                   }) ?? 1
                 )
               }

@@ -24,6 +24,8 @@ import {
   ITEM_TARGET_RATE_DIGIT_LIMIT,
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
+  ROUNDS_DIGIT_LIMIT,
+  SETS_DIGIT_LIMIT,
 } from "./numeric-limits";
 import {
   BLOCK_TITLE_MAX_LENGTH,
@@ -547,10 +549,15 @@ function parseBuilderItem(
     exerciseId !== null && options.restExerciseIds.includes(exerciseId);
 
   const parsedSets = parseOptionalNumber(item.sets);
-  const sets = parsedSets === null ? 1 : parsedSets;
+  let sets = parsedSets === null ? 1 : parsedSets;
   if (sets === INVALID || !Number.isInteger(sets) || sets < 1) {
     return { error: `${context} sets must be a positive integer.` };
   }
+  const setsDigitCheck = checkDigitLimit(sets, SETS_DIGIT_LIMIT, `${context} sets`);
+  if (!setsDigitCheck.ok) {
+    return { error: setsDigitCheck.error };
+  }
+  sets = setsDigitCheck.value;
 
   const volumeType = parseOptionalEnumValue(
     item.volumeType,
@@ -807,12 +814,23 @@ function parseBuilderBlock(
     return { error: `Block ${index + 1} duration must be positive.` };
   }
 
-  const rounds = parseOptionalNumber(block.rounds);
+  let rounds = parseOptionalNumber(block.rounds);
   if (rounds === INVALID || (rounds !== null && !Number.isInteger(rounds))) {
     return { error: `Block ${index + 1} rounds must be a whole number.` };
   }
   if (rounds !== null && rounds <= 0) {
     return { error: `Block ${index + 1} rounds must be positive.` };
+  }
+  if (rounds !== null) {
+    const roundsDigitCheck = checkDigitLimit(
+      rounds,
+      ROUNDS_DIGIT_LIMIT,
+      `Block ${index + 1} rounds`
+    );
+    if (!roundsDigitCheck.ok) {
+      return { error: roundsDigitCheck.error };
+    }
+    rounds = roundsDigitCheck.value;
   }
 
   const workSeconds = parseOptionalNumber(block.workSeconds);
