@@ -32,13 +32,17 @@ const EXERCISES: ExerciseSeed[] = [
   { name: "Sandbag Lunges", equipment: "Sandbag", category: "exercise", isHyroxStation: true },
   { name: "Wall Balls", equipment: "Medicine Ball", category: "exercise", isHyroxStation: true },
 
-  // --- Strength: squat, deadlift, press, lunge variants ---
+  // --- Strength: squat, deadlift, press, lunge, pull variants ---
   { name: "Back Squat", equipment: "Barbell", category: "exercise" },
   { name: "Front Squat", equipment: "Barbell", category: "exercise" },
   { name: "Goblet Squat", equipment: "Kettlebells", category: "exercise" },
   { name: "Deadlift", equipment: "Barbell", category: "exercise" },
   { name: "Romanian Deadlift", equipment: "Barbell", category: "exercise" },
   { name: "Sumo Deadlift", equipment: "Barbell", category: "exercise" },
+  { name: "Barbell Row", equipment: "Barbell", category: "exercise" },
+  { name: "Hip Thrust", equipment: "Barbell", category: "exercise" },
+  { name: "Power Clean", equipment: "Barbell", category: "exercise" },
+  { name: "Bench Press", equipment: "Barbell", category: "exercise" },
   { name: "Overhead Press", equipment: "Barbell", category: "exercise" },
   { name: "Push Press", equipment: "Barbell", category: "exercise" },
   {
