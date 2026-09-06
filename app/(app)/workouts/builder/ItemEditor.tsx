@@ -92,6 +92,19 @@ type TargetMode =
  */
 type PaceDisplayUnit = "500m" | "km" | "mi";
 
+/** The one of "km"/"mi" the Pace unit select offers alongside "500m", for a
+ * given user's unit system — "km" and "mi" are two display labels for the
+ * same stored seconds-per-km value (see PaceDisplayUnit above), not two
+ * distinct scales the way DistanceInput's m/km or ft/mi are, so only the one
+ * matching unit_system is ever shown or seeded. Shared by the select's
+ * option list, paceDisplayUnit's initializer, and updateExerciseId's
+ * becomingRest reset, so the three can't drift. */
+function defaultPaceUnitFor(
+  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+): "km" | "mi" {
+  return unitSystem === "imperial" ? "mi" : "km";
+}
+
 /** Derives which of the six Target modes a *freshly loaded* item is in from
  * its stored fields — used only to seed ItemEditorModalFields' local
  * targetMode state once (see its doc comment), never called again
@@ -223,13 +236,19 @@ function formatItemSummary(
   })();
 
   const weight = (() => {
-    if (item.weightKg == null) return null;
+    // A stored 0 reads the same as unset (see ItemEditor's handleSave,
+    // which normalizes a typed 0 to null before it ever reaches the
+    // reducer) — only a legacy row can still hold a literal 0kg, and
+    // there's nothing worth showing for a bodyweight movement.
+    if (item.weightKg == null || item.weightKg <= 0) return null;
     const display = formatWeightKg(item.weightKg, unitSystem);
     return `${display.value} ${display.unit}`;
   })();
 
+  // Zero rest is a legitimate stored value (back-to-back sets), but a
+  // "0:00 rest" part adds nothing an absent part doesn't already say.
   const rest =
-    item.restSeconds != null
+    item.restSeconds != null && item.restSeconds > 0
       ? `${formatDurationSeconds(item.restSeconds)} rest`
       : null;
 
@@ -614,7 +633,7 @@ function ItemEditorModalFields({
   const [paceDisplayUnit, setPaceDisplayUnit] = useState<PaceDisplayUnit>(
     () => {
       if (item.targetType === "pace_500m") return "500m";
-      return unitSystem === "imperial" ? "mi" : "km";
+      return defaultPaceUnitFor(unitSystem);
     }
   );
 
@@ -670,7 +689,7 @@ function ItemEditorModalFields({
     ]);
     if (becomingRest) {
       setTargetMode("none");
-      setPaceDisplayUnit(unitSystem === "imperial" ? "mi" : "km");
+      setPaceDisplayUnit(defaultPaceUnitFor(unitSystem));
     }
   }
 
@@ -755,17 +774,19 @@ function ItemEditorModalFields({
   }
 
   /**
-   * Switches the Pace value box's display unit. Crossing between the
-   * "500m" group and the "km"/"mi" group is a real target_type change
-   * (pace_500m and pace_km are not interconvertible — see
-   * secondsPerKmToSecondsPerMile's doc comment), so that updates the draft
-   * (comparing against the draft's own targetType, not item's, since it's
-   * the draft that might already differ from the committed item this
-   * session). Switching between "km" and "mi" is a pure display change:
-   * both read/write the same canonical seconds-per-km value, so the draft
-   * doesn't change — only local state does, and the DurationInput below
-   * (keyed on paceDisplayUnit) remounts to re-seed itself from the newly
-   * converted display value.
+   * Switches the Pace value box's display unit. The select only ever offers
+   * "500m" and whichever one of "km"/"mi" matches unitSystem (see
+   * defaultPaceUnitFor), so the only transition this ever handles is
+   * crossing that "500m" boundary — a real target_type change (pace_500m
+   * and pace_km are not interconvertible — see secondsPerKmToSecondsPerMile's
+   * doc comment), updating the draft (comparing against the draft's own
+   * targetType, not item's, since it's the draft that might already differ
+   * from the committed item this session). A same-group "km"-to-"mi" (or
+   * reverse) switch with no targetType change can no longer happen within
+   * one session: both belonged to the same unitSystem, which doesn't change
+   * without remounting this component. The targetType comparison below is
+   * harmless either way — it's just never false for a same-group switch
+   * anymore.
    */
   function handlePaceUnitChange(unit: PaceDisplayUnit) {
     const targetType: TargetType = unit === "500m" ? "pace_500m" : "pace_km";
@@ -1060,8 +1081,9 @@ function ItemEditorModalFields({
                   className="h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 >
                   <option value="500m">/500m</option>
-                  <option value="km">/km</option>
-                  <option value="mi">/mi</option>
+                  <option value={defaultPaceUnitFor(unitSystem)}>
+                    /{defaultPaceUnitFor(unitSystem)}
+                  </option>
                 </select>
               </div>
               {errors.targetValue && (

@@ -93,9 +93,14 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
           : TARGET_TYPE_LABELS[item.targetType].label
         : null;
 
+  // A stored 0 means the same thing as unset here (see ItemEditor's
+  // handleSave, which normalizes a typed 0 to null on save) — only legacy
+  // rows can still hold a literal 0kg, and there's no line worth showing
+  // for a bodyweight movement.
+  const weightKgNum = item.weightKg != null ? Number(item.weightKg) : null;
   const weight =
-    item.weightKg != null
-      ? formatWeightKg(Number(item.weightKg), unitSystem)
+    weightKgNum != null && weightKgNum > 0
+      ? formatWeightKg(weightKgNum, unitSystem)
       : null;
 
   return [
@@ -103,7 +108,11 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
     volume && `Volume: ${volume}`,
     target && `Target: ${target}`,
     weight && `Weight: ${weight.value} ${weight.unit}`,
-    item.restSeconds != null && `Rest: ${formatDurationSeconds(item.restSeconds)}`,
+    // Zero rest is a legitimate stored value (back-to-back sets), but a
+    // "Rest: 0:00" line adds nothing an absent line doesn't already say.
+    item.restSeconds != null &&
+      item.restSeconds > 0 &&
+      `Rest: ${formatDurationSeconds(item.restSeconds)}`,
   ].filter((part): part is string => Boolean(part));
 }
 

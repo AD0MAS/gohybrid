@@ -284,9 +284,16 @@ export default async function WorkoutDetailPage(
                               : TARGET_TYPE_LABELS[item.targetType].label
                             : null;
 
+                      // A stored 0 reads the same as unset (see
+                      // ItemEditor's handleSave, which normalizes a typed 0
+                      // to null on save) — only a legacy row can still hold
+                      // a literal 0kg, and there's nothing worth showing
+                      // for a bodyweight movement.
+                      const weightKgNum =
+                        item.weightKg != null ? Number(item.weightKg) : null;
                       const weight =
-                        item.weightKg != null
-                          ? formatWeightKg(Number(item.weightKg), unitSystem)
+                        weightKgNum != null && weightKgNum > 0
+                          ? formatWeightKg(weightKgNum, unitSystem)
                           : null;
 
                       // A rest item has no sets/volume/target/weight — only
@@ -306,7 +313,11 @@ export default async function WorkoutDetailPage(
                             volume && `Volume: ${volume}`,
                             target && `Target: ${target}`,
                             weight && `Weight: ${weight.value} ${weight.unit}`,
+                            // Zero rest is a legitimate stored value
+                            // (back-to-back sets), but a "Rest: 0:00" line
+                            // adds nothing an absent line doesn't already say.
                             item.restSeconds != null &&
+                              item.restSeconds > 0 &&
                               `Rest: ${formatDurationSeconds(item.restSeconds)}`,
                           ].filter(Boolean);
 
