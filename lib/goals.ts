@@ -13,12 +13,14 @@ import {
   getSessionCountForUserInRange,
   getSessionCountsByPrimaryTypeForUser,
   getStreaksForUser,
+  type PrimaryTypeSessionCount,
 } from "./activity";
-import { getBodyMetricsForUser } from "./body-metrics";
+import { getBodyMetricsForUser, type BodyMetric } from "./body-metrics";
 import {
   getPersonalRecordsForUser,
   groupPersonalRecordsBySubject,
   subjectKey,
+  type PersonalRecordGroup,
 } from "./personal-records";
 import { getFirstDayOfMonth, getMondayOfWeek, getMonthString } from "./dates";
 import type { ValidatedGoalInput } from "./goals-validation";
@@ -296,10 +298,10 @@ const ALL_TIME_START = "0001-01-01";
 
 /**
  * Resolves a goal's period into a `{ from, to }` day range, `to` always
- * being `today`. Shared by resolveGoalCurrentValue for goal_type
- * "session_count" — the only goal_type whose current value is period-aware
- * (streak ignores period; body_metric/personal_record read the latest
- * value regardless of period).
+ * being `today`. Shared by resolveCurrentValueForTarget and
+ * resolveGoalCurrentValues for goal_type "session_count" — the only
+ * goal_type whose current value is period-aware (streak ignores period;
+ * body_metric/personal_record read the latest value regardless of period).
  */
 function resolveGoalPeriodRange(
   period: (typeof goalPeriodEnum.enumValues)[number],
@@ -321,9 +323,8 @@ function resolveGoalPeriodRange(
  * current value except the fields that only matter once a Goal row exists
  * (id, direction, targetValue, startValue). Letting addGoal/updateGoal build
  * one of these from freshly validated form input (before any row exists) is
- * the reason this is split out from resolveGoalCurrentValue at all: those
- * actions need to resolve a start_value for a goal that isn't in the
- * database yet.
+ * the reason this is split out from Goal at all: those actions need to
+ * resolve a start_value for a goal that isn't in the database yet.
  */
 export type GoalTarget = Pick<
   Goal,
@@ -421,16 +422,164 @@ export async function resolveCurrentValueForTarget(
 }
 
 /**
- * Resolves an existing goal's current value — a thin wrapper over
- * resolveCurrentValueForTarget for the common case where a Goal row already
- * exists (GoalsList rendering progress). See resolveCurrentValueForTarget's
- * doc comment for the actual per-goal_type source logic.
+ * Pre-fetched data resolveGoalValueFromSources needs, one bucket per
+ * goal_type's source — each populated at most once per call to
+ * resolveGoalCurrentValues, no matter how many goals in the batch reference
+ * it. A bucket is `null`/empty when nothing in the batch needs it, so
+ * resolveGoalCurrentValues never fetches a source no goal actually targets.
  */
-export async function resolveGoalCurrentValue(
-  goal: Goal,
+type GoalCurrentValueSources = {
+  /** Current streak length; present iff at least one goal_type "streak" goal is in the batch. period is ignored (see resolveCurrentValueForTarget), so this is one query for the whole batch, not one per streak goal. */
+  streakCurrent: number | null;
+  /** Every personal record, pre-grouped by subject; present iff at least one goal_type "personal_record" goal is in the batch — grouping the whole table once serves every such goal, however many distinct subjects they target. */
+  personalRecordGroups: PersonalRecordGroup[] | null;
+  /** Latest-first body metrics, keyed by metric_type — one entry per DISTINCT targetMetricType actually referenced by a goal_type "body_metric" goal, not one per goal. */
+  bodyMetricsByType: Map<
+    (typeof bodyMetricTypeEnum.enumValues)[number],
+    BodyMetric[]
+  >;
+  /**
+   * Per-primary-type session counts for a period's date range, keyed by
+   * `period` — one entry per DISTINCT period actually referenced by a
+   * goal_type "session_count" goal, not one per goal. Every session has
+   * exactly one non-null primary_type, so these per-type counts partition
+   * the full set for that range: summing them reproduces the unfiltered
+   * total. That's why a goal with no targetPrimaryType reads from the same
+   * entry as one filtered to a specific type, instead of needing a second,
+   * separate getSessionCountForUserInRange query per period.
+   */
+  sessionCountsByPeriod: Map<
+    (typeof goalPeriodEnum.enumValues)[number],
+    PrimaryTypeSessionCount[]
+  >;
+};
+
+/**
+ * Pure per-goal resolution against already-fetched sources — the batched
+ * counterpart to resolveCurrentValueForTarget's per-goal_type switch, same
+ * branches but reading from GoalCurrentValueSources instead of awaiting a
+ * query per call. No I/O of its own, same principle as computeStreaks and
+ * isBetterRecord: kept separable from the fetching that feeds it (see
+ * resolveGoalCurrentValues). Falls back to the same "no data" values
+ * resolveCurrentValueForTarget does (0 for session_count, null for
+ * body_metric/personal_record) — see that function's doc comment for why.
+ */
+function resolveGoalValueFromSources(
+  target: GoalTarget,
+  sources: GoalCurrentValueSources
+): number | null {
+  switch (target.goalType) {
+    case "session_count": {
+      const counts = sources.sessionCountsByPeriod.get(target.period) ?? [];
+      if (target.targetPrimaryType === null) {
+        return counts.reduce((sum, c) => sum + c.count, 0);
+      }
+      return (
+        counts.find((c) => c.primaryType === target.targetPrimaryType)
+          ?.count ?? 0
+      );
+    }
+    case "streak":
+      return sources.streakCurrent ?? 0;
+    case "body_metric": {
+      const metrics =
+        sources.bodyMetricsByType.get(target.targetMetricType!) ?? [];
+      return metrics[0]?.value ?? null;
+    }
+    case "personal_record": {
+      const groups = sources.personalRecordGroups ?? [];
+      const key = subjectKey({
+        exerciseId: target.targetExerciseId,
+        customName: target.targetCustomName,
+        recordType: target.targetRecordType!,
+      });
+      return groups.find((g) => g.subjectKey === key)?.best.value ?? null;
+    }
+  }
+}
+
+/**
+ * Resolves current values for every goal in `goals` at once, fetching each
+ * shared source exactly once no matter how many goals reference it — the
+ * batched replacement for GoalsList's old per-goal Promise.all (each call to
+ * the removed resolveGoalCurrentValue redid a full fetch — streak history,
+ * the whole personal_records table, a metric's whole history — even when
+ * several goals shared the same source; see GOHYBRID_PLAN.md §9 step 37).
+ * Returns a Map keyed by goal.id so callers can look up each goal's value
+ * without re-deriving which source it came from.
+ *
+ * Only fetches what `goals` actually references — e.g. no personal_record
+ * query at all when the batch has no personal_record goals. Queries run in
+ * parallel via Promise.all, then every goal is resolved against the fetched
+ * sources by the pure resolveGoalValueFromSources. Single-goal callers
+ * (goals-actions.ts's checkGoalNotAlreadyMet, at goal create/update time)
+ * have no batching to do and stay on resolveCurrentValueForTarget, unchanged.
+ */
+export async function resolveGoalCurrentValues(
+  goals: Goal[],
   userId: string,
   today: string,
   timezone: string
-): Promise<number | null> {
-  return resolveCurrentValueForTarget(goal, userId, today, timezone);
+): Promise<Map<string, number | null>> {
+  const needsStreak = goals.some((g) => g.goalType === "streak");
+  const needsPersonalRecords = goals.some(
+    (g) => g.goalType === "personal_record"
+  );
+  const metricTypes = [
+    ...new Set(
+      goals
+        .filter((g) => g.goalType === "body_metric")
+        .map((g) => g.targetMetricType!)
+    ),
+  ];
+  const periods = [
+    ...new Set(
+      goals.filter((g) => g.goalType === "session_count").map((g) => g.period)
+    ),
+  ];
+
+  const [streakCurrent, personalRecordGroups, bodyMetricResults, sessionCountResults] =
+    await Promise.all([
+      needsStreak
+        ? getStreaksForUser(userId, today, timezone).then((s) => s.current)
+        : Promise.resolve(null),
+      needsPersonalRecords
+        ? getPersonalRecordsForUser(userId).then(groupPersonalRecordsBySubject)
+        : Promise.resolve(null),
+      Promise.all(
+        metricTypes.map(async (metricType) => ({
+          metricType,
+          metrics: await getBodyMetricsForUser(userId, metricType),
+        }))
+      ),
+      Promise.all(
+        periods.map(async (period) => {
+          const { from, to } = resolveGoalPeriodRange(period, today);
+          return {
+            period,
+            counts: await getSessionCountsByPrimaryTypeForUser(
+              userId,
+              from,
+              to,
+              timezone
+            ),
+          };
+        })
+      ),
+    ]);
+
+  const sources: GoalCurrentValueSources = {
+    streakCurrent,
+    personalRecordGroups,
+    bodyMetricsByType: new Map(
+      bodyMetricResults.map((r) => [r.metricType, r.metrics])
+    ),
+    sessionCountsByPeriod: new Map(
+      sessionCountResults.map((r) => [r.period, r.counts])
+    ),
+  };
+
+  return new Map(
+    goals.map((goal) => [goal.id, resolveGoalValueFromSources(goal, sources)])
+  );
 }

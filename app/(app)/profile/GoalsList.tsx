@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import { getExerciseCatalog } from "@/lib/exercises";
-import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValue } from "@/lib/goals";
+import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValues } from "@/lib/goals";
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import GoalFields from "./GoalFields";
@@ -19,7 +19,7 @@ type GoalsListProps = {
  * current-value resolution (and so show no progress bar): they're hidden
  * by default and their progress isn't the point once archived. A
  * body_metric/personal_record goal whose source has no rows yet resolves to
- * `null` (see resolveGoalCurrentValue) rather than a fabricated 0 — this
+ * `null` (see resolveGoalCurrentValues) rather than a fabricated 0 — this
  * renders as a "no data yet" line with no progress bar, instead of the
  * misleading 100% a decrease goal's (start - 0) / (start - target) would
  * otherwise compute. Both
@@ -56,20 +56,20 @@ export default async function GoalsList({ userId }: GoalsListProps) {
     );
   }
 
-  const activeWithProgress = await Promise.all(
-    activeGoals.map(async (goal) => {
-      const current = await resolveGoalCurrentValue(
-        goal,
-        userId,
-        today,
-        timezone
-      );
-      return {
-        goal,
-        progress: current === null ? null : computeGoalProgress(goal, current),
-      };
-    })
+  const currentValues = await resolveGoalCurrentValues(
+    activeGoals,
+    userId,
+    today,
+    timezone
   );
+
+  const activeWithProgress = activeGoals.map((goal) => {
+    const current = currentValues.get(goal.id) ?? null;
+    return {
+      goal,
+      progress: current === null ? null : computeGoalProgress(goal, current),
+    };
+  });
 
   return (
     <div className="flex flex-col gap-4">
