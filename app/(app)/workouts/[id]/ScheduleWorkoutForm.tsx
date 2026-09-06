@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  FormSuccessBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import { SCHEDULE_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import Modal from "../../_components/Modal";
 import type { ScheduleFormState } from "../actions";
@@ -137,9 +142,9 @@ export default function ScheduleWorkoutForm({
             />
           </label>
 
-          {visibleState.status === "error" && (
-            <p className="text-sm text-danger">{visibleState.error}</p>
-          )}
+          <FormErrorMessage
+            error={visibleState.status === "error" ? visibleState.error : null}
+          />
 
           <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Schedule

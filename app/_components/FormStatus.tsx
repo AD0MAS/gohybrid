@@ -61,6 +61,49 @@ export function SubmitButton({
 }
 
 /**
+ * Inline validation-error message for the six components sharing this
+ * app's "server action returns { error }" pattern — BodyMetricFields,
+ * PersonalRecordFields, GoalFields, EventForm, ScheduleWorkoutForm,
+ * SettingsFields — extracted for the same reason FormPendingBanner/
+ * FormSuccessBanner are: six identical copies of the same three-line `<p>`
+ * is exactly the duplication those components exist to avoid. It doesn't
+ * share their fixed-bottom banner shape, though: a validation error belongs
+ * inline, right where the user is already looking (above the submit button,
+ * inside the form or modal they're filling in), not floating over the rest
+ * of the page — so this stays a plain `<p>` in normal flow, not another
+ * banner.
+ *
+ * `role="alert"` rather than "status" (what every other component in this
+ * file uses): pending/success are progress information the user doesn't
+ * have to act on, so a polite announcement that waits its turn is the right
+ * amount of interruption. A failed submit is the opposite — the user just
+ * asked for something to happen, it didn't, and they need to know now
+ * rather than whenever the screen reader gets around to it — the case
+ * role="alert"'s assertive announcement exists for.
+ *
+ * Takes the already-resolved error string (or null/undefined) rather than
+ * the whole action state, since callers don't share one state shape: the
+ * useActionState union types (BodyMetricFormState and friends) only have an
+ * `error` field inside their `status: "error"` branch, while SettingsFields'
+ * state is just `{ error: string | null }` with no status field at all.
+ * Every call site already has to do that resolution itself to decide what
+ * to render, so this only takes the last step off their hands.
+ */
+export function FormErrorMessage({
+  error,
+}: {
+  error: string | null | undefined;
+}) {
+  if (!error) return null;
+
+  return (
+    <p role="alert" className="text-sm text-danger">
+      {error}
+    </p>
+  );
+}
+
+/**
  * Prop-driven counterpart to FormPendingBanner, for a <form> that isn't a
  * React 19 Action (i.e. uses onSubmit instead of action) — useFormStatus
  * only reports pending state for a <form action={...}>, so a form driven by

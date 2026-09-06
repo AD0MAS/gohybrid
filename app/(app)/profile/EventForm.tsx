@@ -1,9 +1,14 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useId, useState, type ReactNode } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
-import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  FormSuccessBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import {
   EVENT_LOCATION_MAX_LENGTH,
@@ -98,6 +103,7 @@ type EventFormProps = {
  * still tell success/error apart by identity).
  */
 export default function EventForm({ entry, renderTrigger }: EventFormProps) {
+  const uid = useId();
   const [open, setOpen] = useState(false);
   const action = entry ? updateEvent.bind(null, entry.id) : addEvent;
   const [state, formAction] = useActionState(action, initialState);
@@ -164,8 +170,12 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit event" : "Add event"}>
         <form key={formKey} action={formAction} className="flex flex-col gap-3">
+          <label htmlFor={`${uid}-title`} className="sr-only">
+            Event title
+          </label>
           <input
             type="text"
+            id={`${uid}-title`}
             name="title"
             placeholder="Event title"
             defaultValue={fieldDefault("title", entry?.title)}
@@ -174,7 +184,11 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
+          <label htmlFor={`${uid}-eventType`} className="sr-only">
+            Event type
+          </label>
           <select
+            id={`${uid}-eventType`}
             name="eventType"
             defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -186,16 +200,24 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             ))}
           </select>
 
+          <label htmlFor={`${uid}-eventDate`} className="sr-only">
+            Event date
+          </label>
           <input
             type="date"
+            id={`${uid}-eventDate`}
             name="eventDate"
             defaultValue={fieldDefault("eventDate", entry?.eventDate)}
             required
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
+          <label htmlFor={`${uid}-location`} className="sr-only">
+            Location (optional)
+          </label>
           <input
             type="text"
+            id={`${uid}-location`}
             name="location"
             placeholder="Location (optional)"
             defaultValue={fieldDefault("location", entry?.location ?? "")}
@@ -203,8 +225,12 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
+          <label htmlFor={`${uid}-notes`} className="sr-only">
+            Notes (optional)
+          </label>
           <input
             type="text"
+            id={`${uid}-notes`}
             name="notes"
             placeholder="Notes (optional)"
             defaultValue={fieldDefault("notes", entry?.notes ?? "")}
@@ -212,9 +238,9 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
 
-          {visibleState.status === "error" && (
-            <p className="text-sm text-danger">{visibleState.error}</p>
-          )}
+          <FormErrorMessage
+            error={visibleState.status === "error" ? visibleState.error : null}
+          />
 
           <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             {entry ? "Save" : "Add event"}

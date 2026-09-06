@@ -2,7 +2,11 @@
 
 import { useActionState } from "react";
 import { unitSystemEnum } from "@/db/schema";
-import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import { saveSettings, type SettingsFormState } from "./actions";
 
 type SettingsFieldsProps = {
@@ -91,7 +95,7 @@ export default function SettingsFields({
         </select>
       </label>
 
-      {state.error && <p className="text-sm text-danger">{state.error}</p>}
+      <FormErrorMessage error={state.error} />
 
       {/* No FormSuccessBanner here: saveSettings redirects to /profile on
           success (see actions.ts), so useActionState's state never actually

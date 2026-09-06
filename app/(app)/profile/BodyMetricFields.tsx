@@ -1,9 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
-import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  FormSuccessBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import type { BodyMetric } from "@/lib/body-metrics";
 import {
   BODY_FAT_DIGIT_LIMIT,
@@ -209,6 +214,7 @@ function BodyMetricFormFields({
   state,
   formAction,
 }: BodyMetricFormFieldsProps) {
+  const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
   function fieldDefault(name: string, fallback?: string): string | undefined {
     return submitted?.[name] ?? fallback;
@@ -242,7 +248,11 @@ function BodyMetricFormFields({
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
+      <label htmlFor={`${uid}-metricType`} className="sr-only">
+        Metric type
+      </label>
       <select
+        id={`${uid}-metricType`}
         name="metricType"
         value={metricType}
         onChange={(e) =>
@@ -259,8 +269,12 @@ function BodyMetricFormFields({
         ))}
       </select>
 
+      <label htmlFor={`${uid}-value`} className="sr-only">
+        {`Value (${unit})`}
+      </label>
       <NumberField
         key={metricType}
+        id={`${uid}-value`}
         name="value"
         step={valueStep}
         // min: 1 for all three — a body weight, body fat %, or resting
@@ -280,8 +294,12 @@ function BodyMetricFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
+      <label htmlFor={`${uid}-measuredAt`} className="sr-only">
+        Date measured
+      </label>
       <input
         type="date"
+        id={`${uid}-measuredAt`}
         name="measuredAt"
         defaultValue={fieldDefault("measuredAt", entry?.measuredAt ?? today)}
         max={today}
@@ -289,8 +307,12 @@ function BodyMetricFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
+      <label htmlFor={`${uid}-notes`} className="sr-only">
+        Notes (optional)
+      </label>
       <input
         type="text"
+        id={`${uid}-notes`}
         name="notes"
         placeholder="Notes (optional)"
         defaultValue={fieldDefault("notes", entry?.notes ?? "")}
@@ -298,9 +320,9 @@ function BodyMetricFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
-      {state.status === "error" && (
-        <p className="text-sm text-danger">{state.error}</p>
-      )}
+      <FormErrorMessage
+        error={state.status === "error" ? state.error : null}
+      />
 
       <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add measurement"}

@@ -1,9 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
-import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  FormSuccessBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
 import {
   CALORIES_DIGIT_LIMIT,
@@ -294,6 +299,7 @@ function PersonalRecordFormFields({
   state,
   formAction,
 }: PersonalRecordFormFieldsProps) {
+  const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
   function fieldDefault(name: string, fallback?: string): string | undefined {
     return submitted?.[name] ?? fallback;
@@ -421,7 +427,11 @@ function PersonalRecordFormFields({
         variable per field, is what lets picking a previously-used name
         and typing a brand new one share one control instead of two.
       */}
+      <label htmlFor={`${uid}-subject`} className="sr-only">
+        Exercise
+      </label>
       <select
+        id={`${uid}-subject`}
         value={subjectSelection}
         onChange={(e) => setSubjectSelection(e.target.value)}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -453,20 +463,30 @@ function PersonalRecordFormFields({
       <input type="hidden" name="exerciseId" value={exerciseId ?? ""} />
 
       {isNewCustomName && (
-        <input
-          type="text"
-          name="customName"
-          placeholder="Custom name"
-          defaultValue={fieldDefault("customName", entry?.customName ?? "")}
-          maxLength={RECORD_CUSTOM_NAME_MAX_LENGTH}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        />
+        <>
+          <label htmlFor={`${uid}-customName`} className="sr-only">
+            Custom name
+          </label>
+          <input
+            type="text"
+            id={`${uid}-customName`}
+            name="customName"
+            placeholder="Custom name"
+            defaultValue={fieldDefault("customName", entry?.customName ?? "")}
+            maxLength={RECORD_CUSTOM_NAME_MAX_LENGTH}
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          />
+        </>
       )}
       {existingCustomName !== null && (
         <input type="hidden" name="customName" value={existingCustomName} />
       )}
 
+      <label htmlFor={`${uid}-recordType`} className="sr-only">
+        Record type
+      </label>
       <select
+        id={`${uid}-recordType`}
         name="recordType"
         value={recordType}
         onChange={(e) =>
@@ -504,25 +524,35 @@ function PersonalRecordFormFields({
           defaultUnit={fieldDefaultDistanceUnit("value")}
         />
       ) : (
-        <NumberField
-          key={recordType}
-          name="value"
-          step={valueStep}
-          min={valueMin}
-          required
-          digitLimit={valueDigitLimit}
-          allowDecimal={recordType === "weight"}
-          initialValue={fieldDefault(
-            "value",
-            defaultValue !== undefined ? String(defaultValue) : undefined
-          )}
-          placeholder={`Value (${valueUnit})`}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        />
+        <>
+          <label htmlFor={`${uid}-value`} className="sr-only">
+            {`Value (${valueUnit})`}
+          </label>
+          <NumberField
+            key={recordType}
+            id={`${uid}-value`}
+            name="value"
+            step={valueStep}
+            min={valueMin}
+            required
+            digitLimit={valueDigitLimit}
+            allowDecimal={recordType === "weight"}
+            initialValue={fieldDefault(
+              "value",
+              defaultValue !== undefined ? String(defaultValue) : undefined
+            )}
+            placeholder={`Value (${valueUnit})`}
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          />
+        </>
       )}
 
+      <label htmlFor={`${uid}-achievedAt`} className="sr-only">
+        Date achieved
+      </label>
       <input
         type="date"
+        id={`${uid}-achievedAt`}
         name="achievedAt"
         defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
         max={today}
@@ -530,8 +560,12 @@ function PersonalRecordFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
+      <label htmlFor={`${uid}-notes`} className="sr-only">
+        Notes (optional)
+      </label>
       <input
         type="text"
+        id={`${uid}-notes`}
         name="notes"
         placeholder="Notes (optional)"
         defaultValue={fieldDefault("notes", entry?.notes ?? "")}
@@ -539,9 +573,9 @@ function PersonalRecordFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
-      {state.status === "error" && (
-        <p className="text-sm text-danger">{state.error}</p>
-      )}
+      <FormErrorMessage
+        error={state.status === "error" ? state.error : null}
+      />
 
       <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add record"}

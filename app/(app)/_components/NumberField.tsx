@@ -9,6 +9,11 @@ import {
 
 type NumberFieldProps = {
   name: string;
+  /** Forwarded to the underlying <input> so a caller can pair it with a
+   * <label htmlFor>. Optional since not every caller needs an associated
+   * label (e.g. a field already named via a wrapping label or aria-label
+   * elsewhere). */
+  id?: string;
   /** "any" disables the browser's native step-based validation (and
    * rounds the spinner arrows' increment to 1, its documented default)
    * while leaving the decimal budget entirely to `digitLimit` — used for
@@ -58,6 +63,7 @@ type NumberFieldProps = {
  */
 export default function NumberField({
   name,
+  id,
   step,
   min,
   required,
@@ -75,6 +81,7 @@ export default function NumberField({
     <input
       type="number"
       name={name}
+      id={id}
       step={step}
       min={min}
       required={required}

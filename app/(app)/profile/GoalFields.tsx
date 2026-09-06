@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import {
   bodyMetricTypeEnum,
@@ -11,7 +11,12 @@ import {
   unitSystemEnum,
   workoutPrimaryTypeEnum,
 } from "@/db/schema";
-import { FormPendingBanner, FormSuccessBanner, SubmitButton } from "@/app/_components/FormStatus";
+import {
+  FormErrorMessage,
+  FormPendingBanner,
+  FormSuccessBanner,
+  SubmitButton,
+} from "@/app/_components/FormStatus";
 import { groupExercisesForSelect, type GroupableExercise } from "@/lib/exercise-groups";
 import type { Goal } from "@/lib/goals";
 import {
@@ -318,6 +323,7 @@ function GoalFormFields({
   state,
   formAction,
 }: GoalFormFieldsProps) {
+  const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
   function fieldDefault(name: string, fallback?: string): string | undefined {
     return submitted?.[name] ?? fallback;
@@ -528,8 +534,12 @@ function GoalFormFields({
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
+      <label htmlFor={`${uid}-title`} className="sr-only">
+        Goal title
+      </label>
       <input
         type="text"
+        id={`${uid}-title`}
         name="title"
         placeholder="Goal title"
         defaultValue={fieldDefault("title", entry?.title)}
@@ -538,7 +548,11 @@ function GoalFormFields({
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       />
 
+      <label htmlFor={`${uid}-goalType`} className="sr-only">
+        Goal type
+      </label>
       <select
+        id={`${uid}-goalType`}
         name="goalType"
         value={goalType}
         onChange={(e) =>
@@ -556,40 +570,52 @@ function GoalFormFields({
       </select>
 
       {goalType === "session_count" && (
-        <select
-          name="targetPrimaryType"
-          defaultValue={fieldDefault(
-            "targetPrimaryType",
-            entry?.targetPrimaryType ?? ""
-          )}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          <option value="">Any type</option>
-          {workoutPrimaryTypeEnum.enumValues.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
+        <>
+          <label htmlFor={`${uid}-targetPrimaryType`} className="sr-only">
+            Workout type
+          </label>
+          <select
+            id={`${uid}-targetPrimaryType`}
+            name="targetPrimaryType"
+            defaultValue={fieldDefault(
+              "targetPrimaryType",
+              entry?.targetPrimaryType ?? ""
+            )}
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            <option value="">Any type</option>
+            {workoutPrimaryTypeEnum.enumValues.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </>
       )}
 
       {goalType === "body_metric" && (
-        <select
-          name="targetMetricType"
-          value={targetMetricType}
-          onChange={(e) =>
-            setTargetMetricType(
-              e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
-            )
-          }
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          {bodyMetricTypeEnum.enumValues.map((type) => (
-            <option key={type} value={type}>
-              {BODY_METRIC_LABELS[type].label}
-            </option>
-          ))}
-        </select>
+        <>
+          <label htmlFor={`${uid}-targetMetricType`} className="sr-only">
+            Metric type
+          </label>
+          <select
+            id={`${uid}-targetMetricType`}
+            name="targetMetricType"
+            value={targetMetricType}
+            onChange={(e) =>
+              setTargetMetricType(
+                e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+              )
+            }
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            {bodyMetricTypeEnum.enumValues.map((type) => (
+              <option key={type} value={type}>
+                {BODY_METRIC_LABELS[type].label}
+              </option>
+            ))}
+          </select>
+        </>
       )}
 
       {goalType === "personal_record" && (
@@ -598,7 +624,11 @@ function GoalFormFields({
               <select> comment for the value-encoding scheme and why
               targetExerciseId/targetCustomName are submitted via the
               explicit inputs below instead. */}
+          <label htmlFor={`${uid}-subject`} className="sr-only">
+            Exercise
+          </label>
           <select
+            id={`${uid}-subject`}
             value={subjectSelection}
             onChange={(e) => setSubjectSelection(e.target.value)}
             className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -634,17 +664,23 @@ function GoalFormFields({
           />
 
           {isNewCustomName && (
-            <input
-              type="text"
-              name="targetCustomName"
-              placeholder="Custom name"
-              defaultValue={fieldDefault(
-                "targetCustomName",
-                entry?.targetCustomName ?? ""
-              )}
-              maxLength={GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            />
+            <>
+              <label htmlFor={`${uid}-targetCustomName`} className="sr-only">
+                Custom name
+              </label>
+              <input
+                type="text"
+                id={`${uid}-targetCustomName`}
+                name="targetCustomName"
+                placeholder="Custom name"
+                defaultValue={fieldDefault(
+                  "targetCustomName",
+                  entry?.targetCustomName ?? ""
+                )}
+                maxLength={GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH}
+                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              />
+            </>
           )}
           {existingCustomName !== null && (
             <input
@@ -654,7 +690,11 @@ function GoalFormFields({
             />
           )}
 
+          <label htmlFor={`${uid}-targetRecordType`} className="sr-only">
+            Record type
+          </label>
           <select
+            id={`${uid}-targetRecordType`}
             name="targetRecordType"
             value={targetRecordType}
             onChange={(e) =>
@@ -674,27 +714,37 @@ function GoalFormFields({
       )}
 
       {showDirectionChoice ? (
-        <select
-          name="direction"
-          value={direction}
-          onChange={(e) =>
-            setDirection(
-              e.target.value as (typeof goalDirectionEnum.enumValues)[number]
-            )
-          }
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          {goalDirectionEnum.enumValues.map((value) => (
-            <option key={value} value={value}>
-              {value === "increase" ? "Increase" : "Decrease"}
-            </option>
-          ))}
-        </select>
+        <>
+          <label htmlFor={`${uid}-direction`} className="sr-only">
+            Direction
+          </label>
+          <select
+            id={`${uid}-direction`}
+            name="direction"
+            value={direction}
+            onChange={(e) =>
+              setDirection(
+                e.target.value as (typeof goalDirectionEnum.enumValues)[number]
+              )
+            }
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            {goalDirectionEnum.enumValues.map((value) => (
+              <option key={value} value={value}>
+                {value === "increase" ? "Increase" : "Decrease"}
+              </option>
+            ))}
+          </select>
+        </>
       ) : (
         <input type="hidden" name="direction" value="increase" />
       )}
 
+      <label htmlFor={`${uid}-period`} className="sr-only">
+        Period
+      </label>
       <select
+        id={`${uid}-period`}
         name="period"
         defaultValue={fieldDefault("period", entry?.period ?? "week")}
         className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
@@ -730,28 +780,34 @@ function GoalFormFields({
           defaultUnit={fieldDefaultDistanceUnit("targetValue")}
         />
       ) : (
-        <NumberField
-          key={valueKind}
-          name="targetValue"
-          step={valueStep}
-          min={valueMin}
-          required
-          digitLimit={valueDigitLimit}
-          allowDecimal={allowDecimalTargetValue}
-          initialValue={fieldDefault(
-            "targetValue",
-            defaultTargetValue !== undefined
-              ? String(defaultTargetValue)
-              : undefined
-          )}
-          placeholder={`Target value (${valueUnit})`}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        />
+        <>
+          <label htmlFor={`${uid}-targetValue`} className="sr-only">
+            {`Target value (${valueUnit})`}
+          </label>
+          <NumberField
+            key={valueKind}
+            id={`${uid}-targetValue`}
+            name="targetValue"
+            step={valueStep}
+            min={valueMin}
+            required
+            digitLimit={valueDigitLimit}
+            allowDecimal={allowDecimalTargetValue}
+            initialValue={fieldDefault(
+              "targetValue",
+              defaultTargetValue !== undefined
+                ? String(defaultTargetValue)
+                : undefined
+            )}
+            placeholder={`Target value (${valueUnit})`}
+            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          />
+        </>
       )}
 
-      {state.status === "error" && (
-        <p className="text-sm text-danger">{state.error}</p>
-      )}
+      <FormErrorMessage
+        error={state.status === "error" ? state.error : null}
+      />
 
       <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add goal"}

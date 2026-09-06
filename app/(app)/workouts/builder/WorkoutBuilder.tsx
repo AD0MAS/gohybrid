@@ -394,7 +394,10 @@ export default function WorkoutBuilder({
       </fieldset>
 
       {saveError && (
-        <p className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
+        <p
+          role="alert"
+          className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger"
+        >
           {saveError}
         </p>
       )}
