@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { formatRelativeDay } from "@/lib/dates";
 import { getSessionsForUser } from "@/lib/sessions";
@@ -34,16 +35,28 @@ const BACK_SOURCES: Record<string, BackDestination> = {
  * Reachable from both /workouts/library (its corner button) and Home (the
  * recent-activity "Full history" link), so the back link's target depends
  * on the `from` search param each sets — see BACK_SOURCES/DEFAULT_BACK.
+ *
+ * `?finished=1` marks a landing from Start Workout Mode's Finish button
+ * (StartWorkoutClient) — the only entry point that ever sets it, so
+ * RedirectSuccessBanner (app/_components/FormStatus.tsx) only shows right
+ * after finishing a workout, never a plain visit to /history. A distinct
+ * value from `?saved=1` (used by /workouts/[id] and /profile) rather than a
+ * reused one, since the label here is "Finished".
  */
 export default async function HistoryPage(props: PageProps<"/history">) {
   const user = await requireUser();
   const searchParams = await props.searchParams;
   const back = resolveBackDestination(searchParams.from, BACK_SOURCES, DEFAULT_BACK);
+  const finished =
+    (Array.isArray(searchParams.finished)
+      ? searchParams.finished[0]
+      : searchParams.finished) === "1";
   const { today, timezone } = await getUserContext(user.id);
   const sessions = await getSessionsForUser(user.id);
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <RedirectSuccessBanner show={finished} label="Finished" paramName="finished" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BackLink href={back.href} label={back.label} />

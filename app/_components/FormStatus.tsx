@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+// bottom-20 (5rem) clears the mobile bottom nav bar, whose height the
+// layout reserves as pb-16 (app/(app)/layout.tsx) — the extra 1rem matches
+// the bottom-4 gap this already used before the bar existed underneath it.
+// sm:bottom-4 restores that original offset once the sidebar takes over and
+// nothing occupies the bottom edge.
 const BANNER_CLASSES =
-  "fixed inset-x-0 bottom-4 z-50 mx-auto w-fit rounded-md border px-4 py-2 text-sm";
+  "fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-md border px-4 py-2 text-sm";
 
 /**
  * Fixed-bottom "Saving…" banner for the pending half of a form submission —

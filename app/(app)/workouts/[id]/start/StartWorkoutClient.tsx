@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { PendingBanner } from "@/app/_components/FormStatus";
 import type { unitSystemEnum } from "@/db/schema";
 import type { getWorkoutForUser } from "@/lib/workouts";
 import {
@@ -206,6 +207,12 @@ export default function StartWorkoutClient({
    * to happen client-side after the action resolves — rather than inside
    * finishWorkout itself, which could redirect server-side instead — since
    * localStorage doesn't exist on the server.
+   *
+   * The `?finished=1` param (read by /history via RedirectSuccessBanner) is
+   * appended here rather than reused from `?saved=1` — a distinct value
+   * because the label at the destination is "Finished", not "Saved", and
+   * this component unmounts on navigation so nothing here can rely on
+   * FormSuccessBanner's own-component retrigger.
    */
   function finish() {
     setFinishError(null);
@@ -218,7 +225,7 @@ export default function StartWorkoutClient({
           // Inaccessible storage — the session was still created; nothing
           // to clean up here.
         }
-        router.push("/history");
+        router.push("/history?finished=1");
       } catch {
         setFinishError(
           "Couldn't finish this workout. It may have been deleted."
@@ -335,8 +342,9 @@ export default function StartWorkoutClient({
         disabled={isFinishing}
         className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
-        {isFinishing ? "Finishing…" : "Finish Workout"}
+        Finish Workout
       </button>
+      <PendingBanner pending={isFinishing} label="Finishing…" />
 
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
