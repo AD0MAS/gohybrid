@@ -1,0 +1,22 @@
+import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/site";
+
+/**
+ * Only /login and /register are reachable to a crawler (see app/robots.ts) —
+ * every other route sits behind the auth redirect and has nothing to list
+ * here.
+ */
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
+    {
+      url: `${SITE_URL}/login`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/register`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+  ];
+}

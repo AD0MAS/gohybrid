@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
@@ -12,6 +13,10 @@ import FavoriteToggle from "../FavoriteToggle";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import WorkoutFilters from "./WorkoutFilters";
+
+export const metadata: Metadata = {
+  title: "My Workouts",
+};
 
 /**
  * Lists the authenticated user's workouts: title, primary type, difficulty,

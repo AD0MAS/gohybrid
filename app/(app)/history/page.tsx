@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { X } from "lucide-react";
 import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
@@ -12,6 +13,10 @@ import {
 } from "../_components/back-destination";
 import ConfirmModal from "../_components/ConfirmModal";
 import { deleteAllSessions, deleteSession } from "./actions";
+
+export const metadata: Metadata = {
+  title: "History",
+};
 
 const DEFAULT_BACK: BackDestination = {
   href: "/workouts/library",

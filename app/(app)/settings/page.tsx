@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { signOut } from "@/app/(auth)/actions";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { getUserSettings } from "@/lib/user-settings";
 import BackLink from "../_components/BackLink";
 import SettingsFields from "./SettingsFields";
+
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 /**
  * Settings (GOHYBRID_PLAN.md §5 Layer 4): account details + sign-out (moved

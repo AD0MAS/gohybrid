@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   blockTypeEnum,
   targetPresetEnum,
@@ -16,6 +17,10 @@ import {
   type BackDestination,
 } from "../../_components/back-destination";
 import WorkoutBuilder from "../builder/WorkoutBuilder";
+
+export const metadata: Metadata = {
+  title: "New Workout",
+};
 
 const DEFAULT_BACK: BackDestination = { href: "/workouts", label: "Workouts" };
 

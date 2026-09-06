@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getWeekOffsetForDate, resolveCalendarView } from "@/lib/calendar";
@@ -14,6 +15,10 @@ import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
 import BackLink from "../_components/BackLink";
+
+export const metadata: Metadata = {
+  title: "Calendar",
+};
 
 /** Scheduled-workout titles shown per day cell (desktop text list) before
  * collapsing the rest into a "+N more" indicator. */

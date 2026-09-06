@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import WeekStrip from "./WeekStrip";
+
+export const metadata: Metadata = {
+  title: "Workouts",
+};
 
 /**
  * Workouts (GOHYBRID_PLAN.md §5A): the planning page shell — the week

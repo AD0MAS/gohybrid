@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   blockTypeEnum,
@@ -15,6 +16,10 @@ import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
 import BackLink from "../../../_components/BackLink";
 import WorkoutBuilder from "../../builder/WorkoutBuilder";
+
+export const metadata: Metadata = {
+  title: "Edit Workout",
+};
 
 /**
  * Edit entry point for one of the authenticated user's workouts — the

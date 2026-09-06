@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
@@ -28,6 +29,10 @@ import { TAG_COLOR_CLASSES } from "../tag-colors";
 import ConfirmModal from "../../_components/ConfirmModal";
 import FavoriteToggle from "../FavoriteToggle";
 import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
+
+export const metadata: Metadata = {
+  title: "Workout",
+};
 
 const DEFAULT_BACK: BackDestination = {
   href: "/workouts/library",

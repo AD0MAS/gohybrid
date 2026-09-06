@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import type { ProgressSeries } from "@/lib/progress";
 import { getProgressSeriesForUser } from "@/lib/progress";
@@ -9,6 +10,10 @@ import DistributionChart from "./DistributionChart";
 import ProgressChart, { type LabeledProgressSeries } from "./ProgressChart";
 import SummaryCards from "./SummaryCards";
 import WeeklyChart from "./WeeklyChart";
+
+export const metadata: Metadata = {
+  title: "Stats",
+};
 
 /**
  * Attaches a series' display label — lib/progress.ts deliberately doesn't

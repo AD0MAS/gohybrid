@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import HomeSummaryCards from "./HomeSummaryCards";
 import RecentActivity from "./RecentActivity";
 import UpcomingList from "./UpcomingList";
+
+export const metadata: Metadata = {
+  title: "Home",
+};
 
 const UPCOMING_LIMIT = 3;
 

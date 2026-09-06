@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signIn } from "../actions";
+
+export const metadata: Metadata = {
+  title: "Log in",
+};
 
 export default async function LoginPage(props: PageProps<"/login">) {
   const { error } = await props.searchParams;

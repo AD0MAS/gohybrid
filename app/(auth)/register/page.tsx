@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signUp } from "../actions";
+
+export const metadata: Metadata = {
+  title: "Register",
+};
 
 export default async function RegisterPage(props: PageProps<"/register">) {
   const { error } = await props.searchParams;

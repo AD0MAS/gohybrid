@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getUserContext } from "@/lib/user-settings";
@@ -7,6 +8,10 @@ import BackLink from "../../../_components/BackLink";
 import { DIFFICULTY_LABELS } from "../../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../../primary-type-labels";
 import StartWorkoutClient from "./StartWorkoutClient";
+
+export const metadata: Metadata = {
+  title: "Start Workout",
+};
 
 /**
  * Start Workout Mode: a focused page showing the workout's blocks and

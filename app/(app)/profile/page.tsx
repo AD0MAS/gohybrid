@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Flag, Scale, Target, Trophy } from "lucide-react";
 import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
@@ -10,6 +11,10 @@ import GoalForm from "./GoalForm";
 import GoalsList from "./GoalsList";
 import PersonalRecordForm from "./PersonalRecordForm";
 import PersonalRecordsList from "./PersonalRecordsList";
+
+export const metadata: Metadata = {
+  title: "Profile",
+};
 
 const SECTION_CLASSES =
   "flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6";
