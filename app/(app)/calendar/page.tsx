@@ -135,7 +135,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         <Link
           href={monthHref(addMonths(view.month, -1))}
           aria-label="Previous month"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -145,7 +145,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
         <Link
           href={monthHref(addMonths(view.month, 1))}
           aria-label="Next month"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -171,7 +171,7 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
             <Link
               key={date}
               href={inMonth ? weekStripHref(date) : monthHref(getMonthString(date))}
-              className={`flex min-h-20 flex-col gap-0.5 rounded-lg border border-hairline bg-surface-1 p-1 text-xs hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+              className={`flex min-h-20 flex-col gap-0.5 rounded-lg border border-hairline bg-surface-1 p-1 text-xs hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                 inMonth ? "text-ink" : "text-ink-tertiary"
               }`}
             >

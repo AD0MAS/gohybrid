@@ -66,19 +66,19 @@ export default async function WorkoutLibraryPage(
           <Link
             href="/workouts/new?from=library"
             aria-label="New workout"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:hidden"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
           </Link>
           <Link
             href="/workouts/new?from=library"
-            className="hidden h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:flex"
+            className="hidden h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus md:flex"
           >
             New workout
           </Link>
           <Link
             href="/history"
-            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             History
           </Link>
@@ -104,7 +104,7 @@ export default async function WorkoutLibraryPage(
               No workouts match these filters.{" "}
               <Link
                 href="/workouts/library"
-                className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="text-ink underline hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Clear filters
               </Link>
@@ -118,12 +118,12 @@ export default async function WorkoutLibraryPage(
           {userWorkouts.map((workout) => (
             <li
               key={workout.id}
-              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
             >
               <div className="flex items-center gap-2">
                 <Link
                   href={`/workouts/${workout.id}`}
-                  className="text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  className="text-ink after:absolute after:inset-0 hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 >
                   {workout.title}
                 </Link>

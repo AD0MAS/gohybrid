@@ -8,7 +8,7 @@ import EventForm from "../profile/EventForm";
 import { deleteEvent } from "../profile/events-actions";
 
 const REMOVE_BUTTON_CLASSES =
-  "text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "text-sm text-ink-subtle hover:text-danger active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type EventCardProps = {
   event: Event;
@@ -56,14 +56,14 @@ type EventCardProps = {
  */
 export default function EventCard({ event }: EventCardProps) {
   return (
-    <li className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2">
+    <li className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[button:active]:bg-surface-2">
       <EventForm
         entry={event}
         renderTrigger={(open) => (
           <button
             type="button"
             onClick={open}
-            className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="font-medium text-ink after:absolute after:inset-0 hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {event.title}
           </button>

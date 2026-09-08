@@ -151,13 +151,13 @@ export default async function WorkoutDetailPage(
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href={`/workouts/${workout.id}/edit`}
-            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Edit
           </Link>
           <ConfirmModal
             trigger="Delete"
-            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             title="Delete workout"
             description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
             confirmLabel="Delete"
@@ -197,7 +197,7 @@ export default async function WorkoutDetailPage(
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={`/workouts/${workout.id}/start`}
-          className="flex h-12 items-center justify-center rounded-md bg-accent px-6 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-12 items-center justify-center rounded-md bg-accent px-6 text-base font-medium text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Start Workout
         </Link>

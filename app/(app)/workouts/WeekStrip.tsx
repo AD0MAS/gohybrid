@@ -22,7 +22,7 @@ import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
 import { TAG_COLOR_CLASSES } from "./tag-colors";
 
 const REMOVE_BUTTON_CLASSES =
-  "text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "text-sm text-ink-subtle hover:text-danger active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
@@ -135,7 +135,7 @@ export default async function WeekStrip({
         <Link
           href={weekHref(-1)}
           aria-label="Previous week"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -143,7 +143,7 @@ export default async function WeekStrip({
         <Link
           href={weekHref(1)}
           aria-label="Next week"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -210,11 +210,11 @@ export default async function WeekStrip({
                 return (
                   <li
                     key={entry.id}
-                    className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+                    className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
                   >
                     <Link
                       href={`/workouts/${entry.workout.id}?from=workouts&week=${view.weekOffset}&day=${entry.scheduledDate}`}
-                      className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                      className="font-medium text-ink after:absolute after:inset-0 hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                     >
                       {entry.workout.title}
                     </Link>
@@ -264,7 +264,7 @@ export default async function WeekStrip({
                         <form
                           action={markScheduledWorkoutDone.bind(null, entry.id)}
                         >
-                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                             Mark done
                           </SubmitButton>
                         </form>
@@ -277,7 +277,7 @@ export default async function WeekStrip({
                             true
                           )}
                         >
-                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                          <SubmitButton className="text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                             Mark skipped
                           </SubmitButton>
                         </form>

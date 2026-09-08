@@ -191,7 +191,7 @@ export default function WorkoutFilters({
           className={`h-11 rounded-md border px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
             favoritesOnly
               ? "border-hairline-strong bg-surface-2 text-ink"
-              : "border-hairline text-ink-subtle hover:text-ink"
+              : "border-hairline text-ink-subtle hover:text-ink active:text-ink"
           }`}
         >
           ★ Favorites
@@ -220,7 +220,7 @@ export default function WorkoutFilters({
           <button
             type="button"
             onClick={clearFilters}
-            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Clear filters
           </button>

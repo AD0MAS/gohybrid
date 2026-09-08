@@ -71,7 +71,7 @@ export default async function HistoryPage(props: PageProps<"/history">) {
         {sessions.length > 0 && (
           <ConfirmModal
             trigger="Clear history"
-            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-danger hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            triggerClassName="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-danger hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             title="Clear history"
             description="Deleting every session removes all training history and empties your stats and the activity heatmap. Workouts completed without being planned disappear from the calendar; planned workouts revert to Planned."
             confirmLabel="Delete"
@@ -105,7 +105,7 @@ export default async function HistoryPage(props: PageProps<"/history">) {
 
               <ConfirmModal
                 trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                triggerClassName="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                triggerClassName="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 triggerAriaLabel="Delete"
                 title="Delete session"
                 description="Deleting this session removes it from training history and from all stats. If it completed a scheduled workout, that workout goes back to Planned."

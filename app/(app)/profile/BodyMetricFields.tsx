@@ -131,7 +131,7 @@ export default function BodyMetricFields({
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -141,14 +141,14 @@ export default function BodyMetricFields({
             type="button"
             onClick={openFresh}
             aria-label="Add measurement"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={openFresh}
-            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
+            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
           >
             <Plus className="h-4 w-4" />
             Add measurement
@@ -324,7 +324,7 @@ function BodyMetricFormFields({
         error={state.status === "error" ? state.error : null}
       />
 
-      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         {entry ? "Save" : "Add measurement"}
       </SubmitButton>
       <FormPendingBanner label="Saving…" />

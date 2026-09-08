@@ -96,7 +96,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <form action={setGoalArchived.bind(null, goal.id, true)}>
-                  <SubmitButton className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                  <SubmitButton className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Archive
                   </SubmitButton>
                 </form>
@@ -109,7 +109,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
                 <form action={deleteGoal.bind(null, goal.id)}>
                   <SubmitButton
                     ariaLabel="Delete"
-                    className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                    className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </SubmitButton>
@@ -178,14 +178,14 @@ export default async function GoalsList({ userId }: GoalsListProps) {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <form action={setGoalArchived.bind(null, goal.id, false)}>
-                      <SubmitButton className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                      <SubmitButton className="flex h-8 items-center justify-center rounded-md border border-hairline bg-surface-1 px-3 text-sm text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                         Unarchive
                       </SubmitButton>
                     </form>
                     <form action={deleteGoal.bind(null, goal.id)}>
                       <SubmitButton
                         ariaLabel="Delete"
-                        className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                        className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </SubmitButton>

@@ -53,7 +53,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
                 className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                   isActive(pathname, href)
                     ? "bg-surface-2 text-ink"
-                    : "text-ink-subtle hover:bg-surface-1 hover:text-ink"
+                    : "text-ink-subtle hover:bg-surface-1 hover:text-ink active:bg-surface-1 active:text-ink"
                 }`}
               >
                 <Icon className="h-5 w-5" />
@@ -68,7 +68,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
             {userEmail}
           </span>
           <form action={signOutAction}>
-            <SubmitButton className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+            <SubmitButton className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-subtle hover:bg-surface-1 hover:text-ink active:bg-surface-1 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
               <LogOut className="h-4 w-4" />
               Sign out
             </SubmitButton>
@@ -82,7 +82,9 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
             key={href}
             href={href}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
-              isActive(pathname, href) ? "text-ink" : "text-ink-subtle"
+              isActive(pathname, href)
+                ? "text-ink"
+                : "text-ink-subtle active:bg-surface-1 active:text-ink"
             }`}
           >
             <Icon className="h-5 w-5" />

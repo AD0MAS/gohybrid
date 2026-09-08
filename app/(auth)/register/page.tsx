@@ -43,7 +43,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
             />
           </label>
 
-          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Register
           </SubmitButton>
           <FormPendingBanner label="Creating your account…" />
@@ -51,7 +51,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
 
         <p className="text-sm text-ink-subtle">
           Already have an account?{" "}
-          <Link href="/login" className="text-ink underline hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <Link href="/login" className="text-ink underline hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Log in
           </Link>
         </p>

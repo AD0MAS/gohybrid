@@ -343,7 +343,7 @@ export default function StartWorkoutClient({
         type="button"
         onClick={handleFinishClick}
         disabled={isFinishing}
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
+        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base font-medium text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:opacity-50"
       >
         Finish Workout
       </button>
@@ -361,7 +361,7 @@ export default function StartWorkoutClient({
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Cancel
               </button>
@@ -372,7 +372,7 @@ export default function StartWorkoutClient({
                   setShowConfirm(false);
                   finish();
                 }}
-                className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 Finish
               </button>

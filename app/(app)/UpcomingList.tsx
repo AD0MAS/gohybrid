@@ -49,11 +49,11 @@ export default async function UpcomingList({ userId, limit }: UpcomingListProps)
           {upcoming.map((entry) => (
             <li
               key={entry.id}
-              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2"
+              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
             >
               <Link
                 href={`/workouts/${entry.workout.id}?from=home`}
-                className="font-medium text-ink after:absolute after:inset-0 hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="font-medium text-ink after:absolute after:inset-0 hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 {entry.workout.title}
               </Link>
@@ -79,19 +79,19 @@ export default async function UpcomingList({ userId, limit }: UpcomingListProps)
 
               <div className="relative z-10 mt-2 flex gap-4">
                 <form action={markScheduledWorkoutDone.bind(null, entry.id)}>
-                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Mark done
                   </SubmitButton>
                 </form>
                 <form
                   action={markScheduledWorkoutSkipped.bind(null, entry.id, true)}
                 >
-                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Mark skipped
                   </SubmitButton>
                 </form>
                 <form action={unscheduleWorkout.bind(null, entry.id)}>
-                  <SubmitButton className="text-sm text-ink-subtle hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+                  <SubmitButton className="text-sm text-ink-subtle hover:text-danger active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
                     Remove
                   </SubmitButton>
                 </form>

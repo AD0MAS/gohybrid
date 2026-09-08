@@ -78,7 +78,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
                       <form action={deleteBodyMetric.bind(null, entry.id)}>
                         <SubmitButton
                           ariaLabel="Delete"
-                          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                         >
                           <X className="h-4 w-4" aria-hidden="true" />
                         </SubmitButton>
