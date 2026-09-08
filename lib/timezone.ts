@@ -29,7 +29,7 @@ export const APP_TIMEZONE = "Europe/Vilnius";
  * lib/user-settings.ts, which is how every caller should reach this now).
  */
 export async function getCurrentDateString(timezone: string): Promise<string> {
-  const [row] = await db.execute<{ today: string }>(
+  const { rows: [row] } = await db.execute<{ today: string }>(
     sql`select (now() at time zone ${timezone})::date::text as today`
   );
   return row.today;
@@ -66,7 +66,7 @@ export async function getCurrentDateString(timezone: string): Promise<string> {
  * Format instead.
  */
 export async function toNoonInstant(date: string, timezone: string): Promise<Date> {
-  const [row] = await db.execute<{ instant: string }>(
+  const { rows: [row] } = await db.execute<{ instant: string }>(
     sql`select to_char(
       ((${date}::date + time '12:00:00') at time zone ${timezone}) at time zone 'UTC',
       'YYYY-MM-DD"T"HH24:MI:SS"Z"'

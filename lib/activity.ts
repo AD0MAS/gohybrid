@@ -36,7 +36,7 @@ export async function getDailySessionCountsForUser(
   to: string,
   timezone: string
 ): Promise<DailySessionCount[]> {
-  const rows = await db.execute<{ date: string; count: number }>(sql`
+  const { rows } = await db.execute<{ date: string; count: number }>(sql`
     select
       (${workoutSessions.completedAt} at time zone ${timezone})::date::text as date,
       count(*)::int as count
@@ -58,7 +58,7 @@ export async function getDailySessionCountsForUser(
 export async function getTotalSessionCountForUser(
   userId: string
 ): Promise<number> {
-  const [row] = await db.execute<{ count: number }>(sql`
+  const { rows: [row] } = await db.execute<{ count: number }>(sql`
     select count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
@@ -81,7 +81,7 @@ export async function getSessionCountForUserInRange(
   to: string,
   timezone: string
 ): Promise<number> {
-  const [row] = await db.execute<{ count: number }>(sql`
+  const { rows: [row] } = await db.execute<{ count: number }>(sql`
     select count(*)::int as count
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
@@ -115,7 +115,7 @@ export async function getWeeklySessionCountsForUser(
   to: string,
   timezone: string
 ): Promise<WeeklySessionCount[]> {
-  const rows = await db.execute<{ week_start: string; count: number }>(sql`
+  const { rows } = await db.execute<{ week_start: string; count: number }>(sql`
     select
       date_trunc('week', (${workoutSessions.completedAt} at time zone ${timezone}))::date::text as week_start,
       count(*)::int as count
@@ -149,7 +149,7 @@ export async function getMonthlySessionCountsForUser(
   to: string,
   timezone: string
 ): Promise<MonthlySessionCount[]> {
-  const rows = await db.execute<{ month: string; count: number }>(sql`
+  const { rows } = await db.execute<{ month: string; count: number }>(sql`
     select
       to_char(date_trunc('month', (${workoutSessions.completedAt} at time zone ${timezone})), 'YYYY-MM') as month,
       count(*)::int as count
@@ -185,7 +185,7 @@ export async function getSessionCountsByPrimaryTypeForUser(
   to: string,
   timezone: string
 ): Promise<PrimaryTypeSessionCount[]> {
-  const rows = await db.execute<{
+  const { rows } = await db.execute<{
     primary_type: PrimaryTypeSessionCount["primaryType"];
     count: number;
   }>(sql`
@@ -266,7 +266,7 @@ export async function getStreaksForUser(
   today: string,
   timezone: string
 ): Promise<StreakSummary> {
-  const rows = await db.execute<{ date: string }>(sql`
+  const { rows } = await db.execute<{ date: string }>(sql`
     select distinct (${workoutSessions.completedAt} at time zone ${timezone})::date::text as date
     from ${workoutSessions}
     where ${workoutSessions.userId} = ${userId}
