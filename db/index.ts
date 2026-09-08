@@ -13,4 +13,11 @@ import * as schema from "./schema";
 // pooler caps the project at 15 connections total.
 const pool = new Pool({ connectionString: process.env.DATABASE_URL!, max: 5 });
 
+// Pool is an EventEmitter; an unhandled 'error' event terminates the process.
+// A pooled connection can die while idle — Supavisor recycles connections on
+// its own — so this is reachable in normal operation, not just on failure.
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle database client", err);
+});
+
 export const db = drizzle(pool, { schema });
