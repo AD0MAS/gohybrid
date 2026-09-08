@@ -1,6 +1,8 @@
 {
   "name": "gohybrid",
   "version": "0.1.0",
+  "description": "A training hub for hybrid athletes — build workouts, plan your week, and track progress across running, strength and HYROX.",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",
