@@ -10,6 +10,7 @@ import {
   formatWeightKg,
 } from "@/lib/units";
 import { isValidDateString } from "@/lib/scheduled-workouts-validation";
+import { firstValue } from "@/lib/search-params";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
@@ -48,10 +49,6 @@ const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
   workouts: { href: "/workouts", label: "Workouts" },
 };
-
-function firstValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 /**
  * Resolves the back link, same map-lookup contract as resolveBackDestination

@@ -1,8 +1,6 @@
-export type BackDestination = { href: string; label: string };
+import { firstValue } from "@/lib/search-params";
 
-function firstValue(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
+export type BackDestination = { href: string; label: string };
 
 /**
  * Resolves a page's BackLink target from a `from` search-param value: a

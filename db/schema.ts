@@ -253,16 +253,8 @@ export const workoutItems = pgTable(
 
 // Relations enable nested db.query reads (e.g. a workout with its blocks
 // and each block's items); they don't affect the generated SQL migrations.
-export const exercisesRelations = relations(exercises, ({ many }) => ({
-  items: many(workoutItems),
-}));
-
 export const workoutsRelations = relations(workouts, ({ many }) => ({
   blocks: many(workoutBlocks),
-  workoutTags: many(workoutTags),
-}));
-
-export const tagsRelations = relations(tags, ({ many }) => ({
   workoutTags: many(workoutTags),
 }));
 

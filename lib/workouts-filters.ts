@@ -1,6 +1,7 @@
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
 import { isOneOf, isValidUuid } from "./workouts-validation";
 import { WORKOUT_SEARCH_MAX_LENGTH } from "./text-limits";
+import { firstValue } from "./search-params";
 
 export const WORKOUT_SORT_OPTIONS = [
   "newest",
@@ -21,12 +22,6 @@ export type WorkoutListFilters = {
   favoritesOnly?: boolean;
   sort: WorkoutSort;
 };
-
-function firstValue(
-  value: string | string[] | undefined
-): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 function toIdList(value: string | string[] | undefined): string[] {
   const raw = value === undefined ? [] : Array.isArray(value) ? value : [value];

@@ -1,5 +1,6 @@
 import { addDays, formatMonthYearHeading, getMondayOfWeek } from "./dates";
 import { isValidDateString } from "./scheduled-workouts-validation";
+import { firstValue } from "./search-params";
 
 export type WeekStripView = {
   /** Whole weeks from the current week; 0 = this week, negative = past. */
@@ -13,12 +14,6 @@ export type WeekStripView = {
   /** The selected day, or null when nothing is selected. */
   selectedDate: string | null;
 };
-
-function firstValue(
-  value: string | string[] | undefined
-): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 /**
  * Resolves the home page week strip's URL search params (`week`, the

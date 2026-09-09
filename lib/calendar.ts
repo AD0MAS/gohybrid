@@ -8,6 +8,7 @@ import {
   getMonthString,
 } from "./dates";
 import { isValidMonthString } from "./scheduled-workouts-validation";
+import { firstValue } from "./search-params";
 
 export type CalendarView = {
   /** The displayed month, YYYY-MM. */
@@ -21,12 +22,6 @@ export type CalendarView = {
    */
   gridDates: string[];
 };
-
-function firstValue(
-  value: string | string[] | undefined
-): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
 
 /**
  * Resolves the /calendar page's `month` URL search param (YYYY-MM) into a
