@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const UPCOMING_LIMIT = 3;
 
 /**
- * Home: the at-a-glance state (GOHYBRID_PLAN.md §5A) — summary cards, then
+ * Home: the at-a-glance state — summary cards, then
  * Upcoming, then recent activity. The week strip moved to /workouts, which
  * is what it's primarily for; the nav shell covers navigation to the other
  * top-level pages, so this page holds only what's specific to it.

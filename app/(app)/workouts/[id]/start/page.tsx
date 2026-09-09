@@ -22,8 +22,7 @@ export const metadata: Metadata = {
  * Stays a Server Component that only fetches the workout — the checkable
  * list, and its localStorage-backed progress, lives entirely in the
  * StartWorkoutClient boundary below, since none of that state has any
- * reason to touch the server (see GOHYBRID_PLAN.md §7, Session stores no
- * performance data).
+ * reason to touch the server (Session stores no performance data).
  */
 export default async function StartWorkoutPage(
   props: PageProps<"/workouts/[id]/start">

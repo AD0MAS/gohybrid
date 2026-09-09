@@ -46,8 +46,8 @@ export type Goal = {
 };
 
 /**
- * Drizzle returns `numeric` columns as strings (see GOHYBRID_PLAN.md §6),
- * so every row read from goals is mapped through this to give callers
+ * Drizzle returns `numeric` columns as strings, so every row read from
+ * goals is mapped through this to give callers
  * actual numbers for targetValue/startValue.
  */
 function toGoal(
@@ -504,7 +504,7 @@ function resolveGoalValueFromSources(
  * batched replacement for GoalsList's old per-goal Promise.all (each call to
  * the removed resolveGoalCurrentValue redid a full fetch — streak history,
  * the whole personal_records table, a metric's whole history — even when
- * several goals shared the same source; see GOHYBRID_PLAN.md §9 step 37).
+ * several goals shared the same source).
  * Returns a Map keyed by goal.id so callers can look up each goal's value
  * without re-deriving which source it came from.
  *

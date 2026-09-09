@@ -26,7 +26,7 @@ type ExercisePickerProps = {
 /**
  * Picks an item's exercise: either linked to a catalog entry
  * (`exerciseId` set) or a free-typed custom name (`customName` set —
- * "Quick add" from GOHYBRID_PLAN.md §5), never both — enforced here by
+ * "Quick add"), never both — enforced here by
  * always clearing the other field on change, the same mutual exclusivity
  * the reducer's own UPDATE_ITEM_FIELD cases enforce for the committed
  * state (this component now writes to ItemEditor's draft instead, via
@@ -43,8 +43,8 @@ type ExercisePickerProps = {
  * input for the name; choosing a catalog
  * exercise hides it. Unlike PersonalRecordFields (where an exercise or a
  * custom name is always required), an item can also be genuinely
- * unselected — GOHYBRID_PLAN.md's save requirement is about
- * volume/weight/duration, not exercise selection — so the select carries
+ * unselected — the save requirement is about volume/weight/duration,
+ * not exercise selection — so the select carries
  * its own neutral "" option instead of overloading "" for Custom. Not a
  * "use client" file itself — see ItemEditor/WorkoutBuilder.
  */

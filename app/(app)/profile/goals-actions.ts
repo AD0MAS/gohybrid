@@ -34,8 +34,8 @@ export type GoalFormState =
  * Resolves a goal target's current value and rejects one that would already
  * be complete before it's created or re-targeted — extended from the old
  * decrease-only "start value must differ from target" rejection to every
- * goal_type/direction (GOHYBRID_PLAN.md doesn't want a goal that's 100%
- * done the moment it exists). Folds that old check in as a special case:
+ * goal_type/direction (a goal that is already 100% done the moment it is
+ * created defeats the point of setting it). Folds that old check in as a special case:
  * a decrease goal whose resolved current value equals targetValue is
  * "already met" under the current <= target rule below, not a separate
  * equality check.

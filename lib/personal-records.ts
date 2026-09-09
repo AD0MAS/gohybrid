@@ -17,8 +17,8 @@ import type { PersonalRecord } from "./personal-records-grouping";
 export type { PersonalRecord };
 
 /**
- * Drizzle returns `numeric` columns as strings (see GOHYBRID_PLAN.md §6),
- * so every row read from personal_records is mapped through this to give
+ * Drizzle returns `numeric` columns as strings, so every row read from
+ * personal_records is mapped through this to give
  * callers an actual number for `value`.
  */
 function toPersonalRecord(

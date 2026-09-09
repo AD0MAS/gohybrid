@@ -58,8 +58,8 @@ export function groupExercisesForSelect<T extends GroupableExercise>(
      * entirely — not just reordered — for a picker whose subject can never
      * legitimately be a rest exercise (PersonalRecordFields, GoalFields).
      * Defaults to true, the workout builder's own case: an item CAN be a
-     * rest exercise (GOHYBRID_PLAN.md — category exists precisely for
-     * this), so ExercisePicker needs the Rest group. */
+     * rest exercise (category exists precisely for this), so ExercisePicker
+     * needs the Rest group. */
     includeRest?: boolean;
   } = {}
 ): ExerciseSelectGroup<T>[] {

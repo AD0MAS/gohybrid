@@ -36,7 +36,7 @@ export type WorkoutMeta = {
 /**
  * One item within a block. `exerciseId` and `customName` are mutually
  * exclusive — an item is either linked to a catalog exercise or a
- * free-typed "Quick add" name (GOHYBRID_PLAN.md §5), never both; the
+ * free-typed "Quick add" name, never both; the
  * reducer enforces this on every write. `targetType`/`targetValue` and
  * `targetPreset` are likewise alternatives. `id` is a client-only
  * crypto.randomUUID() key, never sent to the database.
@@ -188,7 +188,7 @@ type DuplicateBlockAction = { type: "DUPLICATE_BLOCK"; blockId: string };
 /**
  * Sets one field of one block. Setting `blockType` also resets every
  * timing field on that block to null, since which fields are valid
- * depends on the new type (GOHYBRID_PLAN.md §5) and stale values from the
+ * depends on the new type and stale values from the
  * previous type shouldn't linger.
  */
 type UpdateBlockFieldAction =

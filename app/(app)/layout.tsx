@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import Nav from "./Nav";
 
 /**
- * Shell for every authenticated route (GOHYBRID_PLAN.md §5A): renders the
+ * Shell for every authenticated route: renders the
  * top-level Nav once and reserves space for it around the page content — a
  * left gutter for the desktop sidebar, a bottom gutter for the mobile bar
  * — so no individual page has to account for the nav's fixed positioning.

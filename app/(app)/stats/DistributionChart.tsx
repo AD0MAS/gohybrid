@@ -23,8 +23,8 @@ const BAR_MAX_WIDTH =
  * Primary-type distribution chart: one horizontal bar per
  * workout_primary_type with at least one session in the last 12 weeks,
  * hand-drawn SVG. The enum has no "hybrid" value by design (the mix is
- * described by tags, not a summary category — see GOHYBRID_PLAN.md §5
- * Layer 3), so this never invents one; a user training only one discipline
+ * described by tags, not a summary category), so this never invents one;
+ * a user training only one discipline
  * simply sees one bar.
  *
  * Fetches its own data given `userId`, same convention as ActivityHeatmap.

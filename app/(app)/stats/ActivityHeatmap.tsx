@@ -16,7 +16,7 @@ const MOBILE_WEEKS = 26;
 
 /**
  * Shading step for a day's session count: 0 sessions, 1, 2, or 3+ — four
- * levels stepping from surface-1 up through accent (DESIGN.md tokens), so
+ * levels stepping from surface-1 up through accent, so
  * more sessions reads as more lavender. SVG `fill` doesn't take Tailwind
  * classes, so the same scale is carried over as CSS variable references,
  * matching WeeklyChart/DistributionChart's convention.

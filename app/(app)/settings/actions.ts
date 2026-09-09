@@ -11,13 +11,13 @@ export type SettingsFormState = { error: string | null };
 /**
  * Saves the authenticated user's settings (upsert — see
  * updateUserSettings). Passed to useActionState in SettingsFields, same
- * pattern as the other Layer 4 forms: a validation failure returns
+ * pattern as the other forms: a validation failure returns
  * { error } for the form to render instead of throwing into
  * app/error.tsx. Revalidates every route whose queries read
  * getUserSettings — /settings itself, /profile (Goals), / (Home summary
  * cards) and /stats (all four charts) — so a saved timezone/unit change is
  * reflected immediately rather than on next navigation. Unlike the other
- * Layer 4 forms (which live in a Modal and close themselves on success —
+ * forms (which live in a Modal and close themselves on success —
  * see BodyMetricFields), Settings is a whole page reached via a corner
  * button, so success redirects back to /profile instead. The redirect
  * comes after the validation branch, never before: redirect() throws

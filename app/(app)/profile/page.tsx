@@ -20,7 +20,7 @@ const SECTION_CLASSES =
   "flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6";
 
 /**
- * Profile (GOHYBRID_PLAN.md §5A): Goals, Events, Body Metrics and Personal
+ * Profile: Goals, Events, Body Metrics and Personal
  * Records, each its own bordered section with an icon + heading on the
  * left of its header row and an Add button on the right. The Add button
  * opens that section's form in a centred Modal (app/(app)/_components/

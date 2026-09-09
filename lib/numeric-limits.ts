@@ -16,9 +16,9 @@ export type DigitLimitResult =
 // uses. Centralized here so the same number can't drift between, e.g., a
 // personal record's own weight field and a goal that targets one.
 //
-// workout_items.weight_kg and target_value are numeric(6,2) (GOHYBRID_PLAN.md
-// §6) — narrower than personal_records.value/goals.target_value's
-// numeric(9,2) (§6B). volume_value is numeric(9,2) too, widened from
+// workout_items.weight_kg and target_value are numeric(6,2) — narrower than
+// personal_records.value/goals.target_value's numeric(9,2). volume_value
+// is numeric(9,2) too, widened from
 // numeric(6,2) so a distance volume item isn't capped at 9999.99 m (9.99
 // km — unusable for a run); see db/migrations for the ALTER. BODY_WEIGHT/
 // LIFTED_WEIGHT/REPS fit every column width unchanged. ITEM_CALORIES_DIGIT_

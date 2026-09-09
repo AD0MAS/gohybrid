@@ -133,8 +133,8 @@ export const exercises = pgTable("exercises", {
   // station's distance is always shown in metres, never converted to
   // imperial, because the event itself is defined in metric worldwide. A
   // column rather than a hardcoded name list in lib/ for the same reason
-  // `category` exists (GOHYBRID_PLAN.md §7) — renaming an exercise must
-  // not silently change display behaviour.
+  // `category` exists — renaming an exercise must not silently change
+  // display behaviour.
   isHyroxStation: boolean("is_hyrox_station").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -329,7 +329,7 @@ export const workoutSessions = pgTable(
 // independent record that knows nothing about scheduling. No status enum:
 // completed is derived from session_id IS NOT NULL, skipped is its own
 // boolean, and planned is neither — same reasoning as workout_sessions
-// having no status field (GOHYBRID_PLAN.md §5/§6).
+// having no status field.
 export const scheduledWorkouts = pgTable(
   "scheduled_workouts",
   {
@@ -387,11 +387,11 @@ export const scheduledWorkoutsRelations = relations(
 );
 
 // A single measurement (weight, body fat %, resting HR), always in
-// metric/SI units — unit conversion is a Layer 4 Settings UI concern, not
-// a DB one (GOHYBRID_PLAN.md §5 Layer 4). No unique constraint on
-// (user_id, metric_type, measured_at): two weigh-ins on the same day are
-// legitimate. measured_at is `date`, not timestamptz — a measurement is a
-// calendar day, not an instant, same reasoning as scheduled_date (§6A).
+// metric/SI units — unit conversion is a Settings UI concern, not a DB
+// one. No unique constraint on (user_id, metric_type, measured_at):
+// two weigh-ins on the same day are legitimate. measured_at is `date`,
+// not timestamptz — a measurement is a calendar day, not an instant,
+// same reasoning as scheduled_date.
 export const bodyMetrics = pgTable(
   "body_metrics",
   {
@@ -419,8 +419,8 @@ export const bodyMetrics = pgTable(
 // A manually entered personal record, kept as history rather than a single
 // current value — the current best per subject is derived (see
 // isBetterRecord/groupPersonalRecordsBySubject in lib/personal-records-grouping.ts).
-// exercise_id + custom_name mirrors workout_items exactly (GOHYBRID_PLAN.md
-// §6): a record either points at the catalog or carries its own name,
+// exercise_id + custom_name mirrors workout_items exactly: a record either
+// points at the catalog or carries its own name,
 // neither required at the DB level — "at least one" is application-level
 // validation, same as everywhere else in this schema. numeric(9,2) rather
 // than the (6,2) body_metrics uses: time records are stored in seconds and
@@ -468,7 +468,7 @@ export const personalRecordsRelations = relations(
 // duration_seconds/rounds/work_seconds/rest_seconds/interval_seconds: each
 // is filled only for its own goal_type, and which ones a given goal_type
 // requires is application-level validation (lib/goals-validation.ts), not a
-// DB constraint (GOHYBRID_PLAN.md §6). direction is stored here even though
+// DB constraint. direction is stored here even though
 // personal_records derives an equivalent direction from record_type
 // (isBetterRecord in lib/personal-records-grouping.ts) — the same metric can be a
 // goal in either direction (lose weight vs. gain weight), so for goals it's
@@ -519,13 +519,13 @@ export const goalsRelations = relations(goals, ({ one }) => ({
 
 // An upcoming or past race/competition/test a user wants a countdown or
 // record for. event_date is `date`, not timestamptz — an event is a
-// calendar day, same reasoning as scheduled_workouts.scheduled_date (§6A)
+// calendar day, same reasoning as scheduled_workouts.scheduled_date
 // and personal_records.achieved_at. No is_completed/is_past column: an
 // event is past once event_date < today, same reasoning as
 // workout_sessions having no status field and goals having no
 // is_completed column. No FK to goals or scheduled_workouts — linking them
-// would add a column that changes nothing about how either behaves (§6,
-// "no field just in case").
+// would add a column that changes nothing about how either behaves
+// ("no field just in case").
 export const events = pgTable(
   "events",
   {
@@ -547,16 +547,16 @@ export const events = pgTable(
   ]
 );
 
-// Per-user Settings (GOHYBRID_PLAN.md §5 Layer 4): timezone and unit
-// system. user_id is itself the primary key rather than a separate `id` —
+// Per-user Settings: timezone and unit system. user_id is itself the
+// primary key rather than a separate `id` —
 // there's exactly one row per user, so a second identity column would only
 // duplicate the uniqueness the FK already gives it. timezone is `text`,
 // not an enum — there are hundreds of IANA zones, and validating against
 // them belongs in application code (Intl.supportedValuesOf("timeZone"),
 // see lib/user-settings-validation.ts), not a hand-maintained Postgres
 // enum. unit_system is added now, even though nothing reads it until the
-// next Layer 4 step, so this table doesn't need a second migration a few
-// days apart from this one. A missing row (no user has saved settings yet)
+// next step, so this table doesn't need a second migration a few days
+// apart from this one. A missing row (no user has saved settings yet)
 // is a normal, common state — see DEFAULT_USER_SETTINGS in
 // lib/user-settings.ts — not backfilled at registration.
 export const userSettings = pgTable("user_settings", {

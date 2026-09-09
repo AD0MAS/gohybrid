@@ -36,8 +36,8 @@ export type RawEventInput = {
  * lib/goals-validation.ts) — a personal record or body metric can't
  * predate itself, but an event's date is deliberately unconstrained in
  * both directions, so there's no "not in the future" rule to check today
- * against: a user may log an upcoming race or one they already ran
- * (GOHYBRID_PLAN.md §5 Layer 4). Rules: title required and trimmed;
+ * against: a user may log an upcoming race or one they already ran.
+ * Rules: title required and trimmed;
  * eventType must be one of the enum values defined in db/schema.ts;
  * eventDate must be a syntactically valid YYYY-MM-DD date; location and
  * notes, if present, are trimmed and normalized to null when empty.

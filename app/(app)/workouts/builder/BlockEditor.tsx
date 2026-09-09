@@ -113,7 +113,7 @@ function draftFromBlock(block: BuilderBlock): BlockDraft {
  * timing summary) always shown on the builder page, plus a Configure
  * control opening a Modal with the full editor — an optional title, the
  * block_type select, and only the timing fields relevant to the selected
- * type, per the table in GOHYBRID_PLAN.md §5:
+ * type, per block type:
  *   for_time — duration (optional), rounds (optional)
  *   on_off   — work seconds, rest seconds, rounds (all required)
  *   amrap    — duration (required)

@@ -25,7 +25,7 @@ type UpcomingListProps = {
  * lib/scheduled-workouts rather than fetching an API route — same
  * reasoning as the /workouts list and detail pages.
  *
- * A reusable component, not a page (GOHYBRID_PLAN.md §5A): Home and
+ * A reusable component, not a page: Home and
  * Workouts both render this list at a different length, and a dedicated
  * /schedule route would be a third place carrying the same query. It takes
  * `userId` as a prop from the page (same pattern as /stats) rather than

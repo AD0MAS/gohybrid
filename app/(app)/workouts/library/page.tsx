@@ -32,7 +32,7 @@ export const metadata: Metadata = {
  * duplicate auth check for no benefit. The API route stays in place as the
  * surface for later client-side use.
  *
- * Named "My Workouts" in the UI (GOHYBRID_PLAN.md §5A) rather than
+ * Named "My Workouts" in the UI rather than
  * "Library" — in Roxfit "Workout Library" means a catalogue of ready-made
  * workouts; here it's the user's own.
  */

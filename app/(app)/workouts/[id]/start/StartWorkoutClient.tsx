@@ -119,8 +119,8 @@ function formatItemDetails(item: Item, unitSystem: UnitSystem): string[] {
 /**
  * Checkable block/item list for Start Workout Mode. Checkbox state is
  * UI-only — nothing here is written to workout_sessions, which deliberately
- * stores no performance data (see GOHYBRID_PLAN.md §7, "avoids fake
- * analytics") — but it survives a page reload via localStorage, since a
+ * stores no performance data ("avoids fake analytics") — but it survives
+ * a page reload via localStorage, since a
  * real workout runs 40-60 minutes and phones lock their screens in between.
  *
  * Progress is keyed by workout id and stamped with the workout's

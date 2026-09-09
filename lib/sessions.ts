@@ -26,8 +26,8 @@ export type SessionLinkTarget =
  * Creates a workout_session recording that `userId` completed one of their
  * workouts. Reads the workout's current title and primary_type and copies
  * them onto the session as snapshot columns (workout_title,
- * workout_primary_type) — see GOHYBRID_PLAN.md §6/§7 — so training history
- * keeps showing the workout as it was at completion time even if the
+ * workout_primary_type), so training history keeps showing the workout
+ * as it was at completion time even if the
  * template is later edited or deleted. Returns null if the workout doesn't
  * exist or isn't owned by `userId`, in which case no session is created.
  *
@@ -47,8 +47,8 @@ export type SessionLinkTarget =
  * is_backfilled true, session_id pointing at the session just created,
  * scheduled_date/scheduled_time derived from completedAt in `link.timezone`
  * — so an unplanned workout still appears on the week strip and calendar as
- * Completed, exactly like a planned one (GOHYBRID_PLAN.md's week-strip/
- * calendar reasoning). The backfill insert happens in the same transaction
+ * Completed, exactly like a planned one. The backfill insert happens in
+ * the same transaction
  * as the session insert, so a `sameDay` session is never left without one.
  */
 export async function createSessionForWorkout(
@@ -159,9 +159,8 @@ export async function getRecentSessionsForUser(userId: string, limit: number) {
  * deletePersonalRecordForUser.
  *
  * A user-planned scheduled_workouts entry that pointed at this session goes
- * back to Planned: scheduled_workouts.session_id is ON DELETE SET NULL (see
- * GOHYBRID_PLAN.md §6A) — the plan was deliberate and should survive the
- * session. That FK only clears session_id, though, so is_skipped is cleared
+ * back to Planned: scheduled_workouts.session_id is ON DELETE SET NULL —
+ * the plan was deliberate and should survive the session. That FK only clears session_id, though, so is_skipped is cleared
  * explicitly here too — a skipped entry marked done and then unlinked must
  * land on Planned, not Skipped (a row is never both). This runs before the
  * session delete, while the row can still be found by session_id. A

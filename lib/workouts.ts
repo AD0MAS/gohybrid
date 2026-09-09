@@ -318,8 +318,8 @@ export async function createFullWorkoutForUser(
  * Replaces a full workout owned by `userId` — its own fields, plus its
  * entire block/item tree and its tag links — from an already-validated
  * builder payload. Blocks and items have no identity that anything else
- * references (workout_sessions references workouts, not blocks — see
- * GOHYBRID_PLAN.md §6), so rather than diffing the existing tree against
+ * references (workout_sessions references workouts, not blocks), so
+ * rather than diffing the existing tree against
  * the new one, every existing block is deleted (items cascade via their
  * block_id FK) and the submitted tree is re-inserted with sort_order from
  * array position, exactly as createFullWorkoutForUser does for a new

@@ -8,8 +8,8 @@ type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
  * labeled differently in two places. No `unit` field here: the unit
  * depends on the viewing user's unit_system (and, for weight/distance,
  * actually converts), so it comes from lib/units.ts's
- * formatPersonalRecordValue, not this map — one definition per unit
- * (GOHYBRID_PLAN.md §5 Layer 4). Same pattern as BODY_METRIC_LABELS.
+ * formatPersonalRecordValue, not this map — one definition per unit.
+ * Same pattern as BODY_METRIC_LABELS.
  */
 export const PERSONAL_RECORD_LABELS: Record<
   PersonalRecordType,

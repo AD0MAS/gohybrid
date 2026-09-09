@@ -22,7 +22,7 @@ const PLOT_BOTTOM = MARGIN_TOP + PLOT_HEIGHT;
 
 /**
  * Weekly volume chart: one vertical bar per week for the last 12 weeks,
- * hand-drawn SVG (no charting library — see GOHYBRID_PLAN.md §5 Layer 3).
+ * hand-drawn SVG (no charting library).
  * Fetches its own data given `userId`, same convention as ActivityHeatmap.
  * Y axis is a "nice" rounded scale (see buildAxisScale) with a few
  * labelled gridlines; weeks with no sessions render as zero-height bars

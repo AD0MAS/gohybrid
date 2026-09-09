@@ -82,8 +82,8 @@ export async function getEventsForUserInRange(
  * The single soonest upcoming event for `userId`, or null — Home's
  * one-line countdown. A separate function rather than a `limit` parameter
  * on getUpcomingEventsForUser, same reasoning as getRecentSessionsForUser
- * vs getSessionsForUser (GOHYBRID_PLAN.md §7): an optional cap on the full
- * list is one default value away from silently truncating it.
+ * vs getSessionsForUser: an optional cap on the full list is one default
+ * value away from silently truncating it.
  */
 export async function getNextEventForUser(
   userId: string,
@@ -173,7 +173,7 @@ export async function deleteEventForUser(
  * positive for a future event, 0 for today, negative for a past one. Built
  * entirely on diffInDays (lib/dates.ts), which is itself Date.UTC string
  * math — the same calendar-day-arithmetic approach the codebase already
- * uses everywhere else (GOHYBRID_PLAN.md §7), rather than a new one. No DB
+ * uses everywhere else, rather than a new one. No DB
  * access — same principle as computeStreaks/computeGoalProgress, so the
  * countdown math can be reasoned about and tested on its own.
  */

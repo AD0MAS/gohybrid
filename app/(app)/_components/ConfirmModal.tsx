@@ -28,7 +28,7 @@ type ConfirmModalProps = {
  * repeated inline because /history's delete confirmation was the second
  * place needing this exact trigger+confirm+cancel shape (after the
  * workout detail page's own hand-rolled version, since migrated to this
- * component) — see GOHYBRID_PLAN.md step 32.11.
+ * component).
  */
 export default function ConfirmModal({
   trigger,

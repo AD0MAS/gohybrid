@@ -30,12 +30,12 @@ type ProgressChartProps = {
 };
 
 /**
- * Progress Charts (GOHYBRID_PLAN.md §5 Layer 4): a Recharts LineChart over
+ * Progress Charts: a Recharts LineChart over
  * whichever series a <select> picks, all data already fetched server-side
  * by the page — switching series re-renders from memory, no navigation and
  * no refetch. The only client component on /stats; a library is warranted
  * here (unlike WeeklyChart/DistributionChart/ActivityHeatmap) because of
- * the time axis and interactive tooltips (§5 Layer 3). A series' points
+ * the time axis and interactive tooltips. A series' points
  * always stay numeric (raw seconds for a duration series, e.g. a marathon
  * PR) — only the Y-axis ticks and the tooltip value read as a duration
  * (formatDurationSeconds), driven by `series.isDuration`, never the

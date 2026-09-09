@@ -162,7 +162,7 @@ function parseDurationValue(
  * validatePersonalRecordInput/validateBodyMetricInput minus their `today`
  * parameter — unlike a body metric or personal record, a goal carries no
  * date field, so there's no "not in the future" rule to judge against
- * today here. Rules, per §5 Layer 4 / the goals schema comment in
+ * today here. Rules, per the goals schema comment in
  * db/schema.ts:
  *   - title required, trimmed.
  *   - targetValue positive, within its target subject's digit limit (see

@@ -71,8 +71,8 @@ export function kmToMetres(km: number): number {
  * Pace conversion — seconds per kilometre <-> seconds per mile. Unlike
  * DistanceInput's m/km/ft/mi, which all convert into and out of one
  * canonical metres value, pace_500m and pace_km are deliberately NOT
- * interconvertible (GOHYBRID_PLAN.md builder spec: "/500m is its own value,
- * no conversion" — a rower thinking in pace-per-500m and a runner thinking
+ * interconvertible ("/500m is its own value, no conversion" — a rower
+ * thinking in pace-per-500m and a runner thinking
  * in pace-per-km aren't the same mode). Only /km and /mi share one stored
  * quantity (target_type = pace_km, target_value always seconds-per-km), the
  * same way DistanceInput's m/km or ft/mi pairs do, so only that pair gets a
@@ -99,8 +99,8 @@ export type DisplayValue = {
 };
 
 /**
- * Weight, converted for display only — the database always stores kg
- * (GOHYBRID_PLAN.md §5 Layer 4). `value` is always metric/SI in; never
+ * Weight, converted for display only — the database always stores kg.
+ * `value` is always metric/SI in; never
  * pass an already-converted number in, and never feed the returned
  * `value` back into a lib/ comparison or aggregation (isBetterRecord,
  * computeGoalProgress, any query) — those must keep operating in kg.

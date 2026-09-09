@@ -34,11 +34,11 @@ function labelProgressSeries(series: ProgressSeries): LabeledProgressSeries {
 }
 
 /**
- * Layer 3's training analytics page: summary cards, the activity heatmap,
+ * Training analytics page: summary cards, the activity heatmap,
  * and the weekly volume / primary-type distribution charts — all sourced
- * from workout_sessions. Plus Layer 4's Progress Charts, sourced ONLY from
- * Personal Records/Body Metrics, never from sessions (see GOHYBRID_PLAN.md
- * §5 Layer 4 — avoids "fake analytics"). Will grow into the Dashboard's
+ * from workout_sessions. Plus Progress Charts, sourced ONLY from
+ * Personal Records/Body Metrics, never from sessions (avoids "fake
+ * analytics"). Will grow into the Dashboard's
  * analytics section; for now it's its own page.
  */
 export default async function StatsPage() {

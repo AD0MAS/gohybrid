@@ -47,7 +47,7 @@ export const GOAL_PERIOD_LABELS: Record<GoalPeriod, { label: string }> = {
  * display, given the raw metric number computeGoalProgress produced —
  * never the other way round: computeGoalProgress's `percent` is computed
  * from the raw metric current/target and must never be recomputed from a
- * converted value (GOHYBRID_PLAN.md §5 Layer 4). session_count is always
+ * converted value. session_count is always
  * "sessions" and streak is always "days" (both unit-system-independent,
  * value carried through unchanged); body_metric and personal_record route
  * through lib/units.ts's formatters, the same ones the Body Metrics and

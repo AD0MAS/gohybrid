@@ -76,9 +76,9 @@ function convertToFixedUnit(value: number, unit: string): number {
 /**
  * Assembles every chartable progress series for `userId`: one per
  * body_metric_type with data, plus one per personal-record subject+type
- * group with data (see GOHYBRID_PLAN.md §5 Layer 4 — progress charts are
- * sourced ONLY from Personal Records/Body Metrics, never from
- * workout_sessions, to avoid "fake analytics"). Grouping reuses
+ * group with data (progress charts are sourced ONLY from Personal
+ * Records/Body Metrics, never from workout_sessions, to avoid "fake
+ * analytics"). Grouping reuses
  * groupPersonalRecordsBySubject from lib/personal-records-grouping.ts rather than
  * regrouping records here, so subject/record_type identity has one
  * definition. Points are sorted oldest to newest, the opposite of the

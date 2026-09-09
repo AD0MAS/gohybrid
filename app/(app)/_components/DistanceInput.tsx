@@ -174,8 +174,8 @@ function compose(
 
 type DistanceInputBaseProps = {
   unitSystem: UnitSystem;
-  /** Official HYROX distances are metric worldwide (GOHYBRID_PLAN.md §7) —
-   * locks the unit to "m" and disables the <select> regardless of
+  /** Official HYROX distances are metric worldwide — locks the unit to
+   * "m" and disables the <select> regardless of
    * unitSystem. */
   isHyroxStation: boolean;
   /** The digit limit of whichever column this instance's value ultimately
@@ -231,7 +231,7 @@ const selectClassName =
  * the user picks the unit themselves, nothing has to be inferred. Value in
  * and out is always METRES, or null when the number box is empty; unit
  * options come from `unitSystem` (m/km or ft/mi), collapsing to a
- * disabled-"m" <select> when `isHyroxStation` is true (§7 — HYROX distances
+ * disabled-"m" <select> when `isHyroxStation` is true (HYROX distances
  * are always metric).
  *
  * Switching the unit CONVERTS the currently displayed number rather than
@@ -259,8 +259,8 @@ const selectClassName =
  * (addPersonalRecord/updatePersonalRecord/addGoal/updateGoal) reads both off
  * FormData and calls convertDistanceInputToMetres(value, unit) itself,
  * before validation — same principle as every other unit conversion in this
- * app (GOHYBRID_PLAN.md §7: "unit conversion happens only at the display
- * boundary, and in reverse on write ... in the Server Action, because the
+ * app ("unit conversion happens only at the display boundary, and in
+ * reverse on write ... in the Server Action, because the
  * client is a convenience and the server is the gate"). The controlled case
  * has no such round trip: `onChange` is called with `compose`'s result (a
  * metres number) directly, computed with the very same convertDistanceInputToMetres

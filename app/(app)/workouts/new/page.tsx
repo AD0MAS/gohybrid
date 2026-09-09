@@ -32,8 +32,8 @@ const BACK_SOURCES: Record<string, BackDestination> = {
 };
 
 /**
- * Workout builder entry point — the only way to create a workout (see
- * GOHYBRID_PLAN.md §3). Enum values, the exercise catalog, and the tag
+ * Workout builder entry point — the only way to create a workout. Enum
+ * values, the exercise catalog, and the tag
  * catalog are read here, server-side, and passed down as plain data so
  * the client builder never needs to import db/schema.ts or query the
  * database itself. All editing happens in the builder's client state;

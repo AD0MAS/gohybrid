@@ -14,8 +14,8 @@ export type BodyMetric = {
 };
 
 /**
- * Drizzle returns `numeric` columns as strings (see GOHYBRID_PLAN.md §6),
- * so every row read from body_metrics is mapped through this to give
+ * Drizzle returns `numeric` columns as strings, so every row read from
+ * body_metrics is mapped through this to give
  * callers an actual number for `value`.
  */
 function toBodyMetric(row: typeof bodyMetrics.$inferSelect): BodyMetric {

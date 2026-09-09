@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Settings (GOHYBRID_PLAN.md §5 Layer 4): account details + sign-out (moved
+ * Settings: account details + sign-out (moved
  * here from /profile), then timezone and unit system, reached from the
  * Profile page's corner button. getUserSettings falls back to
  * DEFAULT_USER_SETTINGS for a user who hasn't saved anything yet, so this

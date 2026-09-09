@@ -8,7 +8,7 @@ type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
  * labeled differently in two places. No `unit` field here: the unit
  * depends on the viewing user's unit_system (and, for weight, actually
  * converts), so it comes from lib/units.ts's formatBodyMetricValue, not
- * this map — one definition per unit (GOHYBRID_PLAN.md §5 Layer 4).
+ * this map — one definition per unit.
  */
 export const BODY_METRIC_LABELS: Record<BodyMetricType, { label: string }> = {
   weight: { label: "Weight" },

@@ -26,7 +26,7 @@
 
   /* Activity heatmap intensity steps 1–2 of 4 (0 = surface-1, 3 = accent) —
      blended from surface-1 toward accent so more sessions reads as more
-     lavender, per DESIGN.md's scarce-accent rule extended into a scale. */
+     lavender. */
   --color-heat-low: #292e51;
   --color-heat-mid: #434b90;
 

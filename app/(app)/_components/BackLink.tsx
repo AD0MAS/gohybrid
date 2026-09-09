@@ -7,11 +7,11 @@ type BackLinkProps = {
 };
 
 /**
- * App-wide back control (GOHYBRID_PLAN.md §9 step 38): a plain Link to a
+ * App-wide back control: a plain Link to a
  * fixed parent route, not router.back() — zero client JavaScript, a
  * predictable destination, and no risk of leaving the app when the page was
- * opened directly. Used only on pages with no navigation entry of their own
- * (§5A); the four top-level routes never render this. `label` names the
+ * opened directly. Used only on pages with no navigation entry of their own;
+ * the four top-level routes never render this. `label` names the
  * destination ("Workouts", "My Workouts") and becomes the accessible name
  * "Back to {label}", since "Back" alone doesn't say where.
  */

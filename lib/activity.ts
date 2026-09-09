@@ -173,8 +173,8 @@ export type PrimaryTypeSessionCount = {
  * Session counts for `userId` grouped by workout_primary_type, over
  * `from`..`to` (both YYYY-MM-DD, inclusive) — the primary-type distribution
  * chart's data source. Only types with at least one session in range are
- * present in the result; the enum deliberately has no "hybrid" value (see
- * GOHYBRID_PLAN.md §5 Layer 3), and this query doesn't invent one. Ordered
+ * present in the result; the enum deliberately has no "hybrid" value, and
+ * this query doesn't invent one. Ordered
  * by count descending so the largest slice of training renders first.
  * `timezone` is the caller's own, same reasoning as
  * getDailySessionCountsForUser.

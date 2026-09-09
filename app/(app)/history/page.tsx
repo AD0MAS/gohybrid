@@ -35,7 +35,7 @@ const BACK_SOURCES: Record<string, BackDestination> = {
  * completed workout sessions, most recently completed first. Renders
  * workout_title and workout_primary_type from each session's own snapshot
  * columns rather than joining against `workouts`, so a session survives
- * its workout being edited or deleted (see GOHYBRID_PLAN.md §7).
+ * its workout being edited or deleted.
  *
  * Reachable from both /workouts/library (its corner button) and Home (the
  * recent-activity "Full history" link), so the back link's target depends

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Workouts (GOHYBRID_PLAN.md §5A): the planning page shell — the week
+ * Workouts: the planning page shell — the week
  * strip up top (what this page is primarily for), then a prominent New
  * workout action and an entry into the library at /workouts/library.
  * Deliberately not the library itself, since the strip, the library,

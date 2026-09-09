@@ -96,8 +96,8 @@ export type BuilderEnumOptions = {
    * own fetch, or getExerciseCatalog() server-side), the same "caller
    * supplies what it already has" pattern as the other *Options lists.
    * Used to tell a rest item apart from a regular one: rest items are
-   * exempt from the volumeType/volumeValue requirement below (§ change 2 —
-   * a rest item has no volume at all, only an optional rest_seconds). A
+   * exempt from the volumeType/volumeValue requirement below (a rest item
+   * has no volume at all, only an optional rest_seconds). A
    * custom-named item is never a rest item (it has no catalog row), so this
    * is only ever consulted when exerciseId is set. */
   restExerciseIds: readonly string[];
@@ -341,8 +341,8 @@ export function validateBuilderItemDraft(
   if (draft.volumeValue !== null) {
     // Reps and calories are guarded by min: 1 on their own <input>
     // (ItemEditor) — a typed 0 is corrected to 1 before it ever reaches
-    // the draft, so there's nothing left to check here for them (§ fix
-    // 2: enforce minimums at the input, not the validator). Duration and
+    // the draft, so there's nothing left to check here for them (enforce
+    // minimums at the input, not the validator). Duration and
     // distance route through DurationInput/DistanceInput instead, neither
     // of which has a min concept, so this stays their only client-side
     // guard against a typed zero — same reasoning as pace below.
@@ -859,8 +859,8 @@ function parseBuilderBlock(
     return { error: `Block ${index + 1} interval must be positive.` };
   }
 
-  // Per-block-type required timing fields (GOHYBRID_PLAN.md §5): for_time
-  // and general have no required timing fields, so they fall through here
+  // Per-block-type required timing fields: for_time and general have no
+  // required timing fields, so they fall through here
   // untouched. Positivity is already guaranteed by the blanket checks
   // above whenever a field is non-null, so these only need to check for
   // presence — a for_time/general block with a stray zero/negative value
@@ -931,13 +931,13 @@ function parseBuilderBlock(
  * db/schema.ts at runtime, so this function has no Node-only or drizzle
  * dependency and is safe to call from client code.
  *
- * Rules (GOHYBRID_PLAN.md §5): title required and non-empty; primaryType
- * and difficulty must be valid enum values; every block must have a
- * valid blockType; a block's required timing fields depend on its type —
- * amrap needs a positive duration; on_off needs positive work, rest, and
- * rounds; emom needs a positive interval and rounds; for_time and general
- * have none (see parseBuilderBlock) — these fields stay nullable at the
- * DB level (§6) regardless, since this is application-level validation,
+ * Rules: title required and non-empty; primaryType and difficulty must
+ * be valid enum values; every block must have a valid blockType; a
+ * block's required timing fields depend on its type — amrap needs a
+ * positive duration; on_off needs positive work, rest, and rounds; emom
+ * needs a positive interval and rounds; for_time and general have none
+ * (see parseBuilderBlock) — these fields stay nullable at the DB level
+ * regardless, since this is application-level validation,
  * not a column constraint. Each item must have exactly one of exerciseId
  * or customName (never both, never neither); targetType/targetValue and
  * targetPreset are alternatives, never both. Every item whose exercise is

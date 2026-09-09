@@ -25,8 +25,8 @@ type EventCardProps = {
  * EventForm's own doc comment) — client-to-client, an ordinary closure
  * prop is fine. Splitting this out keeps that requirement local to one
  * small leaf instead of forcing WeekStrip itself to become a client
- * component (GOHYBRID_PLAN.md §7 deliberately keeps the week strip and
- * calendar as pure Server Components driven by search-param navigation).
+ * component (the week strip and calendar are deliberately kept as pure
+ * Server Components driven by search-param navigation).
  *
  * Lives in app/(app)/_components — not under workouts/, its only caller
  * today — for the same reason ConfirmModal/Modal/DistanceInput/

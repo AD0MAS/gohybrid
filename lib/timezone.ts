@@ -9,8 +9,8 @@ import { db } from "@/db";
  * calendar day it falls on — never by deriving a day from a JavaScript
  * Date, which would use the server's local timezone instead — now takes
  * its timezone as a parameter (lib/activity.ts) rather than importing a
- * module-level constant, so a user's own saved timezone (Layer 4's
- * Settings, see lib/user-settings.ts) reaches those queries instead of
+ * module-level constant, so a user's own saved timezone (Settings, see
+ * lib/user-settings.ts) reaches those queries instead of
  * this one.
  */
 export const APP_TIMEZONE = "Europe/Vilnius";

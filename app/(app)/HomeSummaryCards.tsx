@@ -11,8 +11,7 @@ type HomeSummaryCardsProps = {
 };
 
 /**
- * Home's at-a-glance row (GOHYBRID_PLAN.md §5A): this week, this month,
- * current streak. A deliberate subset-and-duplicate of /stats' five-card
+ * Home's at-a-glance row: this week, this month, current streak. A deliberate subset-and-duplicate of /stats' five-card
  * SummaryCards, reusing the exact same lib/ functions and the shared
  * SummaryCard tile — total sessions and longest streak stay /stats-only.
  * Fetches its own data given `userId`, same convention as

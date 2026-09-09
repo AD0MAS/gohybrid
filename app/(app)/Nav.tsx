@@ -28,7 +28,7 @@ type NavProps = {
 };
 
 /**
- * Top-level navigation (GOHYBRID_PLAN.md §5A): a persistent left sidebar on
+ * Top-level navigation: a persistent left sidebar on
  * desktop (sm and up) and a fixed bottom bar on mobile, both driven by the
  * same NAV_ITEMS list so the two platforms can't drift out of sync — only
  * the surrounding markup and classes differ per breakpoint. Sign-out lives

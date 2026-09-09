@@ -13,7 +13,7 @@ type RecentActivityProps = {
 /**
  * Home's recent activity: the last 5 completed workout sessions, newest
  * first, read-only. Renders workout_title and workout_primary_type from
- * each session's own snapshot columns (GOHYBRID_PLAN.md §7), same as
+ * each session's own snapshot columns, same as
  * Training History — but this is a fixed five-row list with no actions,
  * not the full chronological list, so it stays its own component rather
  * than a shared one with /history. `userId` arrives as a prop from Home

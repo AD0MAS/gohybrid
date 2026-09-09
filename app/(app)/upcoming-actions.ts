@@ -39,9 +39,8 @@ export async function markScheduledWorkoutSkipped(
  * Records that one of the authenticated user's scheduled workouts was
  * actually done — bound with the id via .bind(null, id) from the "Mark
  * done" control on both UpcomingList and WeekStrip's day cards, for a
- * workout completed away from Start Workout Mode (GOHYBRID_PLAN.md §1: the
- * core loop's "After" moment doesn't require having run "During" through
- * this app). Reuses createSessionForWorkout, the same lib/ function
+ * workout completed away from Start Workout Mode (the core loop's "After"
+ * moment doesn't require having run "During" through this app). Reuses createSessionForWorkout, the same lib/ function
  * finishWorkout goes through, so the created session has the identical
  * shape (snapshot columns, no status field) regardless of entry point.
  *

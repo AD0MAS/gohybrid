@@ -71,8 +71,8 @@ function textClass(entry: DayEntry, inMonth: boolean): string {
 }
 
 /**
- * Month view of scheduled workouts and events (Layer 2's Calendar, events
- * added alongside it): a Monday-first grid for the month named by the
+ * Month view of scheduled workouts and events (events added alongside the
+ * original calendar view): a Monday-first grid for the month named by the
  * `month` search param (YYYY-MM, via resolveCalendarView), with
  * leading/trailing cells from adjacent months completing every week row.
  * Reads the same getScheduledForUserInRange and getEventsForUserInRange

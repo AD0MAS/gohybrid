@@ -66,7 +66,7 @@ type WeekStripProps = {
  * user's own calendar day, not the database's UTC one.
  *
  * Each scheduled-workout entry also carries the same Mark done / Mark
- * skipped / Remove controls as UpcomingList (GOHYBRID_PLAN.md §5A), bound to
+ * skipped / Remove controls as UpcomingList, bound to
  * the identical Server Actions in app/(app)/upcoming-actions.ts — this is
  * the only place that can reach a *past* scheduled entry (UpcomingList only
  * ever lists today-or-later, not-yet-completed ones), so it's also the only
