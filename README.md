@@ -70,6 +70,8 @@ Nested tables carry no `user_id` of their own: `workout_blocks` and `workout_ite
 | Local dev, migrations | Session | 5432 | Direct connections are IPv6-only; session mode supports the DDL and prepared statements migrations need |
 | Production | Transaction | 6543 | Serverless functions open many short-lived connections; transaction mode returns each to the pool immediately |
 
+Vercel functions run in `dub1` (Dublin), the same AWS region as the database. The default `iad1` put every round trip across the Atlantic, which on pages issuing dozens of them cost three to five times the render time.
+
 The driver is `node-postgres`, not `postgres.js`. The latter pipelines queries
 onto a shared socket — it will send a second query before the first is answered
 — which Supavisor's transaction mode mishandles: the backend sits in `ClientRead`
