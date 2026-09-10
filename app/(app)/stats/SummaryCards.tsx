@@ -22,6 +22,15 @@ type SummaryCardsProps = {
  * getUserContext (cached, so this and the three chart components below
  * share one pair of queries per request), so they're always the same
  * user's calendar day.
+ *
+ * Below lg, the five cards lay out as two rows (3 + 2) on a 6-column
+ * grid — each card spans 2 or 3 of those columns so both rows fill the
+ * full width whenever all five don't fit on one row (phones through
+ * iPad Air), and SummaryCard's compact variant keeps the mobile row
+ * short enough that the heatmap below no longer needs a scroll to reach.
+ * Only at lg, where all five cards fit on one row, does grid-cols-5 take
+ * over, paired with an lg:col-span-1 reset on each wrapper so the
+ * mobileSpan values stop applying at that same breakpoint.
  */
 export default async function SummaryCards({ userId }: SummaryCardsProps) {
   const { today, timezone } = await getUserContext(userId);
@@ -36,17 +45,19 @@ export default async function SummaryCards({ userId }: SummaryCardsProps) {
   ]);
 
   const cards = [
-    { label: "Total sessions", value: total },
-    { label: "This week", value: thisWeek },
-    { label: "This month", value: thisMonth },
-    { label: "Current streak", value: streaks.current },
-    { label: "Longest streak", value: streaks.longest },
+    { label: "Total sessions", value: total, mobileSpan: "col-span-2" },
+    { label: "This week", value: thisWeek, mobileSpan: "col-span-2" },
+    { label: "This month", value: thisMonth, mobileSpan: "col-span-2" },
+    { label: "Current streak", value: streaks.current, mobileSpan: "col-span-3" },
+    { label: "Longest streak", value: streaks.longest, mobileSpan: "col-span-3" },
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+    <section className="grid grid-cols-6 gap-3 sm:gap-5 lg:grid-cols-5">
       {cards.map((card) => (
-        <SummaryCard key={card.label} label={card.label} value={card.value} />
+        <div key={card.label} className={`${card.mobileSpan} lg:col-span-1`}>
+          <SummaryCard label={card.label} value={card.value} variant="compact" />
+        </div>
       ))}
     </section>
   );
