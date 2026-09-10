@@ -13,7 +13,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex w-full max-w-2xl flex-col gap-4">
-        <h1 className="text-xl font-semibold text-ink">Register</h1>
+        <h1 className="text-xl font-semibold text-ink">Create your account</h1>
 
         {error && (
           <p className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
@@ -44,7 +44,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
           </label>
 
           <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-            Register
+            Create account
           </SubmitButton>
           <FormPendingBanner label="Creating your account…" />
         </form>

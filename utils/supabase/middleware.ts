@@ -7,8 +7,10 @@ const PUBLIC_PATHS = ["/login", "/register"];
  * Refreshes the Supabase auth session for an incoming request, mirrors any
  * updated cookies onto both the request (so this response cycle sees them)
  * and the response (so the browser stores them), and redirects
- * unauthenticated requests to /login for every route except /login,
- * /register, and API routes. API routes are exempt from the redirect
+ * unauthenticated requests to /register for every route except /login,
+ * /register, and API routes. Most first-time visitors have never registered,
+ * so /register is the more useful landing page than a login form they'd
+ * just bounce off. API routes are exempt from the redirect
  * because a caller there expects a JSON 401 from the Route Handler, not an
  * HTML redirect — each Route Handler is responsible for its own auth
  * check. Also redirects the other way: a request that already has a
@@ -54,7 +56,7 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublicPath && !isApiPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/register";
     return NextResponse.redirect(url);
   }
 
