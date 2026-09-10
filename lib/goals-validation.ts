@@ -205,7 +205,7 @@ export function validateGoalInput(
   if (!isOneOf(goalType, goalTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `Goal type must be one of: ${goalTypeEnum.enumValues.join(", ")}.`,
+      error: "Choose a valid goal type.",
     };
   }
 
@@ -213,9 +213,7 @@ export function validateGoalInput(
   if (!isOneOf(direction, goalDirectionEnum.enumValues)) {
     return {
       success: false,
-      error: `Direction must be one of: ${goalDirectionEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid direction.",
     };
   }
 
@@ -223,7 +221,7 @@ export function validateGoalInput(
   if (!isOneOf(period, goalPeriodEnum.enumValues)) {
     return {
       success: false,
-      error: `Period must be one of: ${goalPeriodEnum.enumValues.join(", ")}.`,
+      error: "Choose a valid period.",
     };
   }
 
@@ -242,9 +240,7 @@ export function validateGoalInput(
   if (!parsedTarget.ok) {
     return {
       success: false,
-      error: isDurationGoal
-        ? "Target value must be more than zero."
-        : "Target value must be greater than 0.",
+      error: "Target value must be greater than zero.",
     };
   }
   if (parsedTarget.value === null) {
@@ -273,9 +269,7 @@ export function validateGoalInput(
   ) {
     return {
       success: false,
-      error: `Workout type must be one of: ${workoutPrimaryTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid workout type.",
     };
   }
 
@@ -290,9 +284,7 @@ export function validateGoalInput(
   ) {
     return {
       success: false,
-      error: `Metric type must be one of: ${bodyMetricTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid metric type.",
     };
   }
 
@@ -332,9 +324,7 @@ export function validateGoalInput(
   ) {
     return {
       success: false,
-      error: `Record type must be one of: ${personalRecordTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid record type.",
     };
   }
 
@@ -343,7 +333,7 @@ export function validateGoalInput(
       if (direction !== "increase") {
         return {
           success: false,
-          error: "Session count and streak goals are always increase.",
+          error: "Session count and streak goals must always increase.",
         };
       }
       if (
@@ -369,7 +359,13 @@ export function validateGoalInput(
       if (targetValue > MAX_GOAL_VALUE) {
         return {
           success: false,
-          error: `Target value must be at most ${MAX_GOAL_VALUE}.`,
+          // Displayed floored: targetValue is already confirmed a whole
+          // number above (Number.isInteger), so "...at most 9999999.99."
+          // would show a fractional ceiling no integer target can ever
+          // meaningfully approach. Math.floor only changes how the bound is
+          // displayed — the comparison two lines up still checks the exact
+          // MAX_GOAL_VALUE, unchanged.
+          error: `Target value must be at most ${Math.floor(MAX_GOAL_VALUE)}.`,
         };
       }
       break;
@@ -378,7 +374,7 @@ export function validateGoalInput(
       if (direction !== "increase") {
         return {
           success: false,
-          error: "Session count and streak goals are always increase.",
+          error: "Session count and streak goals must always increase.",
         };
       }
       if (
@@ -390,7 +386,7 @@ export function validateGoalInput(
       ) {
         return {
           success: false,
-          error: "Streak goals accept none of the target fields.",
+          error: "Streak goals don't accept any target fields.",
         };
       }
       // A count of sessions or a streak length in days — always a whole
@@ -404,7 +400,13 @@ export function validateGoalInput(
       if (targetValue > MAX_GOAL_VALUE) {
         return {
           success: false,
-          error: `Target value must be at most ${MAX_GOAL_VALUE}.`,
+          // Displayed floored: targetValue is already confirmed a whole
+          // number above (Number.isInteger), so "...at most 9999999.99."
+          // would show a fractional ceiling no integer target can ever
+          // meaningfully approach. Math.floor only changes how the bound is
+          // displayed — the comparison two lines up still checks the exact
+          // MAX_GOAL_VALUE, unchanged.
+          error: `Target value must be at most ${Math.floor(MAX_GOAL_VALUE)}.`,
         };
       }
       break;
@@ -466,7 +468,7 @@ export function validateGoalInput(
         return {
           success: false,
           error:
-            "Personal record goals only accept a record type and the exercise/custom-name choice.",
+            "Personal record goals only accept a record type and either an exercise or a custom name.",
         };
       }
       // "time" is already a rounded whole-seconds value from

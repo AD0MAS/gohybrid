@@ -56,15 +56,13 @@ export function validateEventInput(input: RawEventInput): EventValidationResult 
   if (!isOneOf(eventType, eventTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `Event type must be one of: ${eventTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid event type.",
     };
   }
 
   const eventDate = input.eventDate;
   if (!isValidDateString(eventDate)) {
-    return { success: false, error: "Event date must be a YYYY-MM-DD date." };
+    return { success: false, error: "Event date must be a valid date." };
   }
 
   const location =

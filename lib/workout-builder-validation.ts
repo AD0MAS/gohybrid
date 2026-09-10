@@ -314,7 +314,7 @@ export function validateBuilderItemDraft(
   if (draft.exerciseId !== null && draft.customName !== null) {
     errors.exercise = "Cannot have both an exercise and a custom name.";
   } else if (draft.exerciseId === null && draft.customName === null) {
-    errors.exercise = "Needs either an exercise or a custom name.";
+    errors.exercise = "Either an exercise or a custom name is required.";
   }
 
   // A rest item (exerciseId pointing at an exercises.category = "rest" row)
@@ -436,7 +436,7 @@ export function validateBuilderItemDraft(
     (draft.targetType !== "" || draft.targetValue !== null)
   ) {
     errors.targetPreset =
-      "Cannot have both a target preset and a target type/value.";
+      "Cannot have both a target preset and a target type or value.";
   }
 
   if (draft.weightKg !== null) {
@@ -709,7 +709,7 @@ function parseBuilderItem(
 
   if (targetPreset !== null && (targetType !== null || targetValue !== null)) {
     return {
-      error: `${context} cannot have both a target preset and a target type/value.`,
+      error: `${context} cannot have both a target preset and a target type or value.`,
     };
   }
 
@@ -750,7 +750,7 @@ function parseBuilderItem(
 
   const restSeconds = parseOptionalNumber(item.restSeconds);
   if (restSeconds === INVALID) {
-    return { error: `${context} rest seconds must be a number.` };
+    return { error: `${context} rest must be a number.` };
   }
   // >= 0, not > 0 — unlike a block's timing fields, zero rest is a
   // meaningful choice (back-to-back sets), not a missing value.
@@ -849,7 +849,7 @@ function parseBuilderBlock(
 
   const workSeconds = parseOptionalNumber(block.workSeconds);
   if (workSeconds === INVALID) {
-    return { error: `Block ${index + 1} work seconds must be a number.` };
+    return { error: `Block ${index + 1} work time must be a number.` };
   }
   if (workSeconds !== null && workSeconds <= 0) {
     return { error: `Block ${index + 1} work time must be positive.` };
@@ -857,7 +857,7 @@ function parseBuilderBlock(
 
   const restSeconds = parseOptionalNumber(block.restSeconds);
   if (restSeconds === INVALID) {
-    return { error: `Block ${index + 1} rest seconds must be a number.` };
+    return { error: `Block ${index + 1} rest time must be a number.` };
   }
   if (restSeconds !== null && restSeconds <= 0) {
     return { error: `Block ${index + 1} rest time must be positive.` };
@@ -866,7 +866,7 @@ function parseBuilderBlock(
   const intervalSeconds = parseOptionalNumber(block.intervalSeconds);
   if (intervalSeconds === INVALID) {
     return {
-      error: `Block ${index + 1} interval seconds must be a number.`,
+      error: `Block ${index + 1} interval must be a number.`,
     };
   }
   if (intervalSeconds !== null && intervalSeconds <= 0) {
@@ -883,33 +883,45 @@ function parseBuilderBlock(
   // validator is the real gate for a direct API call too) is caught above
   // regardless of block type.
   if (blockType === "amrap" && durationSeconds === null) {
-    return { error: `Block ${index + 1}: an AMRAP block needs a duration.` };
+    return {
+      error: `Block ${index + 1} is an AMRAP block and needs a duration.`,
+    };
   }
 
   if (blockType === "on_off") {
     if (workSeconds === null) {
-      return { error: `Block ${index + 1}: an on/off block needs a work time.` };
+      return {
+        error: `Block ${index + 1} is an on/off block and needs a work time.`,
+      };
     }
     if (restSeconds === null) {
-      return { error: `Block ${index + 1}: an on/off block needs a rest time.` };
+      return {
+        error: `Block ${index + 1} is an on/off block and needs a rest time.`,
+      };
     }
     if (rounds === null) {
-      return { error: `Block ${index + 1}: an on/off block needs a number of rounds.` };
+      return {
+        error: `Block ${index + 1} is an on/off block and needs a number of rounds.`,
+      };
     }
   }
 
   if (blockType === "emom") {
     if (intervalSeconds === null) {
-      return { error: `Block ${index + 1}: an EMOM block needs an interval.` };
+      return {
+        error: `Block ${index + 1} is an EMOM block and needs an interval.`,
+      };
     }
     if (rounds === null) {
-      return { error: `Block ${index + 1}: an EMOM block needs a number of rounds.` };
+      return {
+        error: `Block ${index + 1} is an EMOM block and needs a number of rounds.`,
+      };
     }
   }
 
   const rawItems = Array.isArray(block.items) ? block.items : [];
   if (rawItems.length === 0) {
-    return { error: "Add at least one item" };
+    return { error: "Add at least one item." };
   }
   const items: ValidatedBuilderItem[] = [];
   for (const [itemIndex, rawItem] of rawItems.entries()) {
@@ -982,9 +994,7 @@ export function validateBuilderPayload(
   if (!isOneOf(input.primaryType, options.primaryTypeOptions)) {
     return {
       success: false,
-      error: `primaryType must be one of: ${options.primaryTypeOptions.join(
-        ", "
-      )}.`,
+      error: "Choose a valid primary type.",
     };
   }
   const primaryType = input.primaryType;
@@ -992,9 +1002,7 @@ export function validateBuilderPayload(
   if (!isOneOf(input.difficulty, options.difficultyOptions)) {
     return {
       success: false,
-      error: `difficulty must be one of: ${options.difficultyOptions.join(
-        ", "
-      )}.`,
+      error: "Choose a valid difficulty.",
     };
   }
   const difficulty = input.difficulty;
@@ -1022,7 +1030,7 @@ export function validateBuilderPayload(
     if (!Number.isInteger(parsed) || parsed <= 0) {
       return {
         success: false,
-        error: "estimatedDurationMinutes must be a positive integer.",
+        error: "Estimated duration must be a positive integer.",
       };
     }
     const digitCheck = checkDigitLimit(
@@ -1038,7 +1046,7 @@ export function validateBuilderPayload(
 
   const rawBlocks = Array.isArray(input.blocks) ? input.blocks : [];
   if (rawBlocks.length === 0) {
-    return { success: false, error: "Add at least one block" };
+    return { success: false, error: "Add at least one block." };
   }
   const blocks: ValidatedBuilderBlock[] = [];
   for (const [index, rawBlock] of rawBlocks.entries()) {

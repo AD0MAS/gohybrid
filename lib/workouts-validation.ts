@@ -73,9 +73,7 @@ export function validateWorkoutInput(
   if (!isOneOf(primaryType, workoutPrimaryTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `primaryType must be one of: ${workoutPrimaryTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid primary type.",
     };
   }
 
@@ -83,9 +81,7 @@ export function validateWorkoutInput(
   if (!isOneOf(difficulty, workoutDifficultyEnum.enumValues)) {
     return {
       success: false,
-      error: `difficulty must be one of: ${workoutDifficultyEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid difficulty.",
     };
   }
 
@@ -112,7 +108,7 @@ export function validateWorkoutInput(
     if (!Number.isInteger(parsed) || parsed <= 0) {
       return {
         success: false,
-        error: "estimatedDurationMinutes must be a positive integer.",
+        error: "Estimated duration must be a positive integer.",
       };
     }
     const digitCheck = checkDigitLimit(

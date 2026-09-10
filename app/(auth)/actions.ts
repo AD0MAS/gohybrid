@@ -16,7 +16,7 @@ import { SITE_URL } from "@/lib/site";
 function mapSignInError(error: { code?: string; message: string }): string {
   switch (error.code) {
     case "invalid_credentials":
-      return "Invalid email or password";
+      return "Invalid email or password.";
     case "email_not_confirmed":
       return "Please confirm your email address — check your inbox for the confirmation link.";
     default:
@@ -60,9 +60,9 @@ export async function signIn(formData: FormData) {
 function mapSignUpError(error: { code?: string; message: string }): string {
   switch (error.code) {
     case "weak_password":
-      return "Password must be at least 6 characters";
+      return "Password must be at least 6 characters.";
     case "email_address_invalid":
-      return "Enter a valid email address";
+      return "Enter a valid email address.";
     default:
       console.error("Unexpected sign-up error:", error);
       return "Something went wrong. Please try again.";

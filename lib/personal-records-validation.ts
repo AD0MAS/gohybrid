@@ -144,9 +144,7 @@ export function validatePersonalRecordInput(
   if (!isOneOf(recordType, personalRecordTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `Record type must be one of: ${personalRecordTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid record type.",
     };
   }
 
@@ -184,7 +182,7 @@ export function validatePersonalRecordInput(
   if (!isValidDateString(achievedAt)) {
     return {
       success: false,
-      error: "Date achieved must be a YYYY-MM-DD date.",
+      error: "Date achieved must be a valid date.",
     };
   }
   if (achievedAt > today) {

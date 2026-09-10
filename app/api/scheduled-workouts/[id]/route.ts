@@ -29,7 +29,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   if (!body || typeof body !== "object" || typeof body.isSkipped !== "boolean") {
     return NextResponse.json(
-      { error: "isSkipped must be a boolean." },
+      { error: "The request must specify whether this workout was skipped." },
       { status: 400 }
     );
   }

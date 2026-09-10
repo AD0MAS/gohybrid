@@ -31,16 +31,14 @@ export function validateUserSettingsInput(
     typeof timezone !== "string" ||
     !Intl.supportedValuesOf("timeZone").includes(timezone)
   ) {
-    return { success: false, error: "timezone must be a valid IANA zone." };
+    return { success: false, error: "Timezone must be a valid time zone." };
   }
 
   const unitSystem = input.unitSystem;
   if (!isOneOf(unitSystem, unitSystemEnum.enumValues)) {
     return {
       success: false,
-      error: `unitSystem must be one of: ${unitSystemEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose valid units.",
     };
   }
 

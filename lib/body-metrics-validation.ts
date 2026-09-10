@@ -84,9 +84,7 @@ export function validateBodyMetricInput(
   if (!isOneOf(metricType, bodyMetricTypeEnum.enumValues)) {
     return {
       success: false,
-      error: `Metric type must be one of: ${bodyMetricTypeEnum.enumValues.join(
-        ", "
-      )}.`,
+      error: "Choose a valid metric type.",
     };
   }
 
@@ -106,7 +104,7 @@ export function validateBodyMetricInput(
   if (!isValidDateString(measuredAt)) {
     return {
       success: false,
-      error: "Date measured must be a YYYY-MM-DD date.",
+      error: "Date measured must be a valid date.",
     };
   }
   if (measuredAt > today) {

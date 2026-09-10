@@ -68,14 +68,17 @@ export function validateScheduleInput(
 ): ScheduleValidationResult {
   const workoutId = input.workoutId;
   if (typeof workoutId !== "string" || !isValidUuid(workoutId)) {
-    return { success: false, error: "workoutId must be a valid id." };
+    return {
+      success: false,
+      error: "The request does not include a valid workout.",
+    };
   }
 
   const scheduledDate = input.scheduledDate;
   if (!isValidDateString(scheduledDate)) {
     return {
       success: false,
-      error: "scheduledDate must be a YYYY-MM-DD date.",
+      error: "Date must be a valid date.",
     };
   }
 
@@ -84,7 +87,7 @@ export function validateScheduleInput(
     if (!isValidTimeString(input.scheduledTime)) {
       return {
         success: false,
-        error: "scheduledTime must be an HH:MM time.",
+        error: "Time must be a valid time.",
       };
     }
     scheduledTime = input.scheduledTime;
