@@ -266,7 +266,7 @@ function formatItemSummary(
 type ItemDraft = {
   exerciseId: string | null;
   customName: string | null;
-  sets: number;
+  sets: number | null;
   volumeType: VolumeType | "";
   volumeValue: number | null;
   targetType: TargetType | "";
@@ -670,7 +670,7 @@ function ItemEditorModalFields({
       customName: null,
       ...(becomingRest
         ? {
-            sets: 1,
+            sets: null,
             volumeType: "" as const,
             volumeValue: null,
             targetType: "" as const,
@@ -698,7 +698,7 @@ function ItemEditorModalFields({
     clearErrors(["exercise"]);
   }
 
-  function updateSets(value: number) {
+  function updateSets(value: number | null) {
     setDraft((d) => ({ ...d, sets: value }));
     clearErrors(["sets"]);
   }
@@ -880,13 +880,13 @@ function ItemEditorModalFields({
               min={1}
               step={1}
               required
-              value={draft.sets}
+              value={draft.sets ?? ""}
               onChange={(e) =>
                 updateSets(
                   sanitizeNumberInputChange(e, {
                     min: 1,
                     digitLimit: SETS_DIGIT_LIMIT,
-                  }) ?? 1
+                  })
                 )
               }
               {...numberInputGuardProps()}

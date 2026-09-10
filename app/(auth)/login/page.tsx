@@ -26,7 +26,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
 
         <RedirectSuccessBanner
           show={confirmed}
-          label="Email confirmed. Sign in to continue."
+          label="Email confirmed. Log in to continue."
           paramName="confirmed"
         />
 

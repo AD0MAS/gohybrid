@@ -263,7 +263,7 @@ export function validateBuilderBlockDraft(
 export type BuilderItemDraft = {
   exerciseId: string | null;
   customName: string | null;
-  sets: number;
+  sets: number | null;
   volumeType: (typeof volumeTypeEnum.enumValues)[number] | "";
   volumeValue: number | null;
   targetType: (typeof targetTypeEnum.enumValues)[number] | "";
@@ -317,18 +317,24 @@ export function validateBuilderItemDraft(
     errors.exercise = "Needs either an exercise or a custom name.";
   }
 
-  if (!Number.isInteger(draft.sets) || draft.sets < 1) {
-    errors.sets = "Sets must be a positive integer.";
-  }
-
   // A rest item (exerciseId pointing at an exercises.category = "rest" row)
   // has no volume at all — only its own optional rest_seconds field, which
   // is validated separately below regardless of category. Every other item
   // now requires both a volume type and a volume value (change 1): "Open
   // Ended" — a volume type with no value — no longer exists as a UI state.
+  // Sets is exempt from its own required check just below for the same
+  // reason: a rest item hides the Sets field entirely.
   const isRestItem =
     draft.exerciseId !== null &&
     options.restExerciseIds.includes(draft.exerciseId);
+
+  if (!isRestItem) {
+    if (draft.sets === null) {
+      errors.sets = "Sets is required.";
+    } else if (!Number.isInteger(draft.sets) || draft.sets < 1) {
+      errors.sets = "Sets must be a positive integer.";
+    }
+  }
 
   if (draft.volumeType !== "") {
     if (!isOneOf(draft.volumeType, options.volumeTypeOptions)) {
@@ -549,8 +555,16 @@ function parseBuilderItem(
     exerciseId !== null && options.restExerciseIds.includes(exerciseId);
 
   const parsedSets = parseOptionalNumber(item.sets);
-  let sets = parsedSets === null ? 1 : parsedSets;
-  if (sets === INVALID || !Number.isInteger(sets) || sets < 1) {
+  if (parsedSets === INVALID) {
+    return { error: `${context} sets must be a number.` };
+  }
+  // A rest item has no Sets field to fill in (see the isRestItem comment
+  // above) but workout_items.sets stays NOT NULL, so a missing value
+  // defaults to 1 the way it always has. Every other item must supply its
+  // own value now — Sets is required, exactly like Volume type/Volume value
+  // just below (change 1).
+  let sets = isRestItem ? (parsedSets ?? 1) : parsedSets;
+  if (sets === null || !Number.isInteger(sets) || sets < 1) {
     return { error: `${context} sets must be a positive integer.` };
   }
   const setsDigitCheck = checkDigitLimit(sets, SETS_DIGIT_LIMIT, `${context} sets`);
@@ -894,6 +908,9 @@ function parseBuilderBlock(
   }
 
   const rawItems = Array.isArray(block.items) ? block.items : [];
+  if (rawItems.length === 0) {
+    return { error: "Add at least one item" };
+  }
   const items: ValidatedBuilderItem[] = [];
   for (const [itemIndex, rawItem] of rawItems.entries()) {
     const parsed = parseBuilderItem(
@@ -1020,6 +1037,9 @@ export function validateBuilderPayload(
   }
 
   const rawBlocks = Array.isArray(input.blocks) ? input.blocks : [];
+  if (rawBlocks.length === 0) {
+    return { success: false, error: "Add at least one block" };
+  }
   const blocks: ValidatedBuilderBlock[] = [];
   for (const [index, rawBlock] of rawBlocks.entries()) {
     const parsed = parseBuilderBlock(rawBlock, index, options);

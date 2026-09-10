@@ -45,7 +45,7 @@ export type BuilderItem = {
   id: string;
   exerciseId: string | null;
   customName: string | null;
-  sets: number;
+  sets: number | null;
   volumeType: VolumeType | "";
   volumeValue: number | null;
   targetType: TargetType | "";
@@ -267,7 +267,7 @@ type UpdateItemFieldAction =
       blockId: string;
       itemId: string;
       field: "sets";
-      value: number;
+      value: number | null;
     }
   | {
       type: "UPDATE_ITEM_FIELD";
@@ -370,7 +370,7 @@ function createItem(id: string): BuilderItem {
     id,
     exerciseId: null,
     customName: null,
-    sets: 1,
+    sets: null,
     volumeType: "",
     volumeValue: null,
     targetType: "",
