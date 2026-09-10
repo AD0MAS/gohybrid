@@ -76,7 +76,11 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
         </div>
       </nav>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-hairline bg-canvas sm:hidden">
+      {/* z-20: must sit above the z-10 stretched-link overlays (favorite
+          star, EventCard/UpcomingList/WeekStrip remove buttons) so page
+          content scrolling underneath never paints over the bar; stays
+          below the z-50 FormStatus banner. */}
+      <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-hairline bg-canvas sm:hidden">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

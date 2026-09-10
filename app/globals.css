@@ -34,6 +34,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark only, no theme switch (see CLAUDE.md "Design"). Without this, browsers
+   paint native form-control chrome — select arrows, checkbox outlines,
+   scrollbars — for a light UI regardless of the page's own dark background;
+   on iOS Safari that's what renders the select chevron nearly black on the
+   dark surface color. This tells the browser which palette to paint natives
+   with, so the chevron's shape is unchanged and only its color matches. */
+:root {
+  color-scheme: dark;
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-ink);
