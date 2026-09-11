@@ -15,17 +15,16 @@ type ActivityHeatmapProps = {
 const MOBILE_WEEKS = 26;
 
 /**
- * Shading step for a day's session count: 0 sessions, 1, 2, or 3+ — four
- * levels stepping from surface-1 up through accent, so
- * more sessions reads as more lavender. SVG `fill` doesn't take Tailwind
- * classes, so the same scale is carried over as CSS variable references,
- * matching WeeklyChart/DistributionChart's convention.
+ * Shading for a day's session count: a training app answers "did I train,"
+ * not "how many times" — a gradient with no legend isn't readable. Any day
+ * with at least one session gets accent; a day with none gets surface-3 (not
+ * surface-1, which would disappear against the panel's own surface-1
+ * background). SVG `fill` doesn't take Tailwind classes, so the scale is
+ * carried over as CSS variable references, matching WeeklyChart/
+ * DistributionChart's convention.
  */
 function fillForCount(count: number): string {
-  if (count === 0) return "var(--color-surface-1)";
-  if (count === 1) return "var(--color-heat-low)";
-  if (count === 2) return "var(--color-heat-mid)";
-  return "var(--color-accent)";
+  return count > 0 ? "var(--color-accent)" : "var(--color-surface-3)";
 }
 
 /** Total sessions across a set of columns, treating a null cell as 0. */
@@ -181,16 +180,16 @@ export default async function ActivityHeatmap({
   const mobileTotal = sumSessions(mobileColumns);
 
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
         <h2 className="text-sm font-medium text-ink">Activity</h2>
-        <p className="text-sm text-ink-subtle">
+        <p className="text-xs text-ink-tertiary">
           <span className="hidden md:inline">
-            {yearTotal} session{yearTotal === 1 ? "" : "s"} in the last year
+            {yearTotal} session{yearTotal === 1 ? "" : "s"} · last year
           </span>
           <span className="md:hidden">
-            {mobileTotal} session{mobileTotal === 1 ? "" : "s"} in the last
-            six months
+            {mobileTotal} session{mobileTotal === 1 ? "" : "s"} · last 6
+            months
           </span>
         </p>
       </div>

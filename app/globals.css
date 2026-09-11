@@ -19,16 +19,12 @@
   --color-accent: #5e6ad2;
   --color-accent-hover: #828fff;
   --color-accent-focus: #5e69d1;
+  --color-accent-ink: #d9d7fb;
+  --color-accent-ink-subtle: #b9b6f2;
 
   --color-success: #27a644;
   --color-danger: #eb5757;
   --color-danger-hover: #d43e3e;
-
-  /* Activity heatmap intensity steps 1–2 of 4 (0 = surface-1, 3 = accent) —
-     blended from surface-1 toward accent so more sessions reads as more
-     lavender. */
-  --color-heat-low: #292e51;
-  --color-heat-mid: #434b90;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

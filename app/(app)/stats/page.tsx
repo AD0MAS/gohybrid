@@ -47,13 +47,17 @@ export default async function StatsPage() {
   const progressSeries = await getProgressSeriesForUser(user.id, unitSystem);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <h1 className="text-xl font-semibold">Stats</h1>
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8 lg:px-8">
+      <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px]">
+        Stats
+      </h1>
 
       <SummaryCards userId={user.id} />
       <ActivityHeatmap userId={user.id} />
-      <WeeklyChart userId={user.id} />
-      <DistributionChart userId={user.id} />
+      <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-2">
+        <WeeklyChart userId={user.id} />
+        <DistributionChart userId={user.id} />
+      </div>
       <ProgressChart series={progressSeries.map(labelProgressSeries)} />
     </main>
   );
