@@ -49,7 +49,7 @@ export default async function UpcomingList({ userId, limit }: UpcomingListProps)
           {upcoming.map((entry) => (
             <li
               key={entry.id}
-              className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
+              className="relative cursor-pointer rounded-card border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
             >
               <Link
                 href={`/workouts/${entry.workout.id}?from=home`}
@@ -69,7 +69,7 @@ export default async function UpcomingList({ userId, limit }: UpcomingListProps)
                   {entry.workout.workoutTags.map(({ tag }) => (
                     <span
                       key={tag.id}
-                      className={`rounded-full border px-3 py-1 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+                      className={`rounded-small border px-3 py-1 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
                     >
                       {tag.name}
                     </span>

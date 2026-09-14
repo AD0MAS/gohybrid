@@ -25,7 +25,7 @@ const initialState: EventFormState = { status: "idle" };
 // first goal") — every empty-state CTA in /profile spans the full panel
 // width below sm and sizes to its own text from sm up.
 const CTA_CLASSES =
-  "flex h-10 w-full items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
+  "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 type EventFormProps = {
   /** Absent renders the Add-event button + form; present renders a Pencil
@@ -173,7 +173,7 @@ export default function EventForm({
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -213,7 +213,7 @@ export default function EventForm({
               defaultValue={fieldDefault("title", entry?.title)}
               required
               maxLength={EVENT_TITLE_MAX_LENGTH}
-              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
 
@@ -225,7 +225,7 @@ export default function EventForm({
               id={`${uid}-eventType`}
               name="eventType"
               defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
-              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               {eventTypeEnum.enumValues.map((type) => (
                 <option key={type} value={type}>
@@ -245,7 +245,7 @@ export default function EventForm({
               name="eventDate"
               defaultValue={fieldDefault("eventDate", entry?.eventDate)}
               required
-              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
 
@@ -260,7 +260,7 @@ export default function EventForm({
               placeholder="Location (optional)"
               defaultValue={fieldDefault("location", entry?.location ?? "")}
               maxLength={EVENT_LOCATION_MAX_LENGTH}
-              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
 
@@ -275,7 +275,7 @@ export default function EventForm({
               placeholder="Notes (optional)"
               defaultValue={fieldDefault("notes", entry?.notes ?? "")}
               maxLength={EVENT_NOTES_MAX_LENGTH}
-              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
 
@@ -287,11 +287,11 @@ export default function EventForm({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               Cancel
             </button>
-            <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+            <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
               {entry ? "Save" : "Add event"}
             </SubmitButton>
           </div>

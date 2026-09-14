@@ -225,7 +225,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -243,7 +243,7 @@ export default function WorkoutBuilder({
                 value: e.target.value,
               })
             }
-            className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="rounded-control border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -259,7 +259,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as PrimaryType | "",
               })
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="" disabled>
               Select a type
@@ -284,7 +284,7 @@ export default function WorkoutBuilder({
                 value: e.target.value as Difficulty | "",
               })
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="" disabled>
               Select a difficulty
@@ -320,7 +320,7 @@ export default function WorkoutBuilder({
               })
             }
             {...numberInputGuardProps()}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </label>
 
@@ -342,7 +342,7 @@ export default function WorkoutBuilder({
                     onClick={() =>
                       dispatch({ type: "TOGGLE_TAG", tagId: tag.id })
                     }
-                    className={`rounded-full border px-3 py-1 text-xs ${
+                    className={`rounded-small border px-3 py-1 text-xs ${
                       selected
                         ? TAG_COLOR_CLASSES[tag.color]
                         : "border-hairline text-ink-subtle hover:border-hairline-strong hover:text-ink active:border-hairline-strong active:text-ink"
@@ -387,7 +387,7 @@ export default function WorkoutBuilder({
             setLastAddedBlockId(id);
             dispatch({ type: "ADD_BLOCK", id });
           }}
-          className="flex h-11 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center self-start rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add block
         </button>
@@ -396,7 +396,7 @@ export default function WorkoutBuilder({
       {saveError && (
         <p
           role="alert"
-          className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger"
+          className="rounded-control border border-danger/40 bg-surface-2 p-2 text-sm text-danger"
         >
           {saveError}
         </p>
@@ -404,7 +404,7 @@ export default function WorkoutBuilder({
 
       <PendingSubmitButton
         pending={isSaving}
-        className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center justify-center self-start rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </PendingSubmitButton>

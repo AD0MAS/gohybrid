@@ -25,7 +25,7 @@ export default function SummaryCard({
       : "text-ink-subtle";
 
   return (
-    <div className={`rounded-lg border border-hairline bg-surface-2 ${padding}`}>
+    <div className={`rounded-card border border-hairline bg-surface-2 ${padding}`}>
       <p className="text-2xl font-semibold text-ink">{value}</p>
       <p className={`text-xs ${labelColor}`}>{label}</p>
     </div>

@@ -31,7 +31,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
         />
 
         {error && (
-          <p className="rounded-md border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
+          <p className="rounded-control border border-danger/40 bg-surface-2 p-2 text-sm text-danger">
             {error}
           </p>
         )}
@@ -43,7 +43,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
               type="email"
               name="email"
               required
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -53,11 +53,11 @@ export default async function LoginPage(props: PageProps<"/login">) {
               type="password"
               name="password"
               required
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
-          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Log in
           </SubmitButton>
           <FormPendingBanner label="Signing in…" />

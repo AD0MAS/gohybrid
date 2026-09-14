@@ -12,7 +12,7 @@ import { EVENT_TYPE_LABELS } from "./event-labels";
 import { deleteEvent } from "./events-actions";
 
 const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 // Same low-emphasis bordered-button look as the empty-state CTA button
 // (EventForm's own ctaLabel) — "Past events" reads as the same kind of
 // control as every other quiet button in the app, not a bare native
@@ -23,14 +23,14 @@ const DELETE_ICON_BUTTON_CLASSES =
 // and sm:inline-flex sm:w-auto returns it to sizing on its own text from sm
 // up.
 const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
 
 type EventsListProps = {
   userId: string;
 };
 
 /**
- * Its own bordered section (rounded-xl surface-1 panel, matching /stats'
+ * Its own bordered section (rounded-panel surface-1 panel, matching /stats'
  * panels) — heading, a quiet "Add event" header trigger, and the list
  * itself, all fetched and rendered here rather than page.tsx owning a
  * shared wrapper around this and the other three sections. Upcoming events
@@ -70,7 +70,7 @@ export default async function EventsList({ userId }: EventsListProps) {
   const isEmpty = upcoming.length === 0 && past.length === 0;
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface-1 p-5">
+    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-ink">Events</h2>
         {!isEmpty && <EventForm />}

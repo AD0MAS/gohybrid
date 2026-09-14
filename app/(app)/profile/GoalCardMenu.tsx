@@ -112,7 +112,7 @@ export default function GoalCardMenu({ children }: GoalCardMenuProps) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         <MoreVertical className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -122,7 +122,7 @@ export default function GoalCardMenu({ children }: GoalCardMenuProps) {
         role="menu"
         aria-hidden={!open}
         onClick={() => setOpen(false)}
-        className={`absolute right-0 top-full z-20 mt-1 flex w-40 flex-col overflow-hidden rounded-md border border-hairline bg-surface-2 py-1 shadow-lg ${open ? "" : "invisible pointer-events-none"}`}
+        className={`absolute right-0 top-full z-20 mt-1 flex w-40 flex-col overflow-hidden rounded-card border border-hairline bg-surface-2 py-1 shadow-lg ${open ? "" : "invisible pointer-events-none"}`}
       >
         {children}
       </div>

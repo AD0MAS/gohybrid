@@ -75,7 +75,7 @@ export default function ExercisePicker({
         <select
           value={selectValue}
           onChange={(e) => handleSelectChange(e.target.value)}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">Select exercise…</option>
           <option value={CUSTOM_VALUE}>Custom (new)…</option>
@@ -98,7 +98,7 @@ export default function ExercisePicker({
           value={customName ?? ""}
           onChange={(e) => onChangeCustomName(e.target.value)}
           placeholder="Custom name"
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}
 

@@ -69,7 +69,7 @@ export default function SettingsFields({
           key={currentTimezone}
           name="timezone"
           defaultValue={currentTimezone}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {timezones.map((zone) => (
             <option key={zone} value={zone}>
@@ -85,7 +85,7 @@ export default function SettingsFields({
           key={currentUnitSystem}
           name="unitSystem"
           defaultValue={currentUnitSystem}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {unitSystemEnum.enumValues.map((value) => (
             <option key={value} value={value}>
@@ -105,7 +105,7 @@ export default function SettingsFields({
           `?saved=1` the redirect appends (see app/_components/FormStatus.tsx
           and profile/page.tsx). The pending banner here still matters: it
           covers the gap between clicking Save and that redirect landing. */}
-      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+      <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
         Save
       </SubmitButton>
       <FormPendingBanner label="Saving…" />

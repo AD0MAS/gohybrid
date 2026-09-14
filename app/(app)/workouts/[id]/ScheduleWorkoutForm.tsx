@@ -99,7 +99,7 @@ export default function ScheduleWorkoutForm({
       <button
         type="button"
         onClick={openFresh}
-        className="flex h-12 items-center justify-center rounded-md border border-hairline bg-surface-1 px-6 text-base font-medium text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-12 items-center justify-center rounded-control border border-hairline bg-surface-1 px-6 text-base font-medium text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Schedule
       </button>
@@ -117,7 +117,7 @@ export default function ScheduleWorkoutForm({
               name="scheduledDate"
               defaultValue={fieldDefault("scheduledDate")}
               required
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -127,7 +127,7 @@ export default function ScheduleWorkoutForm({
               type="time"
               name="scheduledTime"
               defaultValue={fieldDefault("scheduledTime")}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -138,7 +138,7 @@ export default function ScheduleWorkoutForm({
               name="notes"
               defaultValue={fieldDefault("notes")}
               maxLength={SCHEDULE_NOTES_MAX_LENGTH}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
 
@@ -146,7 +146,7 @@ export default function ScheduleWorkoutForm({
             error={visibleState.status === "error" ? visibleState.error : null}
           />
 
-          <SubmitButton className="flex h-11 items-center justify-center self-start rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <SubmitButton className="flex h-11 items-center justify-center self-start rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Schedule
           </SubmitButton>
           <FormPendingBanner label="Scheduling…" />

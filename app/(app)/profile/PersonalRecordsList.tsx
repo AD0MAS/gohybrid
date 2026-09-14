@@ -12,14 +12,14 @@ import PersonalRecordFields from "./PersonalRecordFields";
 import { deletePersonalRecord } from "./personal-records-actions";
 
 const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type PersonalRecordsListProps = {
   userId: string;
 };
 
 /**
- * Its own bordered section (rounded-xl surface-1 panel, matching /stats'
+ * Its own bordered section (rounded-panel surface-1 panel, matching /stats'
  * panels), fetching its own data the same way EventsList/GoalsList/
  * BodyMetricsList do rather than page.tsx owning a shared wrapper. Existing
  * personal records, grouped by subject (exercise or custom name) via
@@ -84,7 +84,7 @@ export default async function PersonalRecordsList({
   const groups = groupPersonalRecordsBySubject(records);
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface-1 p-5">
+    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-ink">Personal records</h2>
         {!isEmpty && (

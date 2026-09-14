@@ -86,9 +86,9 @@ export type DurationInputProps =
 // into the generated CSS.
 const BOX_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
   "surface-1":
-    "h-11 w-14 rounded-md border border-hairline bg-surface-1 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+    "h-11 w-14 rounded-control border border-hairline bg-surface-1 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
   "surface-2":
-    "h-11 w-14 rounded-md border border-hairline bg-surface-2 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+    "h-11 w-14 rounded-control border border-hairline bg-surface-2 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
 };
 
 /**

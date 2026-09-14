@@ -135,7 +135,7 @@ export default async function WeekStrip({
         <Link
           href={weekHref(-1)}
           aria-label="Previous week"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -143,7 +143,7 @@ export default async function WeekStrip({
         <Link
           href={weekHref(1)}
           aria-label="Next week"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
         </Link>
@@ -160,7 +160,7 @@ export default async function WeekStrip({
             <Link
               key={date}
               href={dayHref(date)}
-              className="flex flex-col items-center gap-1 rounded p-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex flex-col items-center gap-1 rounded-control p-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <span className="text-xs text-ink-subtle">
                 {WEEKDAY_INITIALS[i]}
@@ -210,7 +210,7 @@ export default async function WeekStrip({
                 return (
                   <li
                     key={entry.id}
-                    className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
+                    className="relative cursor-pointer rounded-card border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[a:active]:bg-surface-2"
                   >
                     <Link
                       href={`/workouts/${entry.workout.id}?from=workouts&week=${view.weekOffset}&day=${entry.scheduledDate}`}
@@ -230,7 +230,7 @@ export default async function WeekStrip({
 
                     <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
                       <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-sm ${STATUS_PILL_CLASSES[status]}`}
+                        className={`shrink-0 rounded-small px-2 py-0.5 text-sm ${STATUS_PILL_CLASSES[status]}`}
                       >
                         {status}
                       </span>
@@ -251,7 +251,7 @@ export default async function WeekStrip({
                         {entry.workout.workoutTags.map(({ tag }) => (
                           <span
                             key={tag.id}
-                            className={`rounded-full border px-2 py-0.5 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+                            className={`rounded-small border px-2 py-0.5 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
                           >
                             {tag.name}
                           </span>

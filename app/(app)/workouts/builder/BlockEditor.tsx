@@ -206,7 +206,7 @@ export default function BlockEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-hairline bg-surface-1 p-5">
+    <div className="flex flex-col gap-3 rounded-card border border-hairline bg-surface-1 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">
@@ -223,7 +223,7 @@ export default function BlockEditor({
             type="button"
             onClick={openFresh}
             aria-label="Configure"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -231,7 +231,7 @@ export default function BlockEditor({
             type="button"
             onClick={() => dispatch({ type: "DUPLICATE_BLOCK", blockId: block.id })}
             aria-label="Duplicate block"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <Copy className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -239,7 +239,7 @@ export default function BlockEditor({
             type="button"
             onClick={() => dispatch({ type: "REMOVE_BLOCK", blockId: block.id })}
             aria-label="Remove block"
-            className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -290,7 +290,7 @@ export default function BlockEditor({
             setLastAddedItemId(id);
             dispatch({ type: "ADD_ITEM", blockId: block.id, id });
           }}
-          className="flex h-11 items-center justify-center self-start rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center self-start rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add item
         </button>
@@ -400,7 +400,7 @@ function BlockEditorModalFields({
           maxLength={BLOCK_TITLE_MAX_LENGTH}
           value={draft.title}
           onChange={(e) => updateTitle(e.target.value)}
-          className="rounded-md border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-control border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </label>
 
@@ -409,7 +409,7 @@ function BlockEditorModalFields({
         <select
           value={draft.blockType}
           onChange={(e) => updateBlockType(e.target.value as BlockType)}
-          className="rounded-md border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="rounded-control border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {blockTypeOptions.map((value) => (
             <option key={value} value={value}>
@@ -468,7 +468,7 @@ function BlockEditorModalFields({
               )
             }
             {...numberInputGuardProps()}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
           {errors.rounds && (
             <p className="text-sm text-danger">{errors.rounds}</p>
@@ -524,7 +524,7 @@ function BlockEditorModalFields({
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

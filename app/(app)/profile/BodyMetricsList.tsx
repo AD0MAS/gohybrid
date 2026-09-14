@@ -10,7 +10,7 @@ import { deleteBodyMetric } from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 
 const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 // Same low-emphasis bordered-button look as the empty-state CTA button
 // (BodyMetricFields' own ctaLabel) — "All readings" reads as the same kind
 // of control as every other quiet button in the app, not a bare native
@@ -20,7 +20,7 @@ const DELETE_ICON_BUTTON_CLASSES =
 // panel width below sm — matching every empty-state CTA in /profile — and
 // sm:inline-flex sm:w-auto returns it to sizing on its own text from sm up.
 const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
 
 type BodyMetricsListProps = {
   userId: string;
@@ -38,7 +38,7 @@ function formatDayGap(days: number): string {
 }
 
 /**
- * Its own bordered section (rounded-xl surface-1 panel, matching /stats'
+ * Its own bordered section (rounded-panel surface-1 panel, matching /stats'
  * panels), fetching its own data the same way EventsList/GoalsList/
  * PersonalRecordsList do rather than page.tsx owning a shared wrapper.
  * Above the readings: one tile per tracked metric type with its latest
@@ -108,7 +108,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
     .filter((group) => group.entries.length > 0);
 
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface-1 p-5">
+    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-ink">Body metrics</h2>
         {!isEmpty && <BodyMetricFields today={today} unitSystem={unitSystem} />}
@@ -164,7 +164,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
               return (
                 <div
                   key={type}
-                  className="flex min-w-0 flex-col gap-0.5 rounded-lg border border-hairline bg-surface-2 p-2"
+                  className="flex min-w-0 flex-col gap-0.5 rounded-card border border-hairline bg-surface-2 p-2"
                 >
                   <p className="text-base font-semibold tracking-tight text-ink">
                     {display.value} {display.unit}

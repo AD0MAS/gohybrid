@@ -21,7 +21,7 @@ import { useFormStatus } from "react-dom";
 // synchronously on the same click that submits the form and well before
 // the Server Action's async result ever sets this banner's own state.
 const BANNER_CLASSES =
-  "visible pointer-events-auto fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-md border px-4 py-2 text-sm";
+  "visible pointer-events-auto fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-control border px-4 py-2 text-sm";
 
 /**
  * Fixed-bottom "Saving…" banner for the pending half of a form submission —

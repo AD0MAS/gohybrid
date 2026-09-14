@@ -510,7 +510,7 @@ export default function ItemEditor({
   }
 
   return (
-    <li className="flex items-start justify-between gap-3 rounded-lg border border-hairline bg-surface-1 p-5">
+    <li className="flex items-start justify-between gap-3 rounded-card border border-hairline bg-surface-1 p-5">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{itemName}</p>
         {(summary || hasNotes) && (
@@ -534,7 +534,7 @@ export default function ItemEditor({
           type="button"
           onClick={openFresh}
           aria-label="Configure"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -544,7 +544,7 @@ export default function ItemEditor({
             dispatch({ type: "DUPLICATE_ITEM", blockId, itemId: item.id })
           }
           aria-label="Duplicate item"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Copy className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -554,7 +554,7 @@ export default function ItemEditor({
             dispatch({ type: "REMOVE_ITEM", blockId, itemId: item.id })
           }
           aria-label="Remove item"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -890,7 +890,7 @@ function ItemEditorModalFields({
                 )
               }
               {...numberInputGuardProps()}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
             {errors.sets && <p className="text-sm text-danger">{errors.sets}</p>}
           </label>
@@ -900,7 +900,7 @@ function ItemEditorModalFields({
             <select
               value={draft.volumeType}
               onChange={(e) => updateVolumeType(e.target.value as VolumeType | "")}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <option value="" disabled>
                 Select a volume type
@@ -958,7 +958,7 @@ function ItemEditorModalFields({
                     )
                   }
                   {...numberInputGuardProps()}
-                  className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 />
               )}
               {errors.volumeValue && (
@@ -976,7 +976,7 @@ function ItemEditorModalFields({
               onChange={(e) =>
                 handleTargetModeChange(e.target.value as TargetMode)
               }
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <option value="none">None</option>
               <option value="intensity_zone">Intensity zone</option>
@@ -1000,7 +1000,7 @@ function ItemEditorModalFields({
                 onChange={(e) =>
                   updateTargetPreset(e.target.value as TargetPreset | "")
                 }
-                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               >
                 <option value="" disabled>
                   Select a zone
@@ -1049,7 +1049,7 @@ function ItemEditorModalFields({
                   )
                 }
                 {...numberInputGuardProps()}
-                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
               {errors.targetValue && (
                 <p className="text-sm text-danger">{errors.targetValue}</p>
@@ -1078,7 +1078,7 @@ function ItemEditorModalFields({
                     handlePaceUnitChange(e.target.value as PaceDisplayUnit)
                   }
                   aria-label="Pace unit"
-                  className="h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  className="h-11 rounded-control border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
                 >
                   <option value="500m">/500m</option>
                   <option value={defaultPaceUnitFor(unitSystem)}>
@@ -1119,7 +1119,7 @@ function ItemEditorModalFields({
                   )
                 }
                 {...numberInputGuardProps()}
-                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
               {errors.targetValue && (
                 <p className="text-sm text-danger">{errors.targetValue}</p>
@@ -1169,7 +1169,7 @@ function ItemEditorModalFields({
                 )
               }
               {...numberInputGuardProps({ allowDecimal: true })}
-              className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
             {errors.weightKg && (
               <p className="text-sm text-danger">{errors.weightKg}</p>
@@ -1199,7 +1199,7 @@ function ItemEditorModalFields({
               maxLength={ITEM_NOTES_MAX_LENGTH}
               value={draft.notes}
               onChange={(e) => updateNotes(e.target.value)}
-              className="rounded-md border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="rounded-control border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>
         </>
@@ -1208,7 +1208,7 @@ function ItemEditorModalFields({
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

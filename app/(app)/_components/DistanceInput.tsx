@@ -232,15 +232,15 @@ export type DistanceInputProps =
 // never makes it into the generated CSS.
 const INPUT_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
   "surface-1":
-    "h-11 flex-1 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+    "h-11 flex-1 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
   "surface-2":
-    "h-11 flex-1 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+    "h-11 flex-1 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
 };
 const SELECT_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
   "surface-1":
-    "h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
+    "h-11 rounded-control border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
   "surface-2":
-    "h-11 rounded-md border border-hairline bg-surface-2 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
+    "h-11 rounded-control border border-hairline bg-surface-2 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
 };
 
 /**

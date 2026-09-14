@@ -81,7 +81,7 @@ const initialState: PersonalRecordFormState = { status: "idle" };
 // first goal") — every empty-state CTA in /profile spans the full panel
 // width below sm and sizes to its own text from sm up.
 const CTA_CLASSES =
-  "flex h-10 w-full items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
+  "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 /** Prefix marking a <select> value as one of `customNames` rather than a
  * catalog exercise id or the "type a new name" sentinel ("") — see the
@@ -194,7 +194,7 @@ export default function PersonalRecordFields({
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -468,7 +468,7 @@ function PersonalRecordFormFields({
           id={`${uid}-subject`}
           value={subjectSelection}
           onChange={(e) => setSubjectSelection(e.target.value)}
-          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <option value="">Custom (new)…</option>
           {customNames.length > 0 && (
@@ -509,7 +509,7 @@ function PersonalRecordFormFields({
             placeholder="Custom name"
             defaultValue={fieldDefault("customName", entry?.customName ?? "")}
             maxLength={RECORD_CUSTOM_NAME_MAX_LENGTH}
-            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         </div>
       )}
@@ -530,7 +530,7 @@ function PersonalRecordFormFields({
               e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
             )
           }
-          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           {personalRecordTypeEnum.enumValues.map((type) => (
             <option key={type} value={type}>
@@ -585,7 +585,7 @@ function PersonalRecordFormFields({
               defaultValue !== undefined ? String(defaultValue) : undefined
             )}
             placeholder={`Value (${valueUnit})`}
-            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
         )}
       </div>
@@ -601,7 +601,7 @@ function PersonalRecordFormFields({
           defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
           max={today}
           required
-          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </div>
 
@@ -616,7 +616,7 @@ function PersonalRecordFormFields({
           placeholder="Notes (optional)"
           defaultValue={fieldDefault("notes", entry?.notes ?? "")}
           maxLength={RECORD_NOTES_MAX_LENGTH}
-          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       </div>
 
@@ -628,11 +628,11 @@ function PersonalRecordFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
           {entry ? "Save" : "Add record"}
         </SubmitButton>
       </div>

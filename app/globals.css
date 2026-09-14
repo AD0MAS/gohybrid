@@ -28,6 +28,12 @@
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --radius-panel: 14px;
+  --radius-card: 11px;
+  --radius-control: 10px;
+  --radius-small: 7px;
+  --radius-bar: 9999px;
 }
 
 /* Dark only, no theme switch (see CLAUDE.md "Design"). Without this, browsers

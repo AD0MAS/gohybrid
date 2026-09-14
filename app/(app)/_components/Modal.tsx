@@ -131,7 +131,7 @@ export default function Modal({
       // unclickable. Removing these two classes would not break anything
       // visibly in this file — it silently breaks GoalCardMenu's Edit
       // instead, elsewhere.
-      className="visible fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-hairline bg-surface-1 p-0 pointer-events-auto text-ink backdrop:bg-black/50"
+      className="visible fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-panel border border-hairline bg-surface-1 p-0 pointer-events-auto text-ink backdrop:bg-black/50"
     >
       <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-hairline bg-surface-1 p-4">
         <div>
@@ -146,7 +146,7 @@ export default function Modal({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="shrink-0 rounded-md p-1 text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="shrink-0 rounded-small p-1 text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <X className="h-5 w-5" />
         </button>

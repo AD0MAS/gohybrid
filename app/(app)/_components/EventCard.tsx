@@ -56,7 +56,7 @@ type EventCardProps = {
  */
 export default function EventCard({ event }: EventCardProps) {
   return (
-    <li className="relative cursor-pointer rounded-lg border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[button:active]:bg-surface-2">
+    <li className="relative cursor-pointer rounded-card border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[button:active]:bg-surface-2">
       <EventForm
         entry={event}
         renderTrigger={(open) => (
@@ -71,7 +71,7 @@ export default function EventCard({ event }: EventCardProps) {
       />
 
       <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
-        <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-sm text-accent">
+        <span className="shrink-0 rounded-small bg-accent/15 px-2 py-0.5 text-sm text-accent">
           Event
         </span>
         {[EVENT_TYPE_LABELS[event.eventType].label, event.location]

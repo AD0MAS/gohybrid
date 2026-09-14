@@ -33,11 +33,11 @@ export default async function SettingsPage() {
           <h1 className="text-xl font-semibold text-ink">Settings</h1>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-surface-1 p-6">
+        <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6">
           <h2 className="text-lg font-semibold text-ink">Account</h2>
           <p className="text-sm text-ink-subtle">{user.email}</p>
           <form action={signOut}>
-            <SubmitButton className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+            <SubmitButton className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
               Sign out
             </SubmitButton>
           </form>

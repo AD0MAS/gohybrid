@@ -39,7 +39,7 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded-lg border border-hairline bg-surface-1 p-5"
+              className="rounded-card border border-hairline bg-surface-1 p-5"
             >
               <p className="font-medium text-ink">{session.workoutTitle}</p>
               <p className="text-sm text-ink-subtle">
@@ -56,7 +56,7 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
 
       <Link
         href="/history?from=home"
-        className="flex h-11 w-fit items-center justify-center self-end rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 w-fit items-center justify-center self-end rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Full history
       </Link>

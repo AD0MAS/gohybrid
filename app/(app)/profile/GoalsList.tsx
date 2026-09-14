@@ -11,9 +11,9 @@ import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE
 import { deleteGoal, setGoalArchived } from "./goals-actions";
 
 const ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 // Same low-emphasis bordered-button look as the empty-state CTAs
 // (EventForm/BodyMetricFields/PersonalRecordFields' own ctaLabel button) —
 // shared by both of this file's disclosures ("Show N more goals" and
@@ -25,14 +25,14 @@ const DELETE_ICON_BUTTON_CLASSES =
 // empty-state CTA in /profile — and sm:inline-flex sm:w-auto returns it to
 // sizing on its own text from sm up, same as before.
 const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
 
 type GoalsListProps = {
   userId: string;
 };
 
 /**
- * Its own bordered section (rounded-xl surface-1 panel, matching /stats'
+ * Its own bordered section (rounded-panel surface-1 panel, matching /stats'
  * panels), except for its own Add trigger: Goals is the one section whose
  * Add action is promoted to page.tsx's own header as the single accent
  * call-to-action, so page.tsx still renders GoalForm there instead of this
@@ -154,7 +154,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
     return (
       <div
         key={goal.id}
-        className="flex flex-col gap-3 rounded-lg border border-hairline bg-surface-2 p-4"
+        className="flex flex-col gap-3 rounded-card border border-hairline bg-surface-2 p-4"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-col gap-1">
@@ -235,9 +235,9 @@ export default async function GoalsList({ userId }: GoalsListProps) {
 
             return (
               <div className="flex flex-col gap-1.5">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-3">
+                <div className="h-1.5 w-full overflow-hidden rounded-bar bg-surface-3">
                   <div
-                    className={`h-full rounded-full ${isComplete ? "bg-success" : "bg-accent"}`}
+                    className={`h-full rounded-bar ${isComplete ? "bg-success" : "bg-accent"}`}
                     style={{ width: `${progress.percent}%` }}
                   />
                 </div>
@@ -262,8 +262,8 @@ export default async function GoalsList({ userId }: GoalsListProps) {
     <section
       className={
         isEmpty
-          ? "flex flex-col gap-4 rounded-xl border border-hairline bg-surface-1 p-6 sm:p-7"
-          : "flex flex-col gap-4 rounded-xl border border-hairline bg-surface-1 p-5"
+          ? "flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7"
+          : "flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
       }
     >
       {isEmpty ? (
