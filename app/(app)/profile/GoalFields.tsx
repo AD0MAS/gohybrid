@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import {
   bodyMetricTypeEnum,
   goalDirectionEnum,
@@ -47,6 +47,7 @@ import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import NumberField from "../_components/NumberField";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
+import { MENU_ITEM_CLASSES } from "./GoalCardMenu";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
@@ -66,6 +67,32 @@ type GoalFieldsProps = {
    * updateGoal instead of addGoal. See the file-level doc comment below for
    * how the two modes share every field. */
   entry?: Goal;
+  /** Only meaningful when `entry` is present: "menu-item" renders "Edit" as
+   * a plain full-width text button (GoalCardMenu's MENU_ITEM_CLASSES)
+   * instead of the default bordered Pencil icon button — GoalsList's card
+   * menu passes this. A plain string tag rather than a renderTrigger
+   * callback (an earlier version of this prop): GoalsList, which composes
+   * this trigger, is a Server Component, and a function can never cross
+   * from a Server Component into a Client Component like this one — only
+   * serializable values (strings, numbers, booleans, plain objects, and
+   * JSX) survive that boundary. A closure-based renderTrigger stays valid
+   * only for a client-to-client caller, same as EventForm's own (see its
+   * doc comment) — GoalFields has no such caller today. */
+  triggerVariant?: "icon" | "menu-item";
+  /** Only meaningful when `entry` is absent: overrides the Add-goal button's
+   * label, e.g. "Set your first goal" for GoalsList's hero empty state
+   * versus "Add goal" for the page header's own copy of this same button. */
+  addLabel?: string;
+  /** Only meaningful when `entry` is absent: hides the Add-goal trigger
+   * button itself via `hidden` (display: none) without unmounting this
+   * component — GoalsList's hero instance passes this once a goal exists,
+   * instead of GoalsList conditionally rendering (and thereby destroying)
+   * the instance itself. See GoalsList's own doc comment for why: this
+   * component's `successCount`/FormSuccessBanner state must survive the
+   * exact render that flips the section from empty to non-empty, since
+   * that's the one save whose own success would otherwise be discarded by
+   * unmounting the very instance that just recorded it. */
+  hidden?: boolean;
 };
 
 const initialState: GoalFormState = { status: "idle" };
@@ -133,17 +160,21 @@ const DIRECTION_CHOICE_TYPES = new Set<
  * `initialState` otherwise, so it never has to know any of this itself.
  *
  * When `entry` is present, this same component renders as GoalsList's
- * per-row edit trigger instead of the section's Add button: a Pencil
- * icon-button in place of the Plus button, "Edit goal"/"Save" copy.
- * `updateGoal.bind(null, entry.id)` is used as the form action in place of
- * addGoal — the bound function still matches useActionState's (prevState,
- * formData) signature.
+ * per-row edit trigger instead of the page header's Add button: a Pencil
+ * icon-button by default, or a plain "Edit" menu-item button when
+ * `triggerVariant="menu-item"` (GoalsList's card menu passes this). "Edit
+ * goal"/"Save" copy either way. `updateGoal.bind(null, entry.id)` is used
+ * as the form action in place of addGoal — the bound function still
+ * matches useActionState's (prevState, formData) signature.
  */
 export default function GoalFields({
   catalog,
   customNames,
   unitSystem,
   entry,
+  triggerVariant = "icon",
+  addLabel = "Add goal",
+  hidden = false,
 }: GoalFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateGoal.bind(null, entry.id) : addGoal;
@@ -174,36 +205,48 @@ export default function GoalFields({
     <>
       <FormSuccessBanner trigger={successCount} label="Saved" />
       {entry ? (
+        triggerVariant === "menu-item" ? (
+          <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={openFresh}
+            aria-label="Edit"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )
+      ) : (
+        // The `hidden` HTML attribute alone wouldn't do this: it's a
+        // user-agent-origin rule, and an unconditional `flex` class is
+        // author-origin — author beats user-agent regardless of order or
+        // specificity, the same cascade fact that once broke Modal's own
+        // <dialog> (see its doc comment). Swapping the whole className
+        // instead means "flex" is never present on the same element as the
+        // thing trying to override it.
         <button
           type="button"
           onClick={openFresh}
-          aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={
+            hidden
+              ? "hidden"
+              : "flex h-11 w-full items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+          }
         >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
+          {addLabel}
         </button>
-      ) : (
-        <>
-          <button
-            type="button"
-            onClick={openFresh}
-            aria-label="Add goal"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={openFresh}
-            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
-          >
-            <Plus className="h-4 w-4" />
-            Add goal
-          </button>
-        </>
       )}
 
-      <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit goal" : "Add goal"}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={entry ? "Edit goal" : "Add goal"}
+        description="Pick what to measure, then a target and a window."
+      >
         <GoalFormFields
           key={formKey}
           catalog={catalog}
@@ -212,6 +255,7 @@ export default function GoalFields({
           entry={entry}
           state={visibleState}
           formAction={formAction}
+          onCancel={() => setOpen(false)}
         />
       </Modal>
     </>
@@ -258,6 +302,13 @@ type GoalFormFieldsProps = {
   entry?: Goal;
   state: GoalFormState;
   formAction: (formData: FormData) => void;
+  /** Closes the modal without submitting — the Cancel button's handler.
+   * Distinct from the dialog's own X/Esc/backdrop close (still wired via
+   * Modal's onClose): a modal is a draft, so both paths discard the same
+   * way, but Cancel is an explicit in-form control the design calls for
+   * alongside the destructive-vs-safe button pairing every other form in
+   * the app already uses (Cancel/Save, Cancel/Delete). */
+  onCancel: () => void;
 };
 
 /**
@@ -322,6 +373,7 @@ function GoalFormFields({
   entry,
   state,
   formAction,
+  onCancel,
 }: GoalFormFieldsProps) {
   const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
@@ -534,44 +586,48 @@ function GoalFormFields({
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
-      <label htmlFor={`${uid}-title`} className="sr-only">
-        Goal title
-      </label>
-      <input
-        type="text"
-        id={`${uid}-title`}
-        name="title"
-        placeholder="Goal title"
-        defaultValue={fieldDefault("title", entry?.title)}
-        required
-        maxLength={GOAL_TITLE_MAX_LENGTH}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-title`} className="text-xs font-medium text-ink-subtle">
+          Title
+        </label>
+        <input
+          type="text"
+          id={`${uid}-title`}
+          name="title"
+          placeholder="Goal title"
+          defaultValue={fieldDefault("title", entry?.title)}
+          required
+          maxLength={GOAL_TITLE_MAX_LENGTH}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
-      <label htmlFor={`${uid}-goalType`} className="sr-only">
-        Goal type
-      </label>
-      <select
-        id={`${uid}-goalType`}
-        name="goalType"
-        value={goalType}
-        onChange={(e) =>
-          handleGoalTypeChange(
-            e.target.value as (typeof goalTypeEnum.enumValues)[number]
-          )
-        }
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        {goalTypeEnum.enumValues.map((type) => (
-          <option key={type} value={type}>
-            {GOAL_TYPE_LABELS[type].label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-goalType`} className="text-xs font-medium text-ink-subtle">
+          Goal type
+        </label>
+        <select
+          id={`${uid}-goalType`}
+          name="goalType"
+          value={goalType}
+          onChange={(e) =>
+            handleGoalTypeChange(
+              e.target.value as (typeof goalTypeEnum.enumValues)[number]
+            )
+          }
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          {goalTypeEnum.enumValues.map((type) => (
+            <option key={type} value={type}>
+              {GOAL_TYPE_LABELS[type].label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {goalType === "session_count" && (
-        <>
-          <label htmlFor={`${uid}-targetPrimaryType`} className="sr-only">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${uid}-targetPrimaryType`} className="text-xs font-medium text-ink-subtle">
             Workout type
           </label>
           <select
@@ -581,7 +637,7 @@ function GoalFormFields({
               "targetPrimaryType",
               entry?.targetPrimaryType ?? ""
             )}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             <option value="">Any type</option>
             {workoutPrimaryTypeEnum.enumValues.map((type) => (
@@ -590,12 +646,12 @@ function GoalFormFields({
               </option>
             ))}
           </select>
-        </>
+        </div>
       )}
 
       {goalType === "body_metric" && (
-        <>
-          <label htmlFor={`${uid}-targetMetricType`} className="sr-only">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${uid}-targetMetricType`} className="text-xs font-medium text-ink-subtle">
             Metric type
           </label>
           <select
@@ -607,7 +663,7 @@ function GoalFormFields({
                 e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
               )
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {bodyMetricTypeEnum.enumValues.map((type) => (
               <option key={type} value={type}>
@@ -615,7 +671,7 @@ function GoalFormFields({
               </option>
             ))}
           </select>
-        </>
+        </div>
       )}
 
       {goalType === "personal_record" && (
@@ -624,38 +680,40 @@ function GoalFormFields({
               <select> comment for the value-encoding scheme and why
               targetExerciseId/targetCustomName are submitted via the
               explicit inputs below instead. */}
-          <label htmlFor={`${uid}-subject`} className="sr-only">
-            Exercise
-          </label>
-          <select
-            id={`${uid}-subject`}
-            value={subjectSelection}
-            onChange={(e) => setSubjectSelection(e.target.value)}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            <option value="">Custom (new)…</option>
-            {customNames.length > 0 && (
-              <optgroup label="Previously used">
-                {customNames.map((name) => (
-                  <option
-                    key={name}
-                    value={`${EXISTING_CUSTOM_PREFIX}${name}`}
-                  >
-                    {name}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.exercises.map((exercise) => (
-                  <option key={exercise.id} value={exercise.id}>
-                    {exercise.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-subject`} className="text-xs font-medium text-ink-subtle">
+              Exercise
+            </label>
+            <select
+              id={`${uid}-subject`}
+              value={subjectSelection}
+              onChange={(e) => setSubjectSelection(e.target.value)}
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              <option value="">Custom (new)…</option>
+              {customNames.length > 0 && (
+                <optgroup label="Previously used">
+                  {customNames.map((name) => (
+                    <option
+                      key={name}
+                      value={`${EXISTING_CUSTOM_PREFIX}${name}`}
+                    >
+                      {name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.exercises.map((exercise) => (
+                    <option key={exercise.id} value={exercise.id}>
+                      {exercise.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
 
           <input
             type="hidden"
@@ -664,8 +722,8 @@ function GoalFormFields({
           />
 
           {isNewCustomName && (
-            <>
-              <label htmlFor={`${uid}-targetCustomName`} className="sr-only">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${uid}-targetCustomName`} className="text-xs font-medium text-ink-subtle">
                 Custom name
               </label>
               <input
@@ -678,9 +736,9 @@ function GoalFormFields({
                   entry?.targetCustomName ?? ""
                 )}
                 maxLength={GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH}
-                className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
-            </>
+            </div>
           )}
           {existingCustomName !== null && (
             <input
@@ -690,32 +748,34 @@ function GoalFormFields({
             />
           )}
 
-          <label htmlFor={`${uid}-targetRecordType`} className="sr-only">
-            Record type
-          </label>
-          <select
-            id={`${uid}-targetRecordType`}
-            name="targetRecordType"
-            value={targetRecordType}
-            onChange={(e) =>
-              setTargetRecordType(
-                e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
-              )
-            }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            {personalRecordTypeEnum.enumValues.map((type) => (
-              <option key={type} value={type}>
-                {PERSONAL_RECORD_LABELS[type].label}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-targetRecordType`} className="text-xs font-medium text-ink-subtle">
+              Record type
+            </label>
+            <select
+              id={`${uid}-targetRecordType`}
+              name="targetRecordType"
+              value={targetRecordType}
+              onChange={(e) =>
+                setTargetRecordType(
+                  e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+                )
+              }
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              {personalRecordTypeEnum.enumValues.map((type) => (
+                <option key={type} value={type}>
+                  {PERSONAL_RECORD_LABELS[type].label}
+                </option>
+              ))}
+            </select>
+          </div>
         </>
       )}
 
       {showDirectionChoice ? (
-        <>
-          <label htmlFor={`${uid}-direction`} className="sr-only">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${uid}-direction`} className="text-xs font-medium text-ink-subtle">
             Direction
           </label>
           <select
@@ -727,7 +787,7 @@ function GoalFormFields({
                 e.target.value as (typeof goalDirectionEnum.enumValues)[number]
               )
             }
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             {goalDirectionEnum.enumValues.map((value) => (
               <option key={value} value={value}>
@@ -735,55 +795,63 @@ function GoalFormFields({
               </option>
             ))}
           </select>
-        </>
+        </div>
       ) : (
         <input type="hidden" name="direction" value="increase" />
       )}
 
-      <label htmlFor={`${uid}-period`} className="sr-only">
-        Period
-      </label>
-      <select
-        id={`${uid}-period`}
-        name="period"
-        defaultValue={fieldDefault("period", entry?.period ?? "week")}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        {goalPeriodEnum.enumValues.map((period) => (
-          <option key={period} value={period}>
-            {GOAL_PERIOD_LABELS[period].label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-period`} className="text-xs font-medium text-ink-subtle">
+          Window
+        </label>
+        <select
+          id={`${uid}-period`}
+          name="period"
+          defaultValue={fieldDefault("period", entry?.period ?? "week")}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          {goalPeriodEnum.enumValues.map((period) => (
+            <option key={period} value={period}>
+              {GOAL_PERIOD_LABELS[period].label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {isTimeRecordGoal ? (
-        <DurationInput
-          key={valueKind}
-          maxUnit="hours"
-          name="targetValue"
-          defaultValueSeconds={fieldDefaultSeconds(
-            "targetValue",
-            defaultTargetValue ?? null
-          )}
-        />
-      ) : isDistanceRecordGoal ? (
-        <DistanceInput
-          key={`${valueKind}-${isHyroxStation ? "hyrox" : "standard"}`}
-          name="targetValue"
-          unitSystem={unitSystem}
-          isHyroxStation={isHyroxStation}
-          digitLimit={DISTANCE_DIGIT_LIMIT}
-          defaultValueMetres={fieldDefaultDistanceMetres(
-            "targetValue",
-            entry && entryIsDistanceRecord ? entry.targetValue : null
-          )}
-          defaultUnit={fieldDefaultDistanceUnit("targetValue")}
-        />
-      ) : (
-        <>
-          <label htmlFor={`${uid}-targetValue`} className="sr-only">
-            {`Target value (${valueUnit})`}
+      <div className="flex flex-col gap-1.5">
+        {isTimeRecordGoal || isDistanceRecordGoal ? (
+          <span className="text-xs font-medium text-ink-subtle">Target</span>
+        ) : (
+          <label htmlFor={`${uid}-targetValue`} className="text-xs font-medium text-ink-subtle">
+            Target
           </label>
+        )}
+        {isTimeRecordGoal ? (
+          <DurationInput
+            key={valueKind}
+            maxUnit="hours"
+            name="targetValue"
+            surface="surface-2"
+            defaultValueSeconds={fieldDefaultSeconds(
+              "targetValue",
+              defaultTargetValue ?? null
+            )}
+          />
+        ) : isDistanceRecordGoal ? (
+          <DistanceInput
+            key={`${valueKind}-${isHyroxStation ? "hyrox" : "standard"}`}
+            name="targetValue"
+            unitSystem={unitSystem}
+            isHyroxStation={isHyroxStation}
+            digitLimit={DISTANCE_DIGIT_LIMIT}
+            surface="surface-2"
+            defaultValueMetres={fieldDefaultDistanceMetres(
+              "targetValue",
+              entry && entryIsDistanceRecord ? entry.targetValue : null
+            )}
+            defaultUnit={fieldDefaultDistanceUnit("targetValue")}
+          />
+        ) : (
           <NumberField
             key={valueKind}
             id={`${uid}-targetValue`}
@@ -800,18 +868,27 @@ function GoalFormFields({
                 : undefined
             )}
             placeholder={`Target value (${valueUnit})`}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
-        </>
-      )}
+        )}
+      </div>
 
       <FormErrorMessage
         error={state.status === "error" ? state.error : null}
       />
 
-      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-        {entry ? "Save" : "Add goal"}
-      </SubmitButton>
+      <div className="mt-1 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Cancel
+        </button>
+        <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          {entry ? "Save" : "Add goal"}
+        </SubmitButton>
+      </div>
       <FormPendingBanner label="Saving…" />
     </form>
   );

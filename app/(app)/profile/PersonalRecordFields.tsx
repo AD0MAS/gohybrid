@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
 import {
   FormErrorMessage,
@@ -54,9 +54,34 @@ type PersonalRecordFieldsProps = {
    * edit trigger + the same form pre-filled from this entry, submitting to
    * updatePersonalRecord instead of addPersonalRecord. */
   entry?: PersonalRecord;
+  /** Only meaningful when `entry` is absent: renders the default Add-record
+   * trigger as a full CTA button with this label instead of the quiet
+   * header-style text link — PersonalRecordsList's empty state passes
+   * "Add a record". A plain string, not a renderTrigger callback (an
+   * earlier version of this prop): PersonalRecordsList, which needs this
+   * variant, is a Server Component, and only serializable props — never
+   * functions — can cross into a Client Component like this one. */
+  ctaLabel?: string;
+  /** Only meaningful when `ctaLabel` is also set: hides the CTA button
+   * itself via `hidden` (display: none) without unmounting this component
+   * — PersonalRecordsList's hero instance passes this once a record exists,
+   * instead of PersonalRecordsList conditionally rendering (and thereby
+   * destroying) the instance itself. See PersonalRecordsList's own doc
+   * comment for why: this component's `successCount`/FormSuccessBanner
+   * state must survive the exact render that flips the section from empty
+   * to non-empty, since that's the one save whose own success would
+   * otherwise be discarded by unmounting the very instance that just
+   * recorded it. */
+  hidden?: boolean;
 };
 
 const initialState: PersonalRecordFormState = { status: "idle" };
+
+// w-full sm:w-auto matches GoalFields' own empty-state button ("Set your
+// first goal") — every empty-state CTA in /profile spans the full panel
+// width below sm and sizes to its own text from sm up.
+const CTA_CLASSES =
+  "flex h-10 w-full items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 /** Prefix marking a <select> value as one of `customNames` rather than a
  * catalog exercise id or the "type a new name" sentinel ("") — see the
@@ -129,6 +154,8 @@ export default function PersonalRecordFields({
   today,
   unitSystem,
   entry,
+  ctaLabel,
+  hidden = false,
 }: PersonalRecordFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry
@@ -167,29 +194,30 @@ export default function PersonalRecordFields({
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
+      ) : ctaLabel ? (
+        // Swaps the whole className rather than adding a `hidden` attribute
+        // alongside CTA_CLASSES' own `flex` — see GoalFields' matching
+        // button for why: `flex` is author-origin and would beat the
+        // user-agent-origin `[hidden]` rule regardless of order.
+        <button
+          type="button"
+          onClick={openFresh}
+          className={hidden ? "hidden" : CTA_CLASSES}
+        >
+          {ctaLabel}
+        </button>
       ) : (
-        <>
-          <button
-            type="button"
-            onClick={openFresh}
-            aria-label="Add record"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={openFresh}
-            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
-          >
-            <Plus className="h-4 w-4" />
-            Add record
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={openFresh}
+          className="text-xs font-medium text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Add record
+        </button>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit record" : "Add record"}>
@@ -202,6 +230,7 @@ export default function PersonalRecordFields({
           entry={entry}
           state={visibleState}
           formAction={formAction}
+          onCancel={() => setOpen(false)}
         />
       </Modal>
     </>
@@ -248,6 +277,9 @@ type PersonalRecordFormFieldsProps = {
   entry?: PersonalRecord;
   state: PersonalRecordFormState;
   formAction: (formData: FormData) => void;
+  /** Closes the modal without submitting — see GoalFields' matching
+   * onCancel doc comment. */
+  onCancel: () => void;
 };
 
 /**
@@ -298,6 +330,7 @@ function PersonalRecordFormFields({
   entry,
   state,
   formAction,
+  onCancel,
 }: PersonalRecordFormFieldsProps) {
   const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
@@ -427,44 +460,46 @@ function PersonalRecordFormFields({
         variable per field, is what lets picking a previously-used name
         and typing a brand new one share one control instead of two.
       */}
-      <label htmlFor={`${uid}-subject`} className="sr-only">
-        Exercise
-      </label>
-      <select
-        id={`${uid}-subject`}
-        value={subjectSelection}
-        onChange={(e) => setSubjectSelection(e.target.value)}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        <option value="">Custom (new)…</option>
-        {customNames.length > 0 && (
-          <optgroup label="Previously used">
-            {customNames.map((name) => (
-              <option
-                key={name}
-                value={`${EXISTING_CUSTOM_PREFIX}${name}`}
-              >
-                {name}
-              </option>
-            ))}
-          </optgroup>
-        )}
-        {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
-          <optgroup key={group.label} label={group.label}>
-            {group.exercises.map((exercise) => (
-              <option key={exercise.id} value={exercise.id}>
-                {exercise.name}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-subject`} className="text-xs font-medium text-ink-subtle">
+          Exercise
+        </label>
+        <select
+          id={`${uid}-subject`}
+          value={subjectSelection}
+          onChange={(e) => setSubjectSelection(e.target.value)}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          <option value="">Custom (new)…</option>
+          {customNames.length > 0 && (
+            <optgroup label="Previously used">
+              {customNames.map((name) => (
+                <option
+                  key={name}
+                  value={`${EXISTING_CUSTOM_PREFIX}${name}`}
+                >
+                  {name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {groupExercisesForSelect(catalog, { includeRest: false }).map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.exercises.map((exercise) => (
+                <option key={exercise.id} value={exercise.id}>
+                  {exercise.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
 
       <input type="hidden" name="exerciseId" value={exerciseId ?? ""} />
 
       {isNewCustomName && (
-        <>
-          <label htmlFor={`${uid}-customName`} className="sr-only">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${uid}-customName`} className="text-xs font-medium text-ink-subtle">
             Custom name
           </label>
           <input
@@ -474,60 +509,68 @@ function PersonalRecordFormFields({
             placeholder="Custom name"
             defaultValue={fieldDefault("customName", entry?.customName ?? "")}
             maxLength={RECORD_CUSTOM_NAME_MAX_LENGTH}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
-        </>
+        </div>
       )}
       {existingCustomName !== null && (
         <input type="hidden" name="customName" value={existingCustomName} />
       )}
 
-      <label htmlFor={`${uid}-recordType`} className="sr-only">
-        Record type
-      </label>
-      <select
-        id={`${uid}-recordType`}
-        name="recordType"
-        value={recordType}
-        onChange={(e) =>
-          setRecordType(
-            e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
-          )
-        }
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        {personalRecordTypeEnum.enumValues.map((type) => (
-          <option key={type} value={type}>
-            {PERSONAL_RECORD_LABELS[type].label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-recordType`} className="text-xs font-medium text-ink-subtle">
+          Record type
+        </label>
+        <select
+          id={`${uid}-recordType`}
+          name="recordType"
+          value={recordType}
+          onChange={(e) =>
+            setRecordType(
+              e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+            )
+          }
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          {personalRecordTypeEnum.enumValues.map((type) => (
+            <option key={type} value={type}>
+              {PERSONAL_RECORD_LABELS[type].label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      {recordType === "time" ? (
-        <DurationInput
-          key="time"
-          maxUnit="hours"
-          name="value"
-          defaultValueSeconds={fieldDefaultSeconds("value", defaultValue ?? null)}
-        />
-      ) : recordType === "distance" ? (
-        <DistanceInput
-          key={`distance-${isHyroxStation ? "hyrox" : "standard"}`}
-          name="value"
-          unitSystem={unitSystem}
-          isHyroxStation={isHyroxStation}
-          digitLimit={DISTANCE_DIGIT_LIMIT}
-          defaultValueMetres={fieldDefaultDistanceMetres(
-            "value",
-            entry && entry.recordType === "distance" ? entry.value : null
-          )}
-          defaultUnit={fieldDefaultDistanceUnit("value")}
-        />
-      ) : (
-        <>
-          <label htmlFor={`${uid}-value`} className="sr-only">
-            {`Value (${valueUnit})`}
+      <div className="flex flex-col gap-1.5">
+        {recordType === "time" || recordType === "distance" ? (
+          <span className="text-xs font-medium text-ink-subtle">Value</span>
+        ) : (
+          <label htmlFor={`${uid}-value`} className="text-xs font-medium text-ink-subtle">
+            Value
           </label>
+        )}
+        {recordType === "time" ? (
+          <DurationInput
+            key="time"
+            maxUnit="hours"
+            name="value"
+            surface="surface-2"
+            defaultValueSeconds={fieldDefaultSeconds("value", defaultValue ?? null)}
+          />
+        ) : recordType === "distance" ? (
+          <DistanceInput
+            key={`distance-${isHyroxStation ? "hyrox" : "standard"}`}
+            name="value"
+            unitSystem={unitSystem}
+            isHyroxStation={isHyroxStation}
+            digitLimit={DISTANCE_DIGIT_LIMIT}
+            surface="surface-2"
+            defaultValueMetres={fieldDefaultDistanceMetres(
+              "value",
+              entry && entry.recordType === "distance" ? entry.value : null
+            )}
+            defaultUnit={fieldDefaultDistanceUnit("value")}
+          />
+        ) : (
           <NumberField
             key={recordType}
             id={`${uid}-value`}
@@ -542,44 +585,57 @@ function PersonalRecordFormFields({
               defaultValue !== undefined ? String(defaultValue) : undefined
             )}
             placeholder={`Value (${valueUnit})`}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           />
-        </>
-      )}
+        )}
+      </div>
 
-      <label htmlFor={`${uid}-achievedAt`} className="sr-only">
-        Date achieved
-      </label>
-      <input
-        type="date"
-        id={`${uid}-achievedAt`}
-        name="achievedAt"
-        defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
-        max={today}
-        required
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-achievedAt`} className="text-xs font-medium text-ink-subtle">
+          Date achieved
+        </label>
+        <input
+          type="date"
+          id={`${uid}-achievedAt`}
+          name="achievedAt"
+          defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
+          max={today}
+          required
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
-      <label htmlFor={`${uid}-notes`} className="sr-only">
-        Notes (optional)
-      </label>
-      <input
-        type="text"
-        id={`${uid}-notes`}
-        name="notes"
-        placeholder="Notes (optional)"
-        defaultValue={fieldDefault("notes", entry?.notes ?? "")}
-        maxLength={RECORD_NOTES_MAX_LENGTH}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-notes`} className="text-xs font-medium text-ink-subtle">
+          Notes (optional)
+        </label>
+        <input
+          type="text"
+          id={`${uid}-notes`}
+          name="notes"
+          placeholder="Notes (optional)"
+          defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+          maxLength={RECORD_NOTES_MAX_LENGTH}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
       <FormErrorMessage
         error={state.status === "error" ? state.error : null}
       />
 
-      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-        {entry ? "Save" : "Add record"}
-      </SubmitButton>
+      <div className="mt-1 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Cancel
+        </button>
+        <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          {entry ? "Save" : "Add record"}
+        </SubmitButton>
+      </div>
       <FormPendingBanner label="Saving…" />
     </form>
   );

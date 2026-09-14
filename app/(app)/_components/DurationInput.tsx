@@ -53,6 +53,12 @@ type DurationInputBaseProps = {
    * h:mm:ss (a cap or a race time that can run past an hour). */
   maxUnit: "minutes" | "hours";
   className?: string;
+  /** Which surface token the boxes sit on — a fixed choice, not a
+   * free-form className override, so no call site can introduce a third
+   * surface. Defaults to "surface-1" (the workout builder's own panels);
+   * the /profile forms (PersonalRecordFields, GoalFields) pass "surface-2"
+   * to match the surface-2 fields around them inside a surface-1 modal. */
+  surface?: "surface-1" | "surface-2";
 };
 
 type UncontrolledDurationInputProps = DurationInputBaseProps & {
@@ -73,8 +79,17 @@ export type DurationInputProps =
   | UncontrolledDurationInputProps
   | ControlledDurationInputProps;
 
-const boxClassName =
-  "h-11 w-14 rounded-md border border-hairline bg-surface-1 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+// Two full, literal class strings — not a template literal interpolating
+// `surface` into `bg-${surface}` — because Tailwind's build-time scanner
+// only picks up class names it can find written out verbatim in the
+// source; a dynamically-assembled utility class silently never makes it
+// into the generated CSS.
+const BOX_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
+  "surface-1":
+    "h-11 w-14 rounded-md border border-hairline bg-surface-1 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+  "surface-2":
+    "h-11 w-14 rounded-md border border-hairline bg-surface-2 px-1 text-center text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+};
 
 /**
  * A segmented duration input — separate h/m/s boxes rather than one parsed
@@ -113,8 +128,9 @@ const boxClassName =
  * elsewhere in these same forms.
  */
 export default function DurationInput(props: DurationInputProps) {
-  const { maxUnit, className } = props;
+  const { maxUnit, className, surface = "surface-1" } = props;
   const isControlled = "onChange" in props;
+  const boxClassName = BOX_CLASS_NAMES[surface];
 
   const [boxes, setBoxes] = useState<Boxes>(() =>
     decomposeSeconds(

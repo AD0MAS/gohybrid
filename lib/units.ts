@@ -149,9 +149,17 @@ export function formatDistanceMetres(
 /**
  * Formats a body_metrics value for display given its metric_type. Only
  * "weight" converts (via formatWeightKg) — body_fat (%) and resting_hr
- * (bpm) are unit-system-independent by nature and are returned unchanged
- * on purpose. Do not "complete" this mapping by inventing a conversion for
- * either; there isn't one.
+ * (bpm) are unit-system-independent by nature and get no unit conversion
+ * on purpose; do not "complete" this mapping by inventing one, there isn't
+ * one. Both are still rounded, though — round1 for body_fat (same one
+ * decimal place BODY_FAT_DIGIT_LIMIT already bounds it to) and a whole
+ * number for resting_hr — because `value` isn't always the exact figure a
+ * user typed: computeBodyMetricTrend (lib/body-metrics.ts) hands this a
+ * subtraction between two stored readings, and JS floating-point
+ * subtraction routinely produces something like -0.6999999999999993 for
+ * what is genuinely a -0.7 difference. A plain stored reading rounds to
+ * itself here (it was already validated to this precision), so this costs
+ * nothing on the common path and fixes the derived one.
  */
 export function formatBodyMetricValue(
   metricType: BodyMetricType,
@@ -161,7 +169,10 @@ export function formatBodyMetricValue(
   if (metricType === "weight") {
     return formatWeightKg(value, unitSystem);
   }
-  return { value, unit: metricType === "body_fat" ? "%" : "bpm" };
+  if (metricType === "body_fat") {
+    return { value: round1(value), unit: "%" };
+  }
+  return { value: Math.round(value), unit: "bpm" };
 }
 
 /**

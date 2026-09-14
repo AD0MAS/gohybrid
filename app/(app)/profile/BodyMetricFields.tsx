@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
 import {
   FormErrorMessage,
@@ -34,9 +34,33 @@ type BodyMetricFieldsProps = {
    * Pencil edit trigger + the same form pre-filled from this entry,
    * submitting to updateBodyMetric instead of addBodyMetric. */
   entry?: BodyMetric;
+  /** Only meaningful when `entry` is absent: renders the default
+   * Add-measurement trigger as a full CTA button with this label instead of
+   * the quiet header-style text link — BodyMetricsList's empty state passes
+   * "Add a measurement". A plain string, not a renderTrigger callback (an
+   * earlier version of this prop): BodyMetricsList, which needs this
+   * variant, is a Server Component, and only serializable props — never
+   * functions — can cross into a Client Component like this one. */
+  ctaLabel?: string;
+  /** Only meaningful when `ctaLabel` is also set: hides the CTA button
+   * itself via `hidden` (display: none) without unmounting this component
+   * — BodyMetricsList's hero instance passes this once a measurement exists,
+   * instead of BodyMetricsList conditionally rendering (and thereby
+   * destroying) the instance itself. See BodyMetricsList's own doc comment
+   * for why: this component's `successCount`/FormSuccessBanner state must
+   * survive the exact render that flips the section from empty to
+   * non-empty, since that's the one save whose own success would otherwise
+   * be discarded by unmounting the very instance that just recorded it. */
+  hidden?: boolean;
 };
 
 const initialState: BodyMetricFormState = { status: "idle" };
+
+// w-full sm:w-auto matches GoalFields' own empty-state button ("Set your
+// first goal") — every empty-state CTA in /profile spans the full panel
+// width below sm and sizes to its own text from sm up.
+const CTA_CLASSES =
+  "flex h-10 w-full items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 /**
  * The Add/Edit trigger plus the Modal shell: owns `open`, the
@@ -97,6 +121,8 @@ export default function BodyMetricFields({
   today,
   unitSystem,
   entry,
+  ctaLabel,
+  hidden = false,
 }: BodyMetricFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateBodyMetric.bind(null, entry.id) : addBodyMetric;
@@ -131,29 +157,30 @@ export default function BodyMetricFields({
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
+      ) : ctaLabel ? (
+        // Swaps the whole className rather than adding a `hidden` attribute
+        // alongside CTA_CLASSES' own `flex` — see GoalFields' matching
+        // button for why: `flex` is author-origin and would beat the
+        // user-agent-origin `[hidden]` rule regardless of order.
+        <button
+          type="button"
+          onClick={openFresh}
+          className={hidden ? "hidden" : CTA_CLASSES}
+        >
+          {ctaLabel}
+        </button>
       ) : (
-        <>
-          <button
-            type="button"
-            onClick={openFresh}
-            aria-label="Add measurement"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={openFresh}
-            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
-          >
-            <Plus className="h-4 w-4" />
-            Add measurement
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={openFresh}
+          className="text-xs font-medium text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Add measurement
+        </button>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit measurement" : "Add measurement"}>
@@ -164,6 +191,7 @@ export default function BodyMetricFields({
           entry={entry}
           state={visibleState}
           formAction={formAction}
+          onCancel={() => setOpen(false)}
         />
       </Modal>
     </>
@@ -176,6 +204,9 @@ type BodyMetricFormFieldsProps = {
   entry?: BodyMetric;
   state: BodyMetricFormState;
   formAction: (formData: FormData) => void;
+  /** Closes the modal without submitting — see GoalFields' matching
+   * onCancel doc comment. */
+  onCancel: () => void;
 };
 
 /**
@@ -213,6 +244,7 @@ function BodyMetricFormFields({
   entry,
   state,
   formAction,
+  onCancel,
 }: BodyMetricFormFieldsProps) {
   const uid = useId();
   const submitted = state.status === "error" ? state.values : null;
@@ -248,85 +280,102 @@ function BodyMetricFormFields({
 
   return (
     <form action={formAction} className="flex flex-col gap-3">
-      <label htmlFor={`${uid}-metricType`} className="sr-only">
-        Metric type
-      </label>
-      <select
-        id={`${uid}-metricType`}
-        name="metricType"
-        value={metricType}
-        onChange={(e) =>
-          setMetricType(
-            e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
-          )
-        }
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        {bodyMetricTypeEnum.enumValues.map((type) => (
-          <option key={type} value={type}>
-            {BODY_METRIC_LABELS[type].label}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-metricType`} className="text-xs font-medium text-ink-subtle">
+          Metric type
+        </label>
+        <select
+          id={`${uid}-metricType`}
+          name="metricType"
+          value={metricType}
+          onChange={(e) =>
+            setMetricType(
+              e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+            )
+          }
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          {bodyMetricTypeEnum.enumValues.map((type) => (
+            <option key={type} value={type}>
+              {BODY_METRIC_LABELS[type].label}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <label htmlFor={`${uid}-value`} className="sr-only">
-        {`Value (${unit})`}
-      </label>
-      <NumberField
-        key={metricType}
-        id={`${uid}-value`}
-        name="value"
-        step={valueStep}
-        // min: 1 for all three — a body weight, body fat %, or resting
-        // heart rate of 0 is meaningless (fix 3: the same "correct the
-        // value while typing" approach as the builder's own numeric
-        // fields), so a typed 0 is corrected to 1 before it ever reaches
-        // this component's state.
-        min={1}
-        required
-        digitLimit={valueDigitLimit}
-        allowDecimal={metricType !== "resting_hr"}
-        initialValue={fieldDefault(
-          "value",
-          defaultValue !== undefined ? String(defaultValue) : undefined
-        )}
-        placeholder={`Value (${unit})`}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-value`} className="text-xs font-medium text-ink-subtle">
+          {`Value (${unit})`}
+        </label>
+        <NumberField
+          key={metricType}
+          id={`${uid}-value`}
+          name="value"
+          step={valueStep}
+          // min: 1 for all three — a body weight, body fat %, or resting
+          // heart rate of 0 is meaningless (fix 3: the same "correct the
+          // value while typing" approach as the builder's own numeric
+          // fields), so a typed 0 is corrected to 1 before it ever reaches
+          // this component's state.
+          min={1}
+          required
+          digitLimit={valueDigitLimit}
+          allowDecimal={metricType !== "resting_hr"}
+          initialValue={fieldDefault(
+            "value",
+            defaultValue !== undefined ? String(defaultValue) : undefined
+          )}
+          placeholder={`Value (${unit})`}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
-      <label htmlFor={`${uid}-measuredAt`} className="sr-only">
-        Date measured
-      </label>
-      <input
-        type="date"
-        id={`${uid}-measuredAt`}
-        name="measuredAt"
-        defaultValue={fieldDefault("measuredAt", entry?.measuredAt ?? today)}
-        max={today}
-        required
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-measuredAt`} className="text-xs font-medium text-ink-subtle">
+          Date measured
+        </label>
+        <input
+          type="date"
+          id={`${uid}-measuredAt`}
+          name="measuredAt"
+          defaultValue={fieldDefault("measuredAt", entry?.measuredAt ?? today)}
+          max={today}
+          required
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
-      <label htmlFor={`${uid}-notes`} className="sr-only">
-        Notes (optional)
-      </label>
-      <input
-        type="text"
-        id={`${uid}-notes`}
-        name="notes"
-        placeholder="Notes (optional)"
-        defaultValue={fieldDefault("notes", entry?.notes ?? "")}
-        maxLength={BODY_METRIC_NOTES_MAX_LENGTH}
-        className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor={`${uid}-notes`} className="text-xs font-medium text-ink-subtle">
+          Notes (optional)
+        </label>
+        <input
+          type="text"
+          id={`${uid}-notes`}
+          name="notes"
+          placeholder="Notes (optional)"
+          defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+          maxLength={BODY_METRIC_NOTES_MAX_LENGTH}
+          className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        />
+      </div>
 
       <FormErrorMessage
         error={state.status === "error" ? state.error : null}
       />
 
-      <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-        {entry ? "Save" : "Add measurement"}
-      </SubmitButton>
+      <div className="mt-1 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Cancel
+        </button>
+        <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          {entry ? "Save" : "Add measurement"}
+        </SubmitButton>
+      </div>
       <FormPendingBanner label="Saving…" />
     </form>
   );

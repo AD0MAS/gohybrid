@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bodyMetricTypeEnum,
@@ -88,6 +88,32 @@ export async function getGoalsForUser(
   });
 
   return rows.map(toGoal);
+}
+
+/**
+ * Whether `userId` has ever created a goal, archived or not — page.tsx's own
+ * call, to decide whether the page-header Add-goal button and GoalsList's
+ * hero empty state would otherwise both offer the same action at once. The
+ * header shows for every state that has a goal to manage (active, all
+ * archived, or a mix) and only GoalsList's own hero CTA covers the one state
+ * that's never had one — an all-archived user still gets a header button
+ * (see GoalsList's own doc comment for why the in-section CTA that used to
+ * cover that state was removed), so this counts every goal regardless of
+ * `is_archived`, unlike an earlier version scoped to active goals only. A
+ * plain `count(*)`, same convention as getTotalSessionCountForUser
+ * (lib/activity.ts) — aggregation belongs in SQL, not in counting an array
+ * client-side — rather than reusing getGoalsForUser's full row-and-exercise
+ * fetch just to read `.length`, which GoalsList already runs independently
+ * moments later.
+ */
+export async function getTotalGoalCountForUser(userId: string): Promise<number> {
+  const { rows: [row] } = await db.execute<{ count: number }>(sql`
+    select count(*)::int as count
+    from ${goals}
+    where ${goals.userId} = ${userId}
+  `);
+
+  return row.count;
 }
 
 /**
@@ -236,6 +262,20 @@ export type GoalProgress = {
   current: number;
   target: number;
   percent: number;
+  /**
+   * `percent` rounded for display, clamped so the rounded number can never
+   * claim a state the raw `percent` hasn't actually reached: 100 only when
+   * `percent` is truly 100 (not e.g. 99.979, which plain `Math.round` turns
+   * into 100), 0 only when `percent` is truly 0, and everything between
+   * clamped to 1–99 — a sliver of real progress must never round down to
+   * the same "0%" an untouched goal shows, and an almost-but-not-quite-done
+   * goal must never round up to the same "100%" a finished one shows.
+   * Completion itself (bar colour, any "done" styling) must still be
+   * decided from `percent`, never from this field — see computeGoalProgress's
+   * own doc comment for why a caller that keyed a completed state off the
+   * rounded number reproduced this exact bug at the bar's fill colour.
+   */
+  roundedPercent: number;
 };
 
 /**
@@ -264,6 +304,17 @@ export type GoalProgress = {
  * must be reasonable on its own) and a "decrease" goal whose start_value
  * equals target_value (also rejected at input time, same reasoning) both
  * report 0% rather than dividing by zero.
+ *
+ * `roundedPercent` is derived here, alongside `percent`, rather than left
+ * for each caller to round — a goal at 9997.9 / 9999.9 has a real `percent`
+ * of 99.979..., which `Math.round` turns into 100, displaying (and, for any
+ * caller that then treats that rounded 100 as "done" instead of rereading
+ * `percent`, colouring) a goal as complete before it actually is. Deriving
+ * it once here means every caller gets the same clamp — 100 only when
+ * `percent` itself already reached 100, 0 only when `percent` itself is 0,
+ * 1–99 for everything genuinely in between — instead of one render site
+ * remembering to clamp and another reintroducing the bug by rounding
+ * `percent` directly.
  */
 export function computeGoalProgress(
   goal: Pick<Goal, "direction" | "targetValue" | "startValue">,
@@ -283,7 +334,14 @@ export function computeGoalProgress(
   }
 
   const percent = Math.min(100, Math.max(0, ratio * 100));
-  return { current: currentValue, target, percent };
+  const roundedPercent =
+    percent <= 0
+      ? 0
+      : percent >= 100
+        ? 100
+        : Math.min(99, Math.max(1, Math.round(percent)));
+
+  return { current: currentValue, target, percent, roundedPercent };
 }
 
 /**

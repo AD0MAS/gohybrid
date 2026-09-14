@@ -7,9 +7,21 @@ import { useFormStatus } from "react-dom";
 // layout reserves as pb-16 (app/(app)/layout.tsx) — the extra 1rem matches
 // the bottom-4 gap this already used before the bar existed underneath it.
 // sm:bottom-4 restores that original offset once the sidebar takes over and
-// nothing occupies the bottom edge.
+// nothing occupies the bottom edge. `visible pointer-events-auto` counter
+// an ancestor's inherited `invisible`/`pointer-events-none` the same way
+// Modal's own <dialog> does (see its doc comment) — GoalCardMenu's popover
+// panel (app/(app)/profile/GoalCardMenu.tsx) applies exactly that pair to
+// itself once closed, and every one of these banners can end up rendered
+// inside it: GoalsList's per-row Edit embeds GoalFields with
+// triggerVariant="menu-item" as one of GoalCardMenu's own `children`.
+// `visibility` is inherited, so without its own override a banner in that
+// position would render (its own `visible` state genuinely true) but stay
+// invisible, inheriting the popover's `invisible` from the menu having
+// just closed — which it does on every click inside it, Save included,
+// synchronously on the same click that submits the form and well before
+// the Server Action's async result ever sets this banner's own state.
 const BANNER_CLASSES =
-  "fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-md border px-4 py-2 text-sm";
+  "visible pointer-events-auto fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-md border px-4 py-2 text-sm";
 
 /**
  * Fixed-bottom "Saving…" banner for the pending half of a form submission —

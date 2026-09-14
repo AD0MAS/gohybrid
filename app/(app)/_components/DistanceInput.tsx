@@ -188,6 +188,13 @@ type DistanceInputBaseProps = {
    * authoritative metres-space clamp. */
   digitLimit: DigitLimit;
   className?: string;
+  /** Which surface token the number input and unit <select> sit on — a
+   * fixed choice, not a free-form className override, so no call site can
+   * introduce a third surface. Defaults to "surface-1" (the workout
+   * builder's own panels); the /profile forms (PersonalRecordFields,
+   * GoalFields) pass "surface-2" to match the surface-2 fields around them
+   * inside a surface-1 modal. */
+  surface?: "surface-1" | "surface-2";
 };
 
 type UncontrolledDistanceInputProps = DistanceInputBaseProps & {
@@ -218,10 +225,23 @@ export type DistanceInputProps =
   | UncontrolledDistanceInputProps
   | ControlledDistanceInputProps;
 
-const inputClassName =
-  "h-11 flex-1 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-const selectClassName =
-  "h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle";
+// Two full, literal class strings per element — not a template literal
+// interpolating `surface` into `bg-${surface}` — because Tailwind's
+// build-time scanner only picks up class names it can find written out
+// verbatim in the source; a dynamically-assembled utility class silently
+// never makes it into the generated CSS.
+const INPUT_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
+  "surface-1":
+    "h-11 flex-1 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+  "surface-2":
+    "h-11 flex-1 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+};
+const SELECT_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
+  "surface-1":
+    "h-11 rounded-md border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
+  "surface-2":
+    "h-11 rounded-md border border-hairline bg-surface-2 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus disabled:text-ink-subtle",
+};
 
 /**
  * A number input paired with an explicit unit <select> — replaces the old
@@ -290,8 +310,10 @@ const selectClassName =
  * for this.
  */
 export default function DistanceInput(props: DistanceInputProps) {
-  const { unitSystem, isHyroxStation, digitLimit, className } = props;
+  const { unitSystem, isHyroxStation, digitLimit, className, surface = "surface-1" } = props;
   const isControlled = "onChange" in props;
+  const inputClassName = INPUT_CLASS_NAMES[surface];
+  const selectClassName = SELECT_CLASS_NAMES[surface];
 
   const [box, setBox] = useState<Box>(() =>
     decompose(

@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { bodyMetrics, bodyMetricTypeEnum } from "@/db/schema";
 import type { ValidatedBodyMetricInput } from "./body-metrics-validation";
+import { diffInDays } from "./dates";
 
 export type BodyMetric = {
   id: string;
@@ -116,4 +117,36 @@ export async function deleteBodyMetricForUser(
     .returning({ id: bodyMetrics.id });
 
   return deleted.length > 0;
+}
+
+export type BodyMetricTrend = {
+  /** latest.value - previous.value, in the metric's own stored SI unit
+   * (kg/%/bpm) — never pre-converted. Display formatting (unit conversion,
+   * sign) happens at the boundary, same as every other stored value in this
+   * schema — see formatBodyMetricValue in lib/units.ts. */
+  deltaValue: number;
+  /** Whole days between the two readings' measuredAt dates. */
+  daysBetween: number;
+};
+
+/**
+ * Compares the two most recent readings of one metric type — the latest
+ * against the one immediately before it, never a fixed-size window (a "last
+ * N readings" cutoff would need a chosen N, and there's no such number
+ * anywhere else in this schema). Pure and query-free, same principle as
+ * isBetterRecord (lib/personal-records-grouping.ts) and computeGoalProgress:
+ * the caller (BodyMetricsList) already has `entries` from
+ * getBodyMetricsForUser, which returns newest-measured-first, so this just
+ * reads the first two. Returns null when there's nothing to compare against
+ * yet (zero or one reading).
+ */
+export function computeBodyMetricTrend(
+  entriesNewestFirst: Pick<BodyMetric, "value" | "measuredAt">[]
+): BodyMetricTrend | null {
+  if (entriesNewestFirst.length < 2) return null;
+  const [latest, previous] = entriesNewestFirst;
+  return {
+    deltaValue: latest.value - previous.value,
+    daysBetween: diffInDays(previous.measuredAt, latest.measuredAt),
+  };
 }

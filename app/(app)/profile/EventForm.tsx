@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState, type ReactNode } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { eventTypeEnum } from "@/db/schema";
 import {
   FormErrorMessage,
@@ -21,6 +21,12 @@ import { addEvent, updateEvent, type EventFormState } from "./events-actions";
 
 const initialState: EventFormState = { status: "idle" };
 
+// w-full sm:w-auto matches GoalFields' own empty-state button ("Set your
+// first goal") — every empty-state CTA in /profile spans the full panel
+// width below sm and sizes to its own text from sm up.
+const CTA_CLASSES =
+  "flex h-10 w-full items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
+
 type EventFormProps = {
   /** Absent renders the Add-event button + form; present renders a Pencil
    * edit trigger + the same form pre-filled from this event, submitting to
@@ -38,6 +44,25 @@ type EventFormProps = {
    * caller-supplied trigger reseeds the form from `entry` fresh on every
    * open exactly like the built-in Pencil button does. */
   renderTrigger?: (open: () => void) => ReactNode;
+  /** Only meaningful when `entry` is absent and `renderTrigger` isn't
+   * supplied: renders the default Add-event trigger as a full CTA button
+   * with this label instead of the quiet header-style text link —
+   * EventsList's empty state passes "Add an event". A plain string, not a
+   * second renderTrigger-shaped callback: EventsList, which needs this
+   * variant, is a Server Component, and only serializable props (never
+   * functions) can cross into a Client Component like this one — the same
+   * reason `renderTrigger` itself is documented above as client-caller-only. */
+  ctaLabel?: string;
+  /** Only meaningful when `ctaLabel` is also set: hides the CTA button
+   * itself via `hidden` (display: none) without unmounting this component
+   * — EventsList's hero instance passes this once an event exists, instead
+   * of EventsList conditionally rendering (and thereby destroying) the
+   * instance itself. See EventsList's own doc comment for why: this
+   * component's `successCount`/FormSuccessBanner state must survive the
+   * exact render that flips the section from empty to non-empty, since
+   * that's the one save whose own success would otherwise be discarded by
+   * unmounting the very instance that just recorded it. */
+  hidden?: boolean;
 };
 
 /**
@@ -102,7 +127,12 @@ type EventFormProps = {
  * from useActionState (which stays untouched, so the sync block above can
  * still tell success/error apart by identity).
  */
-export default function EventForm({ entry, renderTrigger }: EventFormProps) {
+export default function EventForm({
+  entry,
+  renderTrigger,
+  ctaLabel,
+  hidden = false,
+}: EventFormProps) {
   const uid = useId();
   const [open, setOpen] = useState(false);
   const action = entry ? updateEvent.bind(null, entry.id) : addEvent;
@@ -143,108 +173,128 @@ export default function EventForm({ entry, renderTrigger }: EventFormProps) {
           type="button"
           onClick={openFresh}
           aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-md text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
+      ) : ctaLabel ? (
+        // Swaps the whole className rather than adding a `hidden` attribute
+        // alongside CTA_CLASSES' own `flex` — see GoalFields' matching
+        // button for why: `flex` is author-origin and would beat the
+        // user-agent-origin `[hidden]` rule regardless of order.
+        <button
+          type="button"
+          onClick={openFresh}
+          className={hidden ? "hidden" : CTA_CLASSES}
+        >
+          {ctaLabel}
+        </button>
       ) : (
-        <>
-          <button
-            type="button"
-            onClick={openFresh}
-            aria-label="Add event"
-            className="flex h-11 w-11 items-center justify-center rounded-md bg-accent text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:hidden"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={openFresh}
-            className="hidden h-11 items-center gap-2 rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:flex"
-          >
-            <Plus className="h-4 w-4" />
-            Add event
-          </button>
-        </>
+        <button
+          type="button"
+          onClick={openFresh}
+          className="text-xs font-medium text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        >
+          Add event
+        </button>
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit event" : "Add event"}>
         <form key={formKey} action={formAction} className="flex flex-col gap-3">
-          <label htmlFor={`${uid}-title`} className="sr-only">
-            Event title
-          </label>
-          <input
-            type="text"
-            id={`${uid}-title`}
-            name="title"
-            placeholder="Event title"
-            defaultValue={fieldDefault("title", entry?.title)}
-            required
-            maxLength={EVENT_TITLE_MAX_LENGTH}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-title`} className="text-xs font-medium text-ink-subtle">
+              Title
+            </label>
+            <input
+              type="text"
+              id={`${uid}-title`}
+              name="title"
+              placeholder="Event title"
+              defaultValue={fieldDefault("title", entry?.title)}
+              required
+              maxLength={EVENT_TITLE_MAX_LENGTH}
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          </div>
 
-          <label htmlFor={`${uid}-eventType`} className="sr-only">
-            Event type
-          </label>
-          <select
-            id={`${uid}-eventType`}
-            name="eventType"
-            defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            {eventTypeEnum.enumValues.map((type) => (
-              <option key={type} value={type}>
-                {EVENT_TYPE_LABELS[type].label}
-              </option>
-            ))}
-          </select>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-eventType`} className="text-xs font-medium text-ink-subtle">
+              Event type
+            </label>
+            <select
+              id={`${uid}-eventType`}
+              name="eventType"
+              defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              {eventTypeEnum.enumValues.map((type) => (
+                <option key={type} value={type}>
+                  {EVENT_TYPE_LABELS[type].label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <label htmlFor={`${uid}-eventDate`} className="sr-only">
-            Event date
-          </label>
-          <input
-            type="date"
-            id={`${uid}-eventDate`}
-            name="eventDate"
-            defaultValue={fieldDefault("eventDate", entry?.eventDate)}
-            required
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-eventDate`} className="text-xs font-medium text-ink-subtle">
+              Date
+            </label>
+            <input
+              type="date"
+              id={`${uid}-eventDate`}
+              name="eventDate"
+              defaultValue={fieldDefault("eventDate", entry?.eventDate)}
+              required
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          </div>
 
-          <label htmlFor={`${uid}-location`} className="sr-only">
-            Location (optional)
-          </label>
-          <input
-            type="text"
-            id={`${uid}-location`}
-            name="location"
-            placeholder="Location (optional)"
-            defaultValue={fieldDefault("location", entry?.location ?? "")}
-            maxLength={EVENT_LOCATION_MAX_LENGTH}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-location`} className="text-xs font-medium text-ink-subtle">
+              Location (optional)
+            </label>
+            <input
+              type="text"
+              id={`${uid}-location`}
+              name="location"
+              placeholder="Location (optional)"
+              defaultValue={fieldDefault("location", entry?.location ?? "")}
+              maxLength={EVENT_LOCATION_MAX_LENGTH}
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          </div>
 
-          <label htmlFor={`${uid}-notes`} className="sr-only">
-            Notes (optional)
-          </label>
-          <input
-            type="text"
-            id={`${uid}-notes`}
-            name="notes"
-            placeholder="Notes (optional)"
-            defaultValue={fieldDefault("notes", entry?.notes ?? "")}
-            maxLength={EVENT_NOTES_MAX_LENGTH}
-            className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-notes`} className="text-xs font-medium text-ink-subtle">
+              Notes (optional)
+            </label>
+            <input
+              type="text"
+              id={`${uid}-notes`}
+              name="notes"
+              placeholder="Notes (optional)"
+              defaultValue={fieldDefault("notes", entry?.notes ?? "")}
+              maxLength={EVENT_NOTES_MAX_LENGTH}
+              className="h-11 rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          </div>
 
           <FormErrorMessage
             error={visibleState.status === "error" ? visibleState.error : null}
           />
 
-          <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-            {entry ? "Save" : "Add event"}
-          </SubmitButton>
+          <div className="mt-1 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex h-11 items-center justify-center rounded-md border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              Cancel
+            </button>
+            <SubmitButton className="flex h-11 items-center justify-center rounded-md bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+              {entry ? "Save" : "Add event"}
+            </SubmitButton>
+          </div>
           <FormPendingBanner label="Saving…" />
         </form>
       </Modal>

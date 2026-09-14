@@ -3,6 +3,7 @@ node_modules/
 docs/GOHYBRID_PLAN.md
 docs/PROJECT_CONTEXT.md
 docs/ROADMAP.md
+docs/design/
 .next/
 CLAUDE.md
 .claude/
