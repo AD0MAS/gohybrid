@@ -109,7 +109,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
 
   return (
     <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Body metrics</h2>
         {!isEmpty && <BodyMetricFields today={today} unitSystem={unitSystem} />}
       </div>

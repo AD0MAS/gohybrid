@@ -62,6 +62,24 @@ const initialState: BodyMetricFormState = { status: "idle" };
 const CTA_CLASSES =
   "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
+// The section heading's own trigger, rebuilt from BodyMetricTypeTabs' own tab
+// button (the closest existing "small secondary button inside a panel"):
+// rounded-control, border, px-3 py-1.5 (this is what gives the height — no
+// separate h-* class, same as the tabs), text-xs font-medium, and the same
+// focus ring, copied as-is. Two deliberate departures from an inactive tab:
+// bg-surface-2 (the panel behind it is bg-surface-1 — one step darker — so
+// surface-2 is one step lighter, same value the tabs already rest at, chosen
+// so the button reads as raised rather than an outlined hole) with text-ink
+// rather than text-ink-subtle, since this is the section's one primary
+// action and should carry more visual weight than an inactive tab's muted
+// label. hover:/active: reuse the tabs' own *active-tab* values
+// (border-hairline-strong, bg-surface-3) as the pressed/hovered state — the
+// same transition the tabs already define between their two states, just
+// triggered by a pseudo-class instead of a click, and active: mirrors hover:
+// per the app-wide touch-feedback convention (see globals.css/CLAUDE.md).
+const HEADER_TRIGGER_CLASSES =
+  "rounded-control border border-hairline bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+
 /**
  * The Add/Edit trigger plus the Modal shell: owns `open`, the
  * useActionState pair, and `formKey` — everything that must survive across
@@ -174,11 +192,7 @@ export default function BodyMetricFields({
           {ctaLabel}
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={openFresh}
-          className="text-xs font-medium text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
+        <button type="button" onClick={openFresh} className={HEADER_TRIGGER_CLASSES}>
           Add measurement
         </button>
       )}
