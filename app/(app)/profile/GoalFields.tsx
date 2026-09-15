@@ -234,7 +234,7 @@ export default function GoalFields({
           className={
             hidden
               ? "hidden"
-              : "flex h-11 w-full items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+              : "flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
           }
         >
           {addLabel}
@@ -881,11 +881,11 @@ function GoalFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
           {entry ? "Save" : "Add goal"}
         </SubmitButton>
       </div>

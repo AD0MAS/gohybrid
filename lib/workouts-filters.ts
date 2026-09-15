@@ -32,7 +32,7 @@ function toIdList(value: string | string[] | undefined): string[] {
 }
 
 /**
- * Parses the /workouts/library page's URL search params into a
+ * Parses the /workouts page's URL search params into a
  * WorkoutListFilters object for getWorkoutsForUser. Every filter field is
  * independently validated and simply omitted when malformed or unrecognized
  * — a hand-edited or stale URL (e.g. `primaryType=bogus`, a deleted tag's

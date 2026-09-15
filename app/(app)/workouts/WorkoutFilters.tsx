@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import type { CatalogTag, Difficulty, PrimaryType } from "../builder/reducer";
-import { DIFFICULTY_LABELS } from "../difficulty-labels";
-import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
-import { TAG_COLOR_CLASSES } from "../tag-colors";
+import type { CatalogTag, Difficulty, PrimaryType } from "./builder/reducer";
+import { DIFFICULTY_LABELS } from "./difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
 import { WORKOUT_SEARCH_MAX_LENGTH } from "@/lib/text-limits";
 import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
 
@@ -42,7 +41,7 @@ type FilterOverrides = Partial<{
 }>;
 
 /**
- * Filter controls for /workouts/library: title search, primary type and
+ * Filter controls for /workouts: title search, primary type and
  * difficulty selects, toggleable tag chips, a favorites toggle, and a sort
  * select. Sort is a view preference rather than a filter — it's excluded
  * from hasActiveFilters and survives "Clear filters" untouched.
@@ -110,7 +109,7 @@ export default function WorkoutFilters({
 
     const query = params.toString();
     startTransition(() => {
-      router.push(query ? `/workouts/library?${query}` : "/workouts/library");
+      router.push(query ? `/workouts?${query}` : "/workouts");
     });
   }
 
@@ -143,15 +142,15 @@ export default function WorkoutFilters({
     tagIds.length > 0;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-nowrap sm:items-center">
         <input
           type="text"
           value={qInput}
           onChange={(event) => setQInput(event.target.value)}
           placeholder="Search by title"
           maxLength={WORKOUT_SEARCH_MAX_LENGTH}
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="col-span-2 h-11 rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:min-w-0 sm:flex-1"
         />
 
         <select
@@ -159,7 +158,7 @@ export default function WorkoutFilters({
           onChange={(event) =>
             navigate({ primaryType: event.target.value as PrimaryType | "" })
           }
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 w-full rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto sm:shrink-0"
         >
           <option value="">All types</option>
           {primaryTypeOptions.map((option) => (
@@ -174,7 +173,7 @@ export default function WorkoutFilters({
           onChange={(event) =>
             navigate({ difficulty: event.target.value as Difficulty | "" })
           }
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 w-full rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto sm:shrink-0"
         >
           <option value="">All difficulties</option>
           {difficultyOptions.map((option) => (
@@ -188,10 +187,10 @@ export default function WorkoutFilters({
           type="button"
           onClick={() => navigate({ favoritesOnly: !favoritesOnly })}
           aria-pressed={favoritesOnly}
-          className={`h-11 rounded-control border px-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+          className={`h-11 w-full rounded-control border px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto sm:shrink-0 ${
             favoritesOnly
-              ? "border-hairline-strong bg-surface-2 text-ink"
-              : "border-hairline text-ink-subtle hover:text-ink active:text-ink"
+              ? "border-hairline-strong bg-surface-3 text-ink"
+              : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
           }`}
         >
           ★ Favorites
@@ -203,7 +202,7 @@ export default function WorkoutFilters({
             navigate({ sort: event.target.value as WorkoutSort })
           }
           aria-label="Sort by"
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="h-11 w-full rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto sm:shrink-0"
         >
           {WORKOUT_SORT_OPTIONS.map((option) => (
             <option key={option} value={option}>
@@ -213,14 +212,16 @@ export default function WorkoutFilters({
         </select>
 
         {isPending && (
-          <span className="text-xs text-ink-subtle">Updating…</span>
+          <span className="col-span-2 text-xs text-ink-subtle sm:col-span-1">
+            Updating…
+          </span>
         )}
 
         {hasActiveFilters && (
           <button
             type="button"
             onClick={clearFilters}
-            className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-3 text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="col-span-2 flex h-11 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink-subtle hover:text-ink active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:col-span-1 sm:w-auto sm:shrink-0"
           >
             Clear filters
           </button>
@@ -237,9 +238,11 @@ export default function WorkoutFilters({
                 type="button"
                 onClick={() => toggleTag(tag.id)}
                 aria-pressed={active}
-                className={`rounded-small border px-2 py-0.5 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
-                  TAG_COLOR_CLASSES[tag.color]
-                } ${active ? "ring-2 ring-accent-focus ring-offset-1 ring-offset-canvas" : "opacity-60"}`}
+                className={`rounded-small border px-3 py-0.5 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+                  active
+                    ? "border-hairline-strong bg-surface-3 text-ink"
+                    : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
+                }`}
               >
                 {tag.name}
               </button>

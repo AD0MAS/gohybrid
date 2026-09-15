@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 const DEFAULT_BACK: BackDestination = {
-  href: "/workouts/library",
+  href: "/workouts",
   label: "My Workouts",
 };
 
@@ -44,20 +44,23 @@ const DEFAULT_BACK: BackDestination = {
  * each entry point passes — see resolveBackDestination for why `from` is
  * looked up here rather than trusted directly. "workouts" is a base value
  * only: resolveBack below rebuilds its href with the week strip's `week`/
- * `day` restored, once each is independently re-validated. */
+ * `day` restored, once each is independently re-validated. Both "home" and
+ * "workouts" resolve to "/" now that the week strip lives on Home alongside
+ * Upcoming — they stay two separate keys because only "workouts" carries
+ * week/day state back with it. */
 const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
-  workouts: { href: "/workouts", label: "Workouts" },
+  workouts: { href: "/", label: "Home" },
 };
 
 /**
  * Resolves the back link, same map-lookup contract as resolveBackDestination
  * — but when `from=workouts`, the week strip's selected week/day are also
- * restored onto the fixed /workouts base, so returning to the strip doesn't
+ * restored onto the fixed / (Home) base, so returning to the strip doesn't
  * lose which day was open. `week`/`day` are re-validated here (an integer,
  * and lib/scheduled-workouts-validation's YYYY-MM-DD check) rather than
- * trusted as received, so a malformed pair degrades to a bare /workouts
- * instead of ever being passed through unchecked.
+ * trusted as received, so a malformed pair degrades to a bare / instead of
+ * ever being passed through unchecked.
  */
 function resolveBack(
   searchParams: Record<string, string | string[] | undefined>
@@ -81,7 +84,7 @@ function resolveBack(
   if (day !== undefined) query.set("day", day);
   const qs = query.toString();
 
-  return { href: qs ? `/workouts?${qs}` : base.href, label: base.label };
+  return { href: qs ? `/?${qs}` : base.href, label: base.label };
 }
 
 /**
@@ -95,8 +98,8 @@ function resolveBack(
  *
  * A missing id, a malformed id, and an id belonging to another user all
  * render the same not-found page, so this page never confirms whether a
- * given id exists. Reachable from Home's Upcoming, /workouts/library, and
- * the week strip on /workouts, so the back link's target depends on the
+ * given id exists. Reachable from Home's Upcoming, /workouts (the library),
+ * and the week strip on Home, so the back link's target depends on the
  * `from` search param each sets — see resolveBack above.
  *
  * `?saved=1` marks a landing from createFullWorkout/updateFullWorkout's
@@ -148,13 +151,13 @@ export default async function WorkoutDetailPage(
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href={`/workouts/${workout.id}/edit`}
-            className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
           >
             Edit
           </Link>
           <ConfirmModal
             trigger="Delete"
-            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             title="Delete workout"
             description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
             confirmLabel="Delete"

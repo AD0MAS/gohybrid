@@ -140,7 +140,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/settings"
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               Settings
             </Link>

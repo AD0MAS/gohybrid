@@ -39,7 +39,6 @@ export async function finishWorkout(workoutId: string) {
 
   revalidatePath("/history");
   revalidatePath("/");
-  revalidatePath("/workouts");
   revalidatePath("/calendar");
   revalidatePath("/stats");
 

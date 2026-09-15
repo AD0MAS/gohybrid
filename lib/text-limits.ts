@@ -44,7 +44,7 @@ export const BODY_METRIC_NOTES_MAX_LENGTH = 500;
 export const RECORD_NOTES_MAX_LENGTH = 500;
 export const EVENT_NOTES_MAX_LENGTH = 500;
 
-// Not persisted — the /workouts/library search box (WorkoutFilters.tsx),
+// Not persisted — the /workouts search box (WorkoutFilters.tsx),
 // parsed by parseWorkoutListSearchParams (lib/workouts-filters.ts), which
 // has no validator of its own to hold this check inline; the cap is applied
 // there directly instead. Matches WORKOUT_TITLE_MAX_LENGTH since it searches

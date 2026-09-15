@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 const DEFAULT_BACK: BackDestination = {
-  href: "/workouts/library",
+  href: "/workouts",
   label: "My Workouts",
 };
 
@@ -37,7 +37,7 @@ const BACK_SOURCES: Record<string, BackDestination> = {
  * columns rather than joining against `workouts`, so a session survives
  * its workout being edited or deleted.
  *
- * Reachable from both /workouts/library (its corner button) and Home (the
+ * Reachable from both /workouts (its corner button) and Home (the
  * recent-activity "Full history" link), so the back link's target depends
  * on the `from` search param each sets — see BACK_SOURCES/DEFAULT_BACK.
  *
@@ -71,7 +71,7 @@ export default async function HistoryPage(props: PageProps<"/history">) {
         {sessions.length > 0 && (
           <ConfirmModal
             trigger="Clear history"
-            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base text-danger hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-danger hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             title="Clear history"
             description="Deleting every session removes all training history and empties your stats and the activity heatmap. Workouts completed without being planned disappear from the calendar; planned workouts revert to Planned."
             confirmLabel="Delete"

@@ -55,7 +55,7 @@ async function buildEnumOptions(): Promise<BuilderEnumOptions> {
  * the builder already used for immediate feedback, since client-side
  * validation is only a UX convenience, not the real gate. Returns an
  * error object on failure so the Save button can display it — never
- * swallowed. On success, revalidates /workouts/library and redirects to
+ * swallowed. On success, revalidates /workouts and redirects to
  * the new workout's detail page.
  */
 export async function createFullWorkout(payload: RawBuilderPayload) {
@@ -68,7 +68,7 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
 
   const workout = await createFullWorkoutForUser(user.id, result.data);
 
-  revalidatePath("/workouts/library");
+  revalidatePath("/workouts");
   redirect(`/workouts/${workout.id}?saved=1`);
 }
 
@@ -80,7 +80,7 @@ export async function createFullWorkout(payload: RawBuilderPayload) {
  * createFullWorkout. Returns an error object on failure (including
  * "not found", which covers both a missing workout and one owned by
  * another user) so the Save button can display it. On success,
- * revalidates /workouts/library and the workout's detail page, then
+ * revalidates /workouts and the workout's detail page, then
  * redirects to the detail page.
  */
 export async function updateFullWorkout(id: string, payload: RawBuilderPayload) {
@@ -97,7 +97,7 @@ export async function updateFullWorkout(id: string, payload: RawBuilderPayload) 
     return { error: "Workout not found." };
   }
 
-  revalidatePath("/workouts/library");
+  revalidatePath("/workouts");
   revalidatePath(`/workouts/${id}`);
   redirect(`/workouts/${id}?saved=1`);
 }

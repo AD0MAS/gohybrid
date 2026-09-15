@@ -14,15 +14,15 @@ import { echoFormValues } from "@/lib/form-state";
  * Ownership is enforced by deleteWorkoutForUser's WHERE clause, not by
  * trusting that the caller only reaches this action through the detail
  * page — a forged request naming another user's workout id deletes
- * nothing. On success, revalidates /workouts/library and redirects there.
+ * nothing. On success, revalidates /workouts and redirects there.
  */
 export async function deleteWorkout(id: string) {
   const user = await requireUser();
 
   await deleteWorkoutForUser(id, user.id);
 
-  revalidatePath("/workouts/library");
-  redirect("/workouts/library");
+  revalidatePath("/workouts");
+  redirect("/workouts");
 }
 
 /**
@@ -31,7 +31,7 @@ export async function deleteWorkout(id: string) {
  * enforced by toggleFavoriteForUser's WHERE clause. Throws if nothing
  * matched (the workout was deleted or isn't owned by the current user
  * between page load and this call), so FavoriteToggle's optimistic state
- * can catch the failure and revert. Revalidates /workouts/library and the
+ * can catch the failure and revert. Revalidates /workouts and the
  * workout's detail page on success — no redirect, since this is used
  * inline on both pages.
  */
@@ -44,7 +44,7 @@ export async function toggleFavorite(id: string) {
     throw new Error("Workout not found.");
   }
 
-  revalidatePath("/workouts/library");
+  revalidatePath("/workouts");
   revalidatePath(`/workouts/${id}`);
 }
 
@@ -56,7 +56,7 @@ export async function toggleFavorite(id: string) {
  * never drift apart. Throws on invalid input or if the workout isn't
  * found/owned, so ScheduleWorkoutForm can catch and display the error —
  * same contract as toggleFavorite. Revalidates the workout detail page and
- * /workouts and / (Home) — the pages that render UpcomingList — on
+ * / (Home) — which renders both the week strip and UpcomingList — on
  * success, no redirect, since this is used inline on the detail page.
  */
 export type ScheduleFormState =
@@ -113,7 +113,6 @@ export async function scheduleWorkout(
   }
 
   revalidatePath(`/workouts/${workoutId}`);
-  revalidatePath("/workouts");
   revalidatePath("/");
   return { status: "success" };
 }

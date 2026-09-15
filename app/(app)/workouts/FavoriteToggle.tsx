@@ -44,7 +44,9 @@ export default function FavoriteToggle({
           optimisticFavorite ? "Remove from favorites" : "Add to favorites"
         }
         aria-pressed={optimisticFavorite}
-        className="flex h-11 w-11 items-center justify-center text-lg leading-none"
+        className={`flex h-11 w-11 items-center justify-center text-lg leading-none ${
+          optimisticFavorite ? "text-ink-muted" : "text-hairline-tertiary"
+        }`}
       >
         {optimisticFavorite ? "★" : "☆"}
       </button>

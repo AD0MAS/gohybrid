@@ -83,8 +83,8 @@ function textClass(entry: DayEntry, inMonth: boolean): string {
  *
  * Entirely a Server Component: month navigation and day-cell links are
  * plain `<Link>`s to new search params, same convention as WeekStrip — an
- * in-month cell links to the Workouts page's week strip for that day
- * (/workouts?week=N&day=<date>), a muted adjacent-month cell instead
+ * in-month cell links to Home's week strip for that day
+ * (/?week=N&day=<date>), a muted adjacent-month cell instead
  * navigates this page to that month.
  */
 export default async function CalendarPage(props: PageProps<"/calendar">) {
@@ -122,12 +122,12 @@ export default async function CalendarPage(props: PageProps<"/calendar">) {
 
   const monthHref = (month: string) => `/calendar?month=${month}`;
   const weekStripHref = (date: string) =>
-    `/workouts?week=${getWeekOffsetForDate(date, today)}&day=${date}`;
+    `/?week=${getWeekOffsetForDate(date, today)}&day=${date}`;
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex items-center gap-2">
-        <BackLink href="/workouts" label="Workouts" />
+        <BackLink href="/" label="Home" />
         <h1 className="text-xl font-semibold text-ink">Calendar</h1>
       </div>
 

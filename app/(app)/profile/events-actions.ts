@@ -25,8 +25,8 @@ export type EventFormState =
  * a save actually went through. Genuine unexpected failures (e.g. a DB
  * error from createEventForUser) still throw and belong to the error
  * boundary. Revalidates /profile (the Events section), / (Home's
- * next-event line), /calendar and /workouts (both now render events
- * alongside scheduled workouts — WeekStrip and the month grid) on success.
+ * next-event line, WeekStrip and the month calendar preview) and /calendar
+ * on success — both now render events alongside scheduled workouts.
  */
 export async function addEvent(
   _prevState: EventFormState,
@@ -55,7 +55,6 @@ export async function addEvent(
   revalidatePath("/profile");
   revalidatePath("/");
   revalidatePath("/calendar");
-  revalidatePath("/workouts");
   return { status: "success" };
 }
 
@@ -67,9 +66,8 @@ export async function addEvent(
  * entry-populated form instead of an empty one. Ownership is enforced by
  * updateEventForUser's WHERE clause; a null result (wrong id or another
  * user's row) throws, same as deleteEvent, since a forged id can't
- * silently no-op. Revalidates /profile, /, /calendar and /workouts on
- * success — same set as addEvent, since WeekStrip's per-row edit trigger
- * calls this too.
+ * silently no-op. Revalidates /profile, / and /calendar on success — same
+ * set as addEvent, since WeekStrip's per-row edit trigger calls this too.
  */
 export async function updateEvent(
   id: string,
@@ -102,7 +100,6 @@ export async function updateEvent(
   revalidatePath("/profile");
   revalidatePath("/");
   revalidatePath("/calendar");
-  revalidatePath("/workouts");
   return { status: "success" };
 }
 
@@ -115,7 +112,7 @@ export async function updateEvent(
  * workout_session, which is why it goes through ConfirmModal instead).
  * Ownership is enforced by deleteEventForUser's WHERE clause. Throws if
  * nothing matched, so a forged id can't silently no-op. Revalidates
- * /profile, /, /calendar and /workouts on success.
+ * /profile, / and /calendar on success.
  */
 export async function deleteEvent(id: string) {
   const user = await requireUser();
@@ -129,5 +126,4 @@ export async function deleteEvent(id: string) {
   revalidatePath("/profile");
   revalidatePath("/");
   revalidatePath("/calendar");
-  revalidatePath("/workouts");
 }

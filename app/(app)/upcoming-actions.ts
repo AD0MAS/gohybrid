@@ -16,8 +16,8 @@ import { getUserContext } from "@/lib/user-settings";
  * bound with the id (and the target value) via .bind(null, id, isSkipped)
  * from UpcomingList and from WeekStrip's day cards. Ownership is enforced
  * by markSkippedForUser's WHERE clause. Throws if nothing matched, so a
- * forged id can't silently no-op. Revalidates /workouts and / (Home) — the
- * pages that render UpcomingList and WeekStrip.
+ * forged id can't silently no-op. Revalidates / (Home) — the page that
+ * renders both UpcomingList and WeekStrip.
  */
 export async function markScheduledWorkoutSkipped(
   id: string,
@@ -31,7 +31,6 @@ export async function markScheduledWorkoutSkipped(
     throw new Error("Scheduled workout not found.");
   }
 
-  revalidatePath("/workouts");
   revalidatePath("/");
 }
 
@@ -92,7 +91,6 @@ export async function markScheduledWorkoutDone(id: string) {
     throw new Error("Workout not found.");
   }
 
-  revalidatePath("/workouts");
   revalidatePath("/");
   revalidatePath("/history");
   revalidatePath("/stats");
@@ -114,7 +112,6 @@ export async function unscheduleWorkout(id: string) {
   await unscheduleForUser(id, user.id);
 
   revalidatePath("/");
-  revalidatePath("/workouts");
   revalidatePath("/calendar");
   revalidatePath("/history");
   revalidatePath("/stats");

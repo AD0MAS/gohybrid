@@ -290,7 +290,7 @@ export default function BlockEditor({
             setLastAddedItemId(id);
             dispatch({ type: "ADD_ITEM", blockId: block.id, id });
           }}
-          className="flex h-11 items-center justify-center self-start rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center self-start rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Add item
         </button>
@@ -524,7 +524,7 @@ function BlockEditorModalFields({
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

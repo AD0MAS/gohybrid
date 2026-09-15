@@ -81,11 +81,11 @@ const initialState: PersonalRecordFormState = { status: "idle" };
 // first goal") — every empty-state CTA in /profile spans the full panel
 // width below sm and sizes to its own text from sm up.
 const CTA_CLASSES =
-  "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
+  "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 // The section heading's own trigger, rebuilt from BodyMetricTypeTabs' own tab
 // button (the closest existing "small secondary button inside a panel"):
-// rounded-control, border, px-3 py-1.5 (this is what gives the height — no
+// rounded-control, border, px-4 py-1.5 (this is what gives the height — no
 // separate h-* class, same as the tabs), text-xs font-medium, and the same
 // focus ring, copied as-is. Two deliberate departures from an inactive tab:
 // bg-surface-2 (the panel behind it is bg-surface-1 — one step darker — so
@@ -99,7 +99,7 @@ const CTA_CLASSES =
 // triggered by a pseudo-class instead of a click, and active: mirrors hover:
 // per the app-wide touch-feedback convention (see globals.css/CLAUDE.md).
 const HEADER_TRIGGER_CLASSES =
-  "rounded-control border border-hairline bg-surface-2 px-3 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 /** Prefix marking a <select> value as one of `customNames` rather than a
  * catalog exercise id or the "type a new name" sentinel ("") — see the
@@ -642,11 +642,11 @@ function PersonalRecordFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
           {entry ? "Save" : "Add record"}
         </SubmitButton>
       </div>

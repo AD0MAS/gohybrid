@@ -71,7 +71,7 @@ export default function EventCard({ event }: EventCardProps) {
       />
 
       <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
-        <span className="shrink-0 rounded-small bg-accent/15 px-2 py-0.5 text-sm text-accent">
+        <span className="shrink-0 rounded-small bg-accent/15 px-3 py-0.5 text-sm text-accent">
           Event
         </span>
         {[EVENT_TYPE_LABELS[event.eventType].label, event.location]

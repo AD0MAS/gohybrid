@@ -25,7 +25,7 @@ const DELETE_ICON_BUTTON_CLASSES =
 // empty-state CTA in /profile — and sm:inline-flex sm:w-auto returns it to
 // sizing on its own text from sm up, same as before.
 const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-4 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
 
 type GoalsListProps = {
   userId: string;

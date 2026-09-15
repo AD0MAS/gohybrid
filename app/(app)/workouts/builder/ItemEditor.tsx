@@ -1208,7 +1208,7 @@ function ItemEditorModalFields({
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
       >
         Save
       </button>

@@ -4,9 +4,9 @@ import {
   markScheduledWorkoutDone,
   markScheduledWorkoutSkipped,
   unscheduleWorkout,
-} from "../upcoming-actions";
-import ConfirmModal from "../_components/ConfirmModal";
-import EventCard from "../_components/EventCard";
+} from "./upcoming-actions";
+import ConfirmModal from "./_components/ConfirmModal";
+import EventCard from "./_components/EventCard";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import {
   formatDayHeading,
@@ -17,9 +17,9 @@ import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { getUserContext } from "@/lib/user-settings";
 import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
-import { DIFFICULTY_LABELS } from "./difficulty-labels";
-import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
-import { TAG_COLOR_CLASSES } from "./tag-colors";
+import { DIFFICULTY_LABELS } from "./workouts/difficulty-labels";
+import { PRIMARY_TYPE_LABELS } from "./workouts/primary-type-labels";
+import { TAG_COLOR_CLASSES } from "./workouts/tag-colors";
 
 const REMOVE_BUTTON_CLASSES =
   "text-sm text-ink-subtle hover:text-danger active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
@@ -52,7 +52,7 @@ type WeekStripProps = {
 };
 
 /**
- * Workouts page "this week" strip (Roxfit pattern): seven day cells, Monday
+ * Home's "this week" strip (Roxfit pattern): seven day cells, Monday
  * first, with prev/next week navigation and the selected day's scheduled
  * workouts and events underneath. Entirely a Server Component — every
  * interaction (changing week, picking a day) is a plain navigation to a new
@@ -125,9 +125,9 @@ export default async function WeekStrip({
     : [];
 
   const weekHref = (offset: number) =>
-    `/workouts?week=${view.weekOffset + offset}`;
+    `/?week=${view.weekOffset + offset}`;
   const dayHref = (date: string) =>
-    `/workouts?week=${view.weekOffset}&day=${date}`;
+    `/?week=${view.weekOffset}&day=${date}`;
 
   return (
     <section className="flex flex-col gap-3">
@@ -230,7 +230,7 @@ export default async function WeekStrip({
 
                     <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
                       <span
-                        className={`shrink-0 rounded-small px-2 py-0.5 text-sm ${STATUS_PILL_CLASSES[status]}`}
+                        className={`shrink-0 rounded-small px-3 py-0.5 text-sm ${STATUS_PILL_CLASSES[status]}`}
                       >
                         {status}
                       </span>
@@ -251,7 +251,7 @@ export default async function WeekStrip({
                         {entry.workout.workoutTags.map(({ tag }) => (
                           <span
                             key={tag.id}
-                            className={`rounded-small border px-2 py-0.5 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+                            className={`rounded-small border px-3 py-0.5 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
                           >
                             {tag.name}
                           </span>

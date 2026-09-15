@@ -57,7 +57,7 @@ export default async function LoginPage(props: PageProps<"/login">) {
             />
           </label>
 
-          <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-4 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+          <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
             Log in
           </SubmitButton>
           <FormPendingBanner label="Signing in…" />
