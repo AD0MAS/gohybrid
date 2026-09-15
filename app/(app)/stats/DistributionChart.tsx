@@ -1,3 +1,4 @@
+import { workoutPrimaryTypeEnum } from "@/db/schema";
 import { getSessionCountsByPrimaryTypeForUser } from "@/lib/activity";
 import { getWeekStartsEndingAt } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
@@ -45,15 +46,26 @@ function computeShares(counts: number[]): number[] {
 
 /**
  * Primary-type distribution chart: one horizontal bar per
- * workout_primary_type with at least one session in the last 6 weeks, built
- * from plain HTML/CSS rather than a hand-drawn SVG. A fixed SVG viewBox
- * scales its whole coordinate system — label text included — down on a
- * narrow screen until it's unreadable; with real HTML the text no longer
- * shrinks, and the counts become real text nodes instead of <title>
- * elements sitting inside a role="img" subtree that assistive technology
- * never reaches. The enum has no "hybrid" value by design (the mix is
- * described by tags, not a summary category), so this never invents one; a
- * user training only one discipline simply sees one bar.
+ * workout_primary_type, always — built from plain HTML/CSS rather than a
+ * hand-drawn SVG. A fixed SVG viewBox scales its whole coordinate system —
+ * label text included — down on a narrow screen until it's unreadable; with
+ * real HTML the text no longer shrinks, and the counts become real text
+ * nodes instead of <title> elements sitting inside a role="img" subtree
+ * that assistive technology never reaches. The enum has no "hybrid" value
+ * by design (the mix is described by tags, not a summary category), so
+ * this never invents one; a user training only one discipline still sees
+ * every row, the untrained ones at 0.
+ *
+ * The query only returns types with at least one session, so the missing
+ * ones are zero-filled here against workoutPrimaryTypeEnum — the same
+ * reasoning WeeklyChart zero-fills missing weeks against
+ * getWeekStartsEndingAt. That removes the old empty-state message: with
+ * every row always present, "no sessions" is a chart of five zeroed rows
+ * rather than a special case to render instead of one. Rows sort largest
+ * first, same as before; a tie — including every row sitting at zero — falls
+ * back to the enum's own declared order (running, strength, hyrox,
+ * conditioning, other) rather than an arbitrary one, since the array is
+ * built in that order and Array#sort is stable.
  *
  * Fetches its own data given `userId`, same convention as ActivityHeatmap.
  * Both "today" and the bucketing query's timezone come from getUserContext
@@ -65,82 +77,62 @@ export default async function DistributionChart({
 }: DistributionChartProps) {
   const { today, timezone } = await getUserContext(userId);
   const weekStarts = getWeekStartsEndingAt(today, WEEKS);
-  const rows = await getSessionCountsByPrimaryTypeForUser(
+  const sessionCounts = await getSessionCountsByPrimaryTypeForUser(
     userId,
     weekStarts[0],
     today,
     timezone
   );
 
+  const countByType = new Map(
+    sessionCounts.map((row) => [row.primaryType, row.count])
+  );
+  const rows = workoutPrimaryTypeEnum.enumValues
+    .map((primaryType) => ({
+      primaryType,
+      count: countByType.get(primaryType) ?? 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
   const total = rows.reduce((sum, row) => sum + row.count, 0);
-  const maxCount = rows.length > 0 ? rows[0].count : 0;
+  const maxCount = rows[0].count;
   const shares = computeShares(rows.map((row) => row.count));
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 className="text-sm font-medium text-ink">Training mix</h2>
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Training mix</h2>
 
-        {rows.length > 0 && (
+        {total > 0 && (
           <p className="text-xs text-ink-tertiary">
             {total} session{total === 1 ? "" : "s"} · last {WEEKS} weeks
           </p>
         )}
       </div>
 
-      {rows.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-sm text-ink-subtle">
-            No sessions in the last {WEEKS} weeks.
-          </p>
-        </div>
-      ) : (
-        // auto-rows-[38px]: a fixed row size, not 1fr — with one row present,
-        // a flexible track would absorb the panel's whole leftover height
-        // into a single oversized bar. 38px is what the 5-row (the enum's
-        // max) case already produces when this panel is stretched to match
-        // WeeklyChart's height, so a full list and a one-row list use the
-        // same bar thickness. content-around then hands any leftover height
-        // (whenever there are fewer than 5 rows) to the row gaps instead,
-        // split around every track rather than piled below the last one.
-        <div className="flex flex-1 flex-col gap-5 sm:grid sm:grid-cols-[max-content_1fr_max-content] sm:auto-rows-[38px] sm:content-around sm:gap-x-3 sm:gap-y-6">
-          {rows.map((row, index) => {
-            const barWidthPct =
-              maxCount > 0 ? (row.count / maxCount) * 100 : 0;
-            const share = shares[index];
-            const label = PRIMARY_TYPE_LABELS[row.primaryType].label;
+      {/* auto-rows-[38px]: a fixed row size, not 1fr — a flexible track
+          would absorb the panel's whole leftover height into oversized
+          bars. 38px is what this always-5-row grid (one row per enum value)
+          produces when the panel is stretched to match WeeklyChart's
+          height, with nothing left over to hand to content-around — that
+          only mattered back when a shorter list of present-only types
+          could leave rows unfilled. */}
+      <div className="flex flex-1 flex-col gap-5 sm:grid sm:grid-cols-[max-content_1fr_max-content] sm:auto-rows-[38px] sm:gap-x-3 sm:gap-y-6">
+        {rows.map((row, index) => {
+          const barWidthPct = maxCount > 0 ? (row.count / maxCount) * 100 : 0;
+          const share = shares[index];
+          const label = PRIMARY_TYPE_LABELS[row.primaryType].label;
 
-            return (
-              <div
-                key={row.primaryType}
-                className="flex flex-col gap-[9px] sm:contents"
-              >
-                <div className="flex items-baseline justify-between sm:hidden">
-                  <span className="text-[13px] font-medium text-ink-muted">
-                    {label}
-                  </span>
-                  <div className="flex items-baseline gap-[7px]">
-                    <span className="text-[13px] font-semibold text-ink">
-                      {row.count}
-                    </span>
-                    <span className="text-[11px] text-ink-tertiary">
-                      {share}%
-                    </span>
-                  </div>
-                </div>
-
-                <span className="hidden text-[13px] font-medium text-ink-muted sm:block sm:self-center">
+          return (
+            <div
+              key={row.primaryType}
+              className="flex flex-col gap-[9px] sm:contents"
+            >
+              <div className="flex items-baseline justify-between sm:hidden">
+                <span className="text-[13px] font-medium text-ink-muted">
                   {label}
                 </span>
-
-                <div className="h-[26px] w-full rounded-[9px] bg-surface-3 sm:h-full sm:rounded-[10px]">
-                  <div
-                    className="h-full rounded-[9px] bg-accent sm:rounded-[10px]"
-                    style={{ width: `${barWidthPct}%` }}
-                  />
-                </div>
-
-                <div className="hidden items-baseline gap-[7px] sm:flex sm:self-center">
+                <div className="flex items-baseline gap-[7px]">
                   <span className="text-[13px] font-semibold text-ink">
                     {row.count}
                   </span>
@@ -149,10 +141,30 @@ export default async function DistributionChart({
                   </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <span className="hidden text-[13px] font-medium text-ink-muted sm:block sm:self-center">
+                {label}
+              </span>
+
+              <div className="h-[26px] w-full rounded-[9px] bg-surface-3 sm:h-full sm:rounded-[10px]">
+                <div
+                  className="h-full rounded-[9px] bg-accent sm:rounded-[10px]"
+                  style={{ width: `${barWidthPct}%` }}
+                />
+              </div>
+
+              <div className="hidden items-baseline gap-[7px] sm:flex sm:self-center">
+                <span className="text-[13px] font-semibold text-ink">
+                  {row.count}
+                </span>
+                <span className="text-[11px] text-ink-tertiary">
+                  {share}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

@@ -52,7 +52,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 className="text-sm font-medium text-ink">Weekly volume</h2>
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Weekly volume</h2>
 
         {totalInRange > 0 && (
           <p className="text-xs text-ink-tertiary">

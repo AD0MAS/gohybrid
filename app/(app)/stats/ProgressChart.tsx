@@ -80,7 +80,7 @@ export default function ProgressChart({ series }: ProgressChartProps) {
   if (series.length === 0) {
     return (
       <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
-        <h2 className="text-sm font-medium text-ink">Progress</h2>
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Progress</h2>
         <p className="text-sm text-ink-subtle">
           No personal records or body metrics logged yet.
         </p>
@@ -111,7 +111,7 @@ export default function ProgressChart({ series }: ProgressChartProps) {
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-medium text-ink">Progress</h2>
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Progress</h2>
         <select
           value={selected.key}
           onChange={(e) => setSelectedKey(e.target.value)}

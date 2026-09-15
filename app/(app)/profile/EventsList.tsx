@@ -72,7 +72,7 @@ export default async function EventsList({ userId }: EventsListProps) {
   return (
     <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-sm font-medium text-ink">Events</h2>
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Events</h2>
         {!isEmpty && <EventForm />}
       </div>
 

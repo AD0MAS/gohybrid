@@ -284,7 +284,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
         </>
       ) : (
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-medium text-ink">Goals</h2>
+          <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Goals</h2>
           <span className="text-xs text-ink-tertiary">
             {activeGoals.length} active
           </span>
