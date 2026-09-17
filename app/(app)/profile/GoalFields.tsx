@@ -47,7 +47,7 @@ import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import NumberField from "../_components/NumberField";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
-import { MENU_ITEM_CLASSES } from "./GoalCardMenu";
+import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
@@ -68,7 +68,7 @@ type GoalFieldsProps = {
    * how the two modes share every field. */
   entry?: Goal;
   /** Only meaningful when `entry` is present: "menu-item" renders "Edit" as
-   * a plain full-width text button (GoalCardMenu's MENU_ITEM_CLASSES)
+   * a plain full-width text button (CardMenu's MENU_ITEM_CLASSES)
    * instead of the default bordered Pencil icon button — GoalsList's card
    * menu passes this. A plain string tag rather than a renderTrigger
    * callback (an earlier version of this prop): GoalsList, which composes

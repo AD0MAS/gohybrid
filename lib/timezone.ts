@@ -36,19 +36,22 @@ export async function getCurrentDateString(timezone: string): Promise<string> {
 }
 
 /**
- * Converts a calendar day (YYYY-MM-DD) plus a fixed noon wall-clock time to
- * the UTC instant that represents in `timezone` — computed in Postgres by
- * applying `AT TIME ZONE` to a naive timestamp (the same technique
+ * Converts a calendar day (YYYY-MM-DD) plus an optional wall-clock time
+ * (HH:MM or HH:MM:SS, defaulting to noon when `time` is null) to the UTC
+ * instant that represents in `timezone` — computed in Postgres by applying
+ * `AT TIME ZONE` to a naive timestamp (the same technique
  * getCurrentDateString uses in the other direction), so a backdated session
- * with no recorded time-of-day still lands in the correct calendar-day
- * bucket everywhere completed_at is later read back, whether via `AT TIME
- * ZONE` in SQL (lib/activity.ts) or toCalendarDayInTimezone above. A plain
- * `new Date(\`${date}T12:00:00\`)` would use the application server's own
- * local timezone instead of the user's. Noon rather than midnight: a fixed
- * local wall-clock instant right at a DST transition boundary can be
- * ambiguous (falls twice) or nonexistent (skipped) in some zones, and noon
- * is never inside one, so this is safe for every IANA zone without needing
- * to special-case the transition.
+ * still lands in the correct calendar-day bucket everywhere completed_at is
+ * later read back, whether via `AT TIME ZONE` in SQL (lib/activity.ts) or
+ * toCalendarDayInTimezone above. A plain `new Date(\`${date}T12:00:00\`)`
+ * would use the application server's own local timezone instead of the
+ * user's. Noon is the default rather than midnight because a fixed local
+ * wall-clock instant right at a DST transition boundary can be ambiguous
+ * (falls twice) or nonexistent (skipped) in some zones, and noon is never
+ * inside one — safe for every IANA zone without needing to special-case the
+ * transition; a caller-supplied `time` has no such guarantee, but it's the
+ * user's own explicit choice at that point, same as any other user-entered
+ * clock time in this app.
  *
  * Selects the instant as an explicit ISO-8601 UTC string
  * (`to_char(... at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')`) rather
@@ -65,14 +68,29 @@ export async function getCurrentDateString(timezone: string): Promise<string> {
  * this format is guaranteed parseable per the ECMA-262 Date Time String
  * Format instead.
  */
-export async function toNoonInstant(date: string, timezone: string): Promise<Date> {
+export async function toInstantAtTime(
+  date: string,
+  time: string | null,
+  timezone: string
+): Promise<Date> {
   const { rows: [row] } = await db.execute<{ instant: string }>(
     sql`select to_char(
-      ((${date}::date + time '12:00:00') at time zone ${timezone}) at time zone 'UTC',
+      ((${date}::date + ${time ?? "12:00:00"}::time) at time zone ${timezone}) at time zone 'UTC',
       'YYYY-MM-DD"T"HH24:MI:SS"Z"'
     ) as instant`
   );
   return new Date(row.instant);
+}
+
+/**
+ * markScheduledWorkoutDone's own backdating case — a past-dated plan marked
+ * done has no recorded time-of-day, only a day, so it stamps completed_at at
+ * noon. A thin wrapper over toInstantAtTime with `time` fixed to null, kept
+ * as its own named function since "noon, no time given" reads more plainly
+ * at that call site than `toInstantAtTime(date, null, timezone)` would.
+ */
+export async function toNoonInstant(date: string, timezone: string): Promise<Date> {
+  return toInstantAtTime(date, null, timezone);
 }
 
 /**

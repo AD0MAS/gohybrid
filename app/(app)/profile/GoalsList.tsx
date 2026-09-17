@@ -5,7 +5,7 @@ import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValues } from "
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
-import GoalCardMenu, { MENU_ITEM_CLASSES, MENU_ITEM_DANGER_CLASSES } from "./GoalCardMenu";
+import CardMenu, { MENU_ITEM_CLASSES, MENU_ITEM_DANGER_CLASSES } from "../_components/CardMenu";
 import GoalFields from "./GoalFields";
 import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
@@ -51,7 +51,7 @@ type GoalsListProps = {
  * PersonalRecordsList share one pair of queries per request). `userId`
  * arrives as a prop from ProfilePage rather than a local requireUser() call
  * — same pattern as /stats. Each active card's Edit/Archive/Delete live
- * behind a GoalCardMenu (a small client component, three plain icon
+ * behind a CardMenu (a small client component, three plain icon
  * buttons don't fit once a card is half the panel's width) rather than as
  * separate buttons — GoalFields still owns Edit's own open/close state and
  * useActionState call, rendering its trigger as a plain menu-item button
@@ -97,10 +97,10 @@ type GoalsListProps = {
  * GoalFields instance that just bumped its own successCount — gets
  * unmounted by that same render, before the browser ever paints the
  * "Saved" banner it had just set up to show. This is the same class of bug
- * GoalCardMenu's own doc comment describes for Edit/Archive/Delete failing
+ * CardMenu's own doc comment describes for Edit/Archive/Delete failing
  * silently: something set its own state, then got torn down in the same
  * tick before that state took visible effect. The fix is the same one
- * GoalCardMenu already uses — keep the stateful instance mounted always,
+ * CardMenu already uses — keep the stateful instance mounted always,
  * and toggle only its visual presentation (here, a `hidden` prop that
  * disables just the trigger `<button>`, leaving `FormSuccessBanner` — a
  * plain sibling inside GoalFields, not a descendant of anything conditional
@@ -187,7 +187,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
               {GOAL_PERIOD_LABELS[goal.period].label}
             </p>
           </div>
-          <GoalCardMenu>
+          <CardMenu>
             <GoalFields
               catalog={catalog}
               customNames={customNames}
@@ -214,7 +214,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
               confirmLabel="Delete"
               action={deleteGoal.bind(null, goal.id)}
             />
-          </GoalCardMenu>
+          </CardMenu>
         </div>
 
         {progress === null ? (

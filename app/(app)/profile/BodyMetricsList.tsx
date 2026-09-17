@@ -84,7 +84,7 @@ function formatDayGap(days: number): string {
  * false this section's whole hero subtree — including the exact instance
  * that had just bumped its own successCount — would get unmounted in that
  * same render, before the browser ever painted the "Saved" banner it had
- * just set up to show. Same bug class as GoalCardMenu's own doc comment
+ * just set up to show. Same bug class as CardMenu's own doc comment
  * describes for Edit/Archive/Delete failing silently (something set its own
  * state, then got torn down in the same tick before that state took
  * visible effect), fixed the same way: keep the stateful instance mounted

@@ -5,19 +5,22 @@ import { requireUser } from "@/lib/auth";
 import {
   getScheduledWorkoutForUser,
   markSkippedForUser,
+  rescheduleForUser,
   unscheduleForUser,
 } from "@/lib/scheduled-workouts";
+import { validateScheduleInput } from "@/lib/scheduled-workouts-validation";
 import { createSessionForWorkout } from "@/lib/sessions";
 import { toNoonInstant } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
+import { echoFormValues } from "@/lib/form-state";
+import type { ScheduleFormState } from "./workouts/actions";
 
 /**
  * Sets is_skipped on one of the authenticated user's scheduled workouts,
  * bound with the id (and the target value) via .bind(null, id, isSkipped)
- * from UpcomingList and from WeekStrip's day cards. Ownership is enforced
- * by markSkippedForUser's WHERE clause. Throws if nothing matched, so a
- * forged id can't silently no-op. Revalidates / (Home) — the page that
- * renders both UpcomingList and WeekStrip.
+ * from WeekStrip's day-card menu. Ownership is enforced by
+ * markSkippedForUser's WHERE clause. Throws if nothing matched, so a forged
+ * id can't silently no-op. Revalidates / (Home), which renders WeekStrip.
  */
 export async function markScheduledWorkoutSkipped(
   id: string,
@@ -35,9 +38,88 @@ export async function markScheduledWorkoutSkipped(
 }
 
 /**
+ * Updates the date, time and notes of one of the authenticated user's
+ * scheduled workouts, bound with the id via .bind(null, id) from the
+ * generalized ScheduleWorkoutForm's `entry`-present branch on WeekStrip's
+ * day-card menu and Home's TODAY card. Reads the entry first
+ * (getScheduledWorkoutForUser) rather
+ * than going straight to rescheduleForUser, so a completed entry gets its
+ * own clear error instead of the generic 404 a forged/foreign id would —
+ * unlike unscheduleWorkout/markScheduledWorkoutSkipped, "not found" and
+ * "found but not eligible" are genuinely different outcomes here, and only
+ * one of them is a state the user themselves can be looking at (their own
+ * WeekStrip only ever renders a Reschedule control for a Planned or Skipped
+ * entry, but a stale page or a second tab could still race one to
+ * Completed). Shares validateScheduleInput with scheduleWorkout — the past-
+ * date rule and every other check apply identically to a reschedule — passing
+ * the entry's own unchanged workoutId, since this action only ever moves an
+ * existing plan, never repoints it at a different workout.
+ */
+export async function rescheduleWorkout(
+  id: string,
+  _prevState: ScheduleFormState,
+  formData: FormData
+): Promise<ScheduleFormState> {
+  const user = await requireUser();
+
+  const entry = await getScheduledWorkoutForUser(id, user.id);
+  if (!entry) {
+    throw new Error("Scheduled workout not found.");
+  }
+  if (entry.sessionId) {
+    return {
+      status: "error",
+      error: "A completed entry can't be rescheduled.",
+      values: echoFormValues(formData),
+    };
+  }
+
+  const { today, now } = await getUserContext(user.id);
+
+  const result = validateScheduleInput(
+    {
+      workoutId: entry.workoutId,
+      scheduledDate: formData.get("scheduledDate"),
+      scheduledTime: formData.get("scheduledTime"),
+      notes: formData.get("notes"),
+    },
+    today,
+    now
+  );
+
+  if (!result.success) {
+    return {
+      status: "error",
+      error: result.error,
+      values: echoFormValues(formData),
+    };
+  }
+
+  const updated = await rescheduleForUser(
+    id,
+    user.id,
+    result.data.scheduledDate,
+    result.data.scheduledTime,
+    result.data.notes
+  );
+
+  if (!updated) {
+    return {
+      status: "error",
+      error: "This entry can no longer be rescheduled.",
+      values: echoFormValues(formData),
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/calendar");
+  return { status: "success" };
+}
+
+/**
  * Records that one of the authenticated user's scheduled workouts was
  * actually done — bound with the id via .bind(null, id) from the "Mark
- * done" control on both UpcomingList and WeekStrip's day cards, for a
+ * done" control on WeekStrip's day-card menu and Home's TODAY card, for a
  * workout completed away from Start Workout Mode (the core loop's "After"
  * moment doesn't require having run "During" through this app). Reuses createSessionForWorkout, the same lib/ function
  * finishWorkout goes through, so the created session has the identical
@@ -99,12 +181,11 @@ export async function markScheduledWorkoutDone(id: string) {
 
 /**
  * Removes one of the authenticated user's scheduled workouts, bound with
- * the id via .bind(null, id) from UpcomingList and from WeekStrip's day
- * cards. Ownership is enforced by unscheduleForUser's WHERE clauses. If the
- * entry was Completed (session_id NOT NULL), its workout_session is deleted
- * along with it — see unscheduleForUser's doc comment — so this can affect
- * training history and stats, not just the two pages that render the
- * scheduled-workout lists.
+ * the id via .bind(null, id) from WeekStrip's day-card menu. Ownership is
+ * enforced by unscheduleForUser's WHERE clauses. If the entry was Completed
+ * (session_id NOT NULL), its workout_session is deleted along with it — see
+ * unscheduleForUser's doc comment — so this can affect training history and
+ * stats, not just Home.
  */
 export async function unscheduleWorkout(id: string) {
   const user = await requireUser();

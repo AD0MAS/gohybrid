@@ -14,7 +14,7 @@ import { firstValue } from "@/lib/search-params";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/workouts-validation";
-import { deleteWorkout, scheduleWorkout, toggleFavorite } from "../actions";
+import { deleteWorkout, toggleFavorite } from "../actions";
 import BackLink from "../../_components/BackLink";
 import {
   resolveBackDestination,
@@ -28,8 +28,9 @@ import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
 import ConfirmModal from "../../_components/ConfirmModal";
+import LogPastSessionForm from "../../_components/LogPastSessionForm";
+import ScheduleWorkoutForm from "../../_components/ScheduleWorkoutForm";
 import FavoriteToggle from "../FavoriteToggle";
-import ScheduleWorkoutForm from "./ScheduleWorkoutForm";
 
 export const metadata: Metadata = {
   title: "Workout",
@@ -122,7 +123,7 @@ export default async function WorkoutDetailPage(
     notFound();
   }
 
-  const [workout, { unitSystem }] = await Promise.all([
+  const [workout, { unitSystem, today }] = await Promise.all([
     getWorkoutForUser(id, user.id),
     getUserContext(user.id),
   ]);
@@ -201,9 +202,8 @@ export default async function WorkoutDetailPage(
         >
           Start Workout
         </Link>
-        <ScheduleWorkoutForm
-          scheduleAction={scheduleWorkout.bind(null, workout.id)}
-        />
+        <ScheduleWorkoutForm today={today} workoutId={workout.id} />
+        <LogPastSessionForm today={today} workoutId={workout.id} />
       </div>
 
       {workout.blocks.length === 0 ? (

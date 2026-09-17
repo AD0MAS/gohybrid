@@ -14,31 +14,38 @@ export const MENU_ITEM_CLASSES =
 export const MENU_ITEM_DANGER_CLASSES =
   "flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
-type GoalCardMenuProps = {
+type CardMenuProps = {
   children: React.ReactNode;
 };
 
 /**
- * A three-dot menu for a goal card's row of actions — Edit/Archive/Delete
- * used to be three separate icon buttons, which stopped fitting once the
- * card itself shrank to half the panel's width in the two-column grid. The
- * only reason this is a client component (unlike GoalsList itself, which
- * stays a Server Component): opening/closing a popover, and reacting to an
- * outside click or Escape, both need client state — there is no
- * server-renderable equivalent the way there is for the archived-goals/
- * past-events `<details>` disclosures elsewhere in /profile.
+ * A three-dot menu for a card's row of actions — originally built for
+ * /profile's goal cards, whose Edit/Archive/Delete stopped fitting as three
+ * separate icon buttons once the card shrank to half the panel's width in
+ * the two-column grid, and reused as-is by Home's week-strip day cards for
+ * the same reason (Mark done/Mark skipped/Reschedule/Open workout/Remove is
+ * too many buttons for one row). Lives in app/(app)/_components — not under
+ * profile/, its original caller — for the same reason ConfirmModal/Modal/
+ * EventCard do: a small client widget meant to be shared across more than
+ * one (app) feature folder. The only reason this is a client component
+ * (unlike the Server Components that compose it): opening/closing a
+ * popover, and reacting to an outside click or Escape, both need client
+ * state — there is no server-renderable equivalent the way there is for the
+ * archived-goals/past-events `<details>` disclosures elsewhere in /profile.
  *
- * `children` are whatever GoalsList composes for this specific row —
- * GoalFields with `triggerVariant="menu-item"` for Edit, a plain
- * `<form>`+`SubmitButton` for Archive (unchanged, still a one-click Server
- * Action), and a ConfirmModal for Delete (unchanged, still confirmed) — so
- * none of those three's own behaviour has to be reimplemented here. Passing
- * pre-rendered JSX like this as `children`, from GoalsList (a Server
- * Component) into this Client Component, is exactly the boundary-safe
- * pattern React supports: what can't cross is a *function* prop (a
- * `renderTrigger` callback GoalFields used to take, and GoalFields itself
- * would have had to invoke) — GoalCardMenu's own signature never needed to
- * change for this fix, only what got composed inside it. Closing
+ * `children` are whatever the caller composes for this specific row —
+ * GoalsList passes GoalFields with `triggerVariant="menu-item"` for Edit, a
+ * plain `<form>`+`SubmitButton` for Archive (a one-click Server Action),
+ * and a ConfirmModal for Delete; WeekStrip passes plain forms for Mark
+ * done/Mark skipped, ScheduleWorkoutForm with `triggerVariant="menu-item"`
+ * for Reschedule, a plain Link for Open workout, and a form or ConfirmModal
+ * for Remove — so none of those components' own behaviour has to be
+ * reimplemented here. Passing pre-rendered JSX like this as `children`,
+ * from a Server Component into this Client Component, is exactly the
+ * boundary-safe pattern React supports: what can't cross is a *function*
+ * prop (a `renderTrigger` callback GoalFields used to take, and GoalFields
+ * itself would have had to invoke) — this component's own signature never
+ * needed to change for that fix, only what got composed inside it. Closing
  * the menu after a choice doesn't need per-item callbacks threaded through
  * any of them: the menu panel's own onClick closes it for *any* click
  * inside, and that handler runs during the bubble phase after the item's
@@ -78,7 +85,7 @@ type GoalCardMenuProps = {
  * closed panel would otherwise inherit both and render unusable even
  * though `showModal()` had promoted it to the top layer.
  */
-export default function GoalCardMenu({ children }: GoalCardMenuProps) {
+export default function CardMenu({ children }: CardMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();

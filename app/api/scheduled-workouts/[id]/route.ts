@@ -1,14 +1,35 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { markSkippedForUser, unscheduleForUser } from "@/lib/scheduled-workouts";
+import {
+  getScheduledWorkoutForUser,
+  markSkippedForUser,
+  rescheduleForUser,
+  unscheduleForUser,
+} from "@/lib/scheduled-workouts";
+import { validateScheduleInput } from "@/lib/scheduled-workouts-validation";
+import { getUserContext } from "@/lib/user-settings";
 import { isValidUuid } from "@/lib/workouts-validation";
 
 /**
  * PATCH /api/scheduled-workouts/[id]
- * Sets is_skipped on one of the authenticated user's scheduled workouts.
- * Responds 401 if there is no authenticated user, 400 if isSkipped isn't a
- * boolean, and 404 both when the id doesn't exist and when it belongs to a
- * different user. Returns the updated row as JSON on success.
+ * Two independent updates on one of the authenticated user's scheduled
+ * workouts, distinguished by which key the body carries — mirrors
+ * rescheduleWorkout/markScheduledWorkoutSkipped
+ * (app/(app)/upcoming-actions.ts), the Server Actions this route stays in
+ * sync with rather than being called by (see "REST routes stay, unused",
+ * docs/GOHYBRID_PLAN.md §7):
+ *   - `{ isSkipped: boolean }` sets is_skipped, unchanged from before.
+ *   - `{ scheduledDate: string, scheduledTime?, notes? }` reschedules the
+ *     entry via the same validateScheduleInput + rescheduleForUser pair the
+ *     Server Action uses, including both halves of the past rule (against
+ *     `today`/`now`, resolved here via getUserContext) and the
+ *     completed-entry rejection.
+ * Responds 401 if there is no authenticated user, 400 if the body matches
+ * neither shape or fails validation, 404 if the id doesn't exist or isn't
+ * owned by the user, and — for a reschedule specifically — 400 (not 404) if
+ * the entry exists and is owned but is already Completed, since that's a
+ * real state the caller can act on rather than a nonexistent resource.
+ * Returns the updated row as JSON on success.
  */
 export async function PATCH(
   request: Request,
@@ -27,20 +48,74 @@ export async function PATCH(
   }
 
   const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object" || typeof body.isSkipped !== "boolean") {
+  if (!body || typeof body !== "object") {
     return NextResponse.json(
-      { error: "The request must specify whether this workout was skipped." },
+      { error: "Request body must be JSON." },
       { status: 400 }
     );
   }
 
-  const updated = await markSkippedForUser(id, user.id, body.isSkipped);
+  if (typeof body.isSkipped === "boolean") {
+    const updated = await markSkippedForUser(id, user.id, body.isSkipped);
 
-  if (!updated) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!updated) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
   }
 
-  return NextResponse.json(updated);
+  if (typeof body.scheduledDate === "string") {
+    const entry = await getScheduledWorkoutForUser(id, user.id);
+    if (!entry) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    if (entry.sessionId) {
+      return NextResponse.json(
+        { error: "A completed entry can't be rescheduled." },
+        { status: 400 }
+      );
+    }
+
+    const { today, now } = await getUserContext(user.id);
+    const result = validateScheduleInput(
+      {
+        workoutId: entry.workoutId,
+        scheduledDate: body.scheduledDate,
+        scheduledTime: body.scheduledTime,
+        notes: body.notes,
+      },
+      today,
+      now
+    );
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    const updated = await rescheduleForUser(
+      id,
+      user.id,
+      result.data.scheduledDate,
+      result.data.scheduledTime,
+      result.data.notes
+    );
+    if (!updated) {
+      return NextResponse.json(
+        { error: "This entry can no longer be rescheduled." },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(updated);
+  }
+
+  return NextResponse.json(
+    {
+      error:
+        "The request must specify either whether this workout was skipped, or a new scheduledDate.",
+    },
+    { status: 400 }
+  );
 }
 
 /**

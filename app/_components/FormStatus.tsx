@@ -9,11 +9,11 @@ import { useFormStatus } from "react-dom";
 // sm:bottom-4 restores that original offset once the sidebar takes over and
 // nothing occupies the bottom edge. `visible pointer-events-auto` counter
 // an ancestor's inherited `invisible`/`pointer-events-none` the same way
-// Modal's own <dialog> does (see its doc comment) — GoalCardMenu's popover
-// panel (app/(app)/profile/GoalCardMenu.tsx) applies exactly that pair to
+// Modal's own <dialog> does (see its doc comment) — CardMenu's popover
+// panel (app/(app)/_components/CardMenu.tsx) applies exactly that pair to
 // itself once closed, and every one of these banners can end up rendered
 // inside it: GoalsList's per-row Edit embeds GoalFields with
-// triggerVariant="menu-item" as one of GoalCardMenu's own `children`.
+// triggerVariant="menu-item" as one of CardMenu's own `children`.
 // `visibility` is inherited, so without its own override a banner in that
 // position would render (its own `visible` state genuinely true) but stay
 // invisible, inheriting the popover's `invisible` from the menu having

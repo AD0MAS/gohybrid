@@ -16,6 +16,16 @@ const upcomingScheduledWorkoutQuery = {
         workoutTags: { with: { tag: true } },
       },
     },
+    // Only the linked session's completedAt — the actual instant a Completed
+    // entry was done, as opposed to scheduled_time (when it was planned for).
+    // Fetched here rather than in a second query so WeekStrip's day cards and
+    // Home's TODAY card can show it without a per-entry lookup; always null
+    // for getNextScheduledForUserOnDate (its own WHERE already excludes
+    // anything with a session) and unused by /calendar (no times rendered
+    // there), but a one-column join costs all three nothing to carry.
+    session: {
+      columns: { completedAt: true },
+    },
   },
 } as const;
 
@@ -59,36 +69,6 @@ export async function scheduleWorkoutForUser(
 }
 
 /**
- * Lists `userId`'s upcoming scheduled workouts — scheduled_date today or
- * later, not skipped, with no session linked yet — soonest first, each
- * with its workout (and that workout's tags) nested. Ordered by date, then
- * (within a day) by scheduled_time — entries with a time before ones
- * without, earliest first, since ASC ordering already sorts NULLs last in
- * Postgres. Used by the UpcomingList component, rendered on /workouts and
- * the home page.
- * `today` is computed in Postgres via `current_date` rather than passed in
- * from the application server, so it can't drift from the database's own
- * notion of "today."
- */
-export async function getUpcomingForUser(userId: string, limit: number) {
-  return db.query.scheduledWorkouts.findMany({
-    where: (scheduledWorkouts, { and, eq, gte }) =>
-      and(
-        eq(scheduledWorkouts.userId, userId),
-        gte(scheduledWorkouts.scheduledDate, sql`current_date`),
-        eq(scheduledWorkouts.isSkipped, false),
-        isNull(scheduledWorkouts.sessionId)
-      ),
-    orderBy: (scheduledWorkouts, { asc }) => [
-      asc(scheduledWorkouts.scheduledDate),
-      asc(scheduledWorkouts.scheduledTime),
-    ],
-    limit,
-    ...upcomingScheduledWorkoutQuery,
-  });
-}
-
-/**
  * Lists `userId`'s scheduled workouts with a scheduled_date between `from`
  * and `to` (both YYYY-MM-DD, inclusive), each with its workout (and that
  * workout's tags) nested. A plain date-range query with no filtering
@@ -120,6 +100,37 @@ export async function getScheduledForUserInRange(
 }
 
 /**
+ * The single scheduled workout `userId` should do next on `date` — Home's
+ * TODAY hero. Only a still-open entry counts (not skipped, no session
+ * linked): a Completed or Skipped entry isn't something to "start." Among
+ * several open entries on the same date, earliest scheduled_time wins, then
+ * earliest created_at for entries with no time — the identical tie-break
+ * linkScheduledWorkoutForDateToSession already uses to resolve same-day
+ * ambiguity (see its own doc comment), reused here so a page rendering
+ * "what's next" and a session linking "which plan did this complete" can
+ * never disagree about which entry that is.
+ */
+export async function getNextScheduledForUserOnDate(
+  userId: string,
+  date: string
+) {
+  return db.query.scheduledWorkouts.findFirst({
+    where: (scheduledWorkouts, { and, eq }) =>
+      and(
+        eq(scheduledWorkouts.userId, userId),
+        eq(scheduledWorkouts.scheduledDate, date),
+        eq(scheduledWorkouts.isSkipped, false),
+        isNull(scheduledWorkouts.sessionId)
+      ),
+    orderBy: (scheduledWorkouts, { asc }) => [
+      asc(scheduledWorkouts.scheduledTime),
+      asc(scheduledWorkouts.createdAt),
+    ],
+    ...upcomingScheduledWorkoutQuery,
+  });
+}
+
+/**
  * Sets is_skipped on a scheduled workout owned by `userId`. The ownership
  * check is part of the UPDATE's WHERE clause itself, not a separate read
  * followed by a write. Returns the updated row, or null if nothing matched
@@ -135,6 +146,42 @@ export async function markSkippedForUser(
     .set({ isSkipped })
     .where(
       and(eq(scheduledWorkouts.id, id), eq(scheduledWorkouts.userId, userId))
+    )
+    .returning();
+
+  return updated ?? null;
+}
+
+/**
+ * Updates the date, time and notes of one of userId's scheduled workouts.
+ * Ownership is enforced in the same statement's WHERE clause as
+ * markSkippedForUser, plus a session_id IS NULL condition — a completed
+ * entry (session_id set) is never eligible: its session's completed_at is
+ * the real record of when the work happened, and moving the entry would put
+ * the calendar and stats in disagreement about it (docs/GOHYBRID_PLAN.md
+ * §7). rescheduleWorkout (app/(app)/upcoming-actions.ts) already checks this
+ * before calling in, so the WHERE clause is defense against the race where
+ * the entry gets linked to a session between that check and this UPDATE —
+ * two concurrent requests can't both succeed. Returns the updated row, or
+ * null if nothing matched (wrong id/owner, or the entry became Completed in
+ * the meantime).
+ */
+export async function rescheduleForUser(
+  id: string,
+  userId: string,
+  scheduledDate: string,
+  scheduledTime: string | null,
+  notes: string | null
+) {
+  const [updated] = await db
+    .update(scheduledWorkouts)
+    .set({ scheduledDate, scheduledTime, notes })
+    .where(
+      and(
+        eq(scheduledWorkouts.id, id),
+        eq(scheduledWorkouts.userId, userId),
+        isNull(scheduledWorkouts.sessionId)
+      )
     )
     .returning();
 

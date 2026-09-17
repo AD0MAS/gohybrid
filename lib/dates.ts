@@ -15,6 +15,16 @@ const MONTH_NAMES = [
 
 const WEEKDAY_SHORT_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const WEEKDAY_FULL_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 const MONTH_SHORT_NAMES = [
   "Jan",
   "Feb",
@@ -105,6 +115,19 @@ export function formatDayHeading(date: string): string {
   const weekday = WEEKDAY_SHORT_NAMES[getIsoWeekday(date) - 1];
   const month = MONTH_NAMES[parseDateString(date).month - 1];
   return `${weekday} ${day} ${month}`;
+}
+
+/**
+ * Formats a YYYY-MM-DD string as e.g. "Thursday, 11 September" — Home's page
+ * title. Unlike formatDayHeading (the week strip's compact "Tue 25 August"),
+ * this spells out the weekday in full, so it needs its own name list rather
+ * than reusing WEEKDAY_SHORT_NAMES.
+ */
+export function formatDayHeadingLong(date: string): string {
+  const { day } = parseDateString(date);
+  const weekday = WEEKDAY_FULL_NAMES[getIsoWeekday(date) - 1];
+  const month = MONTH_NAMES[parseDateString(date).month - 1];
+  return `${weekday}, ${day} ${month}`;
 }
 
 /** Formats a YYYY-MM-DD string as e.g. "September 2026". */

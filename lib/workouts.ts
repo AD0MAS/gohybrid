@@ -35,6 +35,27 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * descending. Every option ends with `id` as a tiebreaker so two rows
  * sharing a timestamp still sort the same way on every load.
  */
+/**
+ * Total workouts owned by `userId`, all time — Home's brand-new-user check
+ * (alongside getTotalSessionCountForUser in lib/activity.ts). A single
+ * count(*), same reasoning as getTotalGoalCountForUser/
+ * getTotalSessionCountForUser: cheaper than fetching the full list just to
+ * read its length, and this is the only thing Home needs from it. Because
+ * scheduled_workouts.workout_id is `onDelete: "cascade"` (db/schema.ts), a
+ * user with zero workouts also has zero scheduled_workouts rows — a
+ * scheduled entry can't outlive the workout it points at — so this one count
+ * is enough to rule out "nothing scheduled" too, with no separate query.
+ */
+export async function getWorkoutCountForUser(userId: string): Promise<number> {
+  const { rows: [row] } = await db.execute<{ count: number }>(sql`
+    select count(*)::int as count
+    from ${workouts}
+    where ${workouts.userId} = ${userId}
+  `);
+
+  return row.count;
+}
+
 export async function getWorkoutsForUser(
   userId: string,
   filters: WorkoutListFilters = { sort: "newest" }

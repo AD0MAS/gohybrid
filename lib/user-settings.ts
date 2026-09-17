@@ -2,7 +2,11 @@ import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import { unitSystemEnum, userSettings } from "@/db/schema";
-import { APP_TIMEZONE, getCurrentDateString } from "./timezone";
+import {
+  APP_TIMEZONE,
+  getCurrentDateString,
+  toClockTimeInTimezone,
+} from "./timezone";
 import type { ValidatedUserSettingsInput } from "./user-settings-validation";
 
 export type UserSettings = {
@@ -53,26 +57,42 @@ export type UserContext = UserSettings & {
    * server: both would disagree with the user's actual calendar day near
    * midnight in every timezone that isn't UTC. */
   today: string;
+  /** HH:MM, the current wall-clock time in the user's own timezone — see
+   * toClockTimeInTimezone in lib/timezone.ts. Used by
+   * validateLogPastSessionInput (lib/scheduled-workouts-validation.ts) to
+   * decide whether a same-day time is actually in the past. Unlike `today`,
+   * this is resolved from the application server's own `new Date()`, not a
+   * Postgres round trip — safe here because toClockTimeInTimezone converts
+   * that instant via an explicit IANA `timeZone`, so it's correct regardless
+   * of the server process's own local timezone; the server-local-timezone
+   * bug `today`'s own comment warns about is specifically about deriving a
+   * *calendar day* close to midnight from a raw Date, which reading a clock
+   * time out of an already-known-correct instant never does. Existing
+   * precedent for trusting `new Date()` as "the real current instant" this
+   * way: markScheduledWorkoutDone (app/(app)/upcoming-actions.ts) already
+   * uses a bare `new Date()` as a same-day plan's completion instant. */
+  now: string;
 };
 
 /**
- * The one place a Server Component or Server Action should reach for both
- * "which timezone" and "what day is it" — resolves `userId`'s settings and
- * today's date in that timezone together, so a caller can never end up
- * combining a user's timezone with a UTC-derived "today" (the bug this
- * function exists to make impossible: two different notions of "today" in
- * one calculation). Wrapped in React's `cache()` so the several components
- * that need this within one request/render (e.g. /stats' four charts, or
- * /profile's Goals and Events sections) share one pair of queries instead
- * of each repeating them — `cache()` dedupes by argument, so this only
- * saves work when they're called with the same `userId`, which every
- * caller here is.
+ * The one place a Server Component or Server Action should reach for
+ * "which timezone," "what day is it" and "what time is it" — resolves
+ * `userId`'s settings, today's date and the current clock time in that
+ * timezone together, so a caller can never end up combining a user's
+ * timezone with a UTC-derived (or otherwise mismatched) notion of either
+ * (the bug this function exists to make impossible). Wrapped in React's
+ * `cache()` so the several components that need this within one
+ * request/render (e.g. /stats' four charts, or /profile's Goals and Events
+ * sections) share one pair of queries instead of each repeating them —
+ * `cache()` dedupes by argument, so this only saves work when they're
+ * called with the same `userId`, which every caller here is.
  */
 export const getUserContext = cache(
   async (userId: string): Promise<UserContext> => {
     const settings = await getUserSettings(userId);
     const today = await getCurrentDateString(settings.timezone);
-    return { ...settings, today };
+    const now = toClockTimeInTimezone(new Date(), settings.timezone);
+    return { ...settings, today, now };
   }
 );
 

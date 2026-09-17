@@ -1,22 +1,19 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import { EVENT_TYPE_LABELS } from "../profile/event-labels";
 import EventForm from "../profile/EventForm";
 import { deleteEvent } from "../profile/events-actions";
-
-const REMOVE_BUTTON_CLASSES =
-  "text-sm text-ink-subtle hover:text-danger active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+import CardMenu, { MENU_ITEM_CLASSES, MENU_ITEM_DANGER_CLASSES } from "./CardMenu";
 
 type EventCardProps = {
   event: Event;
 };
 
 /**
- * One event rendered as a card of the same shape as a workout card — hover
- * state, chevron on the right, a bottom Remove action — for WeekStrip's day
+ * One event rendered as a day card, the same shape as WeekStrip's own
+ * scheduled-workout cards — title, a pill, a CardMenu — for WeekStrip's day
  * list, and available to /calendar later if it grows a similar list. A
  * client component (unlike WeekStrip/CalendarPage, both Server Components)
  * purely so it can hand EventForm's `renderTrigger` a function: that prop
@@ -29,64 +26,57 @@ type EventCardProps = {
  * Server Components driven by search-param navigation).
  *
  * Lives in app/(app)/_components — not under workouts/, its only caller
- * today — for the same reason ConfirmModal/Modal/DistanceInput/
- * DurationInput do: a small client widget meant to be shared across more
- * than one (app) feature folder. It still imports EventForm,
- * EVENT_TYPE_LABELS and deleteEvent from profile/, because that's where the
- * event feature's own components/actions live (profile/ owns the Events
- * section) — WeekStrip already reached into profile/ the same way before
- * this file existed; moving here only changes which shared-widget file
- * does the reaching, not the direction of the dependency.
+ * today — for the same reason ConfirmModal/Modal/CardMenu do: a small
+ * client widget meant to be shared across more than one (app) feature
+ * folder. It still imports EventForm, EVENT_TYPE_LABELS and deleteEvent
+ * from profile/, because that's where the event feature's own components/
+ * actions live (profile/ owns the Events section) — WeekStrip already
+ * reached into profile/ the same way before this file existed; moving here
+ * only changes which shared-widget file does the reaching, not the
+ * direction of the dependency.
  *
- * The card's title is EventForm's `renderTrigger`, stretched via
- * after:absolute after:inset-0 the same way a workout card's title Link
- * is, so clicking anywhere on the card opens the edit modal — one button,
- * one way in, no second Edit control competing with it. Remove sits in a
- * sibling `relative z-10` wrapper, layered above that stretched ::after
- * overlay, same technique WeekStrip's own scheduled-workout cards use for
- * their Mark done/skipped/Remove row: z-index and paint order decide which
- * element receives a click, not whether the stretched element underneath
- * is an <a> (workout card) or a <button onClick> (this one), so a Remove
- * click still lands on the (higher, z-10) Remove button rather than
- * falling through to the title button's overlay beneath it. Remove reuses
- * deleteEvent directly, no confirmation step — matches /profile's own
- * event delete exactly, unlike unscheduleWorkout's Completed-only
- * ConfirmModal on the workout cards, since deleting an event has no
- * session/history side effect to warn about.
+ * Only Edit and Remove — an event has no done/skipped state in the schema,
+ * so it never carries WeekStrip's Mark done/Mark skipped/Reschedule/Open
+ * workout items. Edit is EventForm's `renderTrigger`, rendered as a plain
+ * CardMenu row (the same menu-item shape ScheduleWorkoutForm's own
+ * `triggerVariant="menu-item"` produces); Remove reuses deleteEvent
+ * directly, no confirmation step — matches /profile's own event delete
+ * exactly, unlike unscheduleWorkout's Completed-only ConfirmModal on the
+ * workout cards, since deleting an event has no session/history side
+ * effect to warn about.
  */
 export default function EventCard({ event }: EventCardProps) {
   return (
-    <li className="relative cursor-pointer rounded-card border border-hairline bg-surface-1 py-5 pl-5 pr-10 hover:bg-surface-2 has-[button:active]:bg-surface-2">
-      <EventForm
-        entry={event}
-        renderTrigger={(open) => (
-          <button
-            type="button"
-            onClick={open}
-            className="font-medium text-ink after:absolute after:inset-0 hover:text-accent active:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            {event.title}
-          </button>
-        )}
-      />
+    <li className="flex items-center justify-between gap-4 rounded-card border border-hairline bg-surface-2 p-4">
+      <div className="min-w-0 flex flex-col gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="break-words font-medium text-ink">{event.title}</span>
+          <span className="shrink-0 rounded-small bg-accent/15 px-3 py-0.5 text-xs text-accent">
+            Event
+          </span>
+        </div>
+        <p className="text-sm text-ink-subtle">
+          {[EVENT_TYPE_LABELS[event.eventType].label, event.location]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </div>
 
-      <p className="flex flex-wrap items-center gap-1.5 text-sm text-ink-subtle">
-        <span className="shrink-0 rounded-small bg-accent/15 px-3 py-0.5 text-sm text-accent">
-          Event
-        </span>
-        {[EVENT_TYPE_LABELS[event.eventType].label, event.location]
-          .filter(Boolean)
-          .join(" · ")}
-      </p>
-
-      <div className="relative z-10 mt-2 flex gap-4">
+      <CardMenu>
+        <EventForm
+          entry={event}
+          renderTrigger={(open) => (
+            <button type="button" onClick={open} className={MENU_ITEM_CLASSES}>
+              Edit
+            </button>
+          )}
+        />
         <form action={deleteEvent.bind(null, event.id)}>
-          <SubmitButton className={REMOVE_BUTTON_CLASSES}>
+          <SubmitButton className={MENU_ITEM_DANGER_CLASSES}>
             Remove
           </SubmitButton>
         </form>
-      </div>
-      <ChevronRight className="absolute right-5 top-1/2 h-5 w-5 shrink-0 -translate-y-1/2 text-ink-subtle" />
+      </CardMenu>
     </li>
   );
 }

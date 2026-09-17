@@ -69,7 +69,7 @@ type ModalProps = {
  *
  * `visible pointer-events-auto` on the dialog itself guard against a
  * caller that keeps this component mounted inside a visually-hidden
- * ancestor rather than unmounting it — GoalCardMenu does exactly this
+ * ancestor rather than unmounting it — CardMenu does exactly this
  * (see its own doc comment): its closed panel is `invisible
  * pointer-events-none` rather than removed from the DOM, specifically so
  * the modal a menu item just opened doesn't get unmounted along with the
@@ -120,16 +120,16 @@ export default function Modal({
       aria-describedby={description ? descriptionId : undefined}
       // `visible` and `pointer-events-auto` below counter inheritance from
       // a caller that keeps this component mounted inside a visually-hidden
-      // ancestor instead of unmounting it on close — GoalCardMenu does this
+      // ancestor instead of unmounting it on close — CardMenu does this
       // on purpose (its closed panel is `invisible pointer-events-none`,
       // not removed from the DOM, so a menu item's own modal doesn't get
       // unmounted along with the menu closing around it — see
-      // GoalCardMenu.tsx's doc comment). `visibility`/`pointer-events` are
+      // CardMenu.tsx's doc comment). `visibility`/`pointer-events` are
       // both inherited, so without resetting them here, a modal opened from
       // inside that closed panel would inherit `invisible
       // pointer-events-none` and render fully open but invisible and
       // unclickable. Removing these two classes would not break anything
-      // visibly in this file — it silently breaks GoalCardMenu's Edit
+      // visibly in this file — it silently breaks CardMenu's Edit
       // instead, elsewhere.
       className="visible fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-panel border border-hairline bg-surface-1 p-0 pointer-events-auto text-ink backdrop:bg-black/50"
     >

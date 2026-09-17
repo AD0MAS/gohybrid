@@ -4,17 +4,20 @@ import { getRecentSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
 
-const RECENT_ACTIVITY_LIMIT = 5;
+const RECENT_ACTIVITY_LIMIT = 3;
+
+const HEADER_TRIGGER_CLASSES =
+  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type RecentActivityProps = {
   userId: string;
 };
 
 /**
- * Home's recent activity: the last 5 completed workout sessions, newest
+ * Home's recent sessions: the last 3 completed workout sessions, newest
  * first, read-only. Renders workout_title and workout_primary_type from
  * each session's own snapshot columns, same as
- * Training History — but this is a fixed five-row list with no actions,
+ * Training History — but this is a fixed three-row list with no actions,
  * not the full chronological list, so it stays its own component rather
  * than a shared one with /history. `userId` arrives as a prop from Home
  * rather than a local requireUser() call — same pattern as /stats.
@@ -27,22 +30,31 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
   );
 
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-ink">Recent activity</h2>
+    <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+          Recent sessions
+        </h2>
+        <Link href="/history?from=home" className={HEADER_TRIGGER_CLASSES}>
+          Full history
+        </Link>
+      </div>
 
       {sessions.length === 0 ? (
         <p className="text-sm text-ink-subtle">
           No completed workouts yet. Finish a workout to see it here.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col">
           {sessions.map((session) => (
             <li
               key={session.id}
-              className="rounded-card border border-hairline bg-surface-1 p-5"
+              className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
             >
-              <p className="font-medium text-ink">{session.workoutTitle}</p>
-              <p className="text-sm text-ink-subtle">
+              <p className="break-words text-sm font-medium text-ink">
+                {session.workoutTitle}
+              </p>
+              <p className="shrink-0 text-xs text-ink-tertiary">
                 {session.workoutPrimaryType} ·{" "}
                 {formatRelativeDay(
                   toCalendarDayInTimezone(session.completedAt, timezone),
@@ -53,13 +65,6 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
           ))}
         </ul>
       )}
-
-      <Link
-        href="/history?from=home"
-        className="flex h-11 w-fit items-center justify-center self-end rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-      >
-        Full history
-      </Link>
     </section>
   );
 }
