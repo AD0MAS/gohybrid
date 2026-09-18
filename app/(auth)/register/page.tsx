@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signUp } from "../actions";
+import PasswordField from "../PasswordField";
 
 export const metadata: Metadata = {
   title: "Register",
@@ -44,12 +45,11 @@ export default async function RegisterPage(props: PageProps<"/register">) {
 
             <label className="flex flex-col gap-1 text-sm">
               Password
-              <input
-                type="password"
+              <PasswordField
                 name="password"
                 required
                 minLength={6}
-                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className="h-11 w-full rounded-control border border-hairline bg-surface-1 pl-4 pr-11 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
               />
             </label>
 
