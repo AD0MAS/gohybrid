@@ -5,7 +5,8 @@ import {
   getWorkoutForUser,
   updateWorkoutForUser,
 } from "@/lib/workouts";
-import { isValidUuid, validateWorkoutInput } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
+import { validateWorkoutInput } from "@/lib/workouts-validation";
 
 /**
  * GET /api/workouts/[id]

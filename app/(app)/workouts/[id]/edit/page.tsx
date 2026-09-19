@@ -13,7 +13,7 @@ import { getExerciseCatalog } from "@/lib/exercises";
 import { getTagCatalog } from "@/lib/tags";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 import BackLink from "../../../_components/BackLink";
 import WorkoutBuilder from "../../builder/WorkoutBuilder";
 

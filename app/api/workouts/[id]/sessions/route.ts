@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { createSessionForWorkout } from "@/lib/sessions";
 import { getUserContext } from "@/lib/user-settings";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 
 /**
  * POST /api/workouts/[id]/sessions

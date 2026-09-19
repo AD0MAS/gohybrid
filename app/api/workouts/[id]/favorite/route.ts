@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { toggleFavoriteForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 
 /**
  * POST /api/workouts/[id]/favorite

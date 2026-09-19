@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, gte, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { scheduledWorkouts, workoutSessions, workouts } from "@/db/schema";
 
@@ -186,6 +186,44 @@ export async function rescheduleForUser(
     .returning();
 
   return updated ?? null;
+}
+
+/**
+ * Lists `userId`'s upcoming open entries for one specific workout, capped
+ * at `limit` — the workout detail page's read-only "Scheduled" panel.
+ * "Upcoming" means scheduled_date >= today (today included — see
+ * getNextScheduledForUserOnDate for the same convention), not yet linked
+ * to a session, and not skipped: a completed or skipped entry isn't
+ * something still to come, so it belongs on Home/`/calendar`'s full
+ * picture, not this preview. A narrow select, not upcomingScheduledWorkoutQuery's
+ * `with: { workout, session }` — this page already has the workout, and an
+ * open entry has no linked session to fetch. `limit` is required, not
+ * defaulted, same reasoning as getSessionsForWorkout in lib/sessions.ts.
+ */
+export async function getUpcomingScheduledForWorkout(
+  userId: string,
+  workoutId: string,
+  today: string,
+  limit: number
+) {
+  return db
+    .select({
+      id: scheduledWorkouts.id,
+      scheduledDate: scheduledWorkouts.scheduledDate,
+      scheduledTime: scheduledWorkouts.scheduledTime,
+    })
+    .from(scheduledWorkouts)
+    .where(
+      and(
+        eq(scheduledWorkouts.userId, userId),
+        eq(scheduledWorkouts.workoutId, workoutId),
+        gte(scheduledWorkouts.scheduledDate, today),
+        isNull(scheduledWorkouts.sessionId),
+        eq(scheduledWorkouts.isSkipped, false)
+      )
+    )
+    .orderBy(asc(scheduledWorkouts.scheduledDate), asc(scheduledWorkouts.scheduledTime))
+    .limit(limit);
 }
 
 /**

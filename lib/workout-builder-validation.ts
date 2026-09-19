@@ -35,6 +35,7 @@ import {
   WORKOUT_DESCRIPTION_MAX_LENGTH,
   WORKOUT_TITLE_MAX_LENGTH,
 } from "./text-limits";
+import { isValidUuid } from "./uuid";
 
 export type ValidatedBuilderItem = {
   exerciseId: string | null;
@@ -143,12 +144,6 @@ export type RawBuilderPayload = {
 function isOneOf(value: unknown, allowed: readonly string[]): value is string {
   return typeof value === "string" && allowed.includes(value);
 }
-
-// Duplicated from lib/workouts-validation.ts's isValidUuid rather than
-// imported from it — that module has a runtime import of db/schema.ts,
-// and this file must stay free of one (see the module comment above).
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Distinct from `null` (explicitly "not set") and any real parsed
  * value — signals "the caller provided something, but it's not valid". */
@@ -479,7 +474,7 @@ function parseTagIds(value: unknown): string[] | typeof INVALID {
 
   const tagIds: string[] = [];
   for (const raw of value) {
-    if (typeof raw !== "string" || !UUID_REGEX.test(raw)) {
+    if (typeof raw !== "string" || !isValidUuid(raw)) {
       return INVALID;
     }
     if (!tagIds.includes(raw)) {

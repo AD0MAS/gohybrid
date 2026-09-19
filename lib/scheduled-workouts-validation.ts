@@ -1,4 +1,4 @@
-import { isValidUuid } from "./workouts-validation";
+import { isValidUuid } from "./uuid";
 import { checkTextLength, SCHEDULE_NOTES_MAX_LENGTH } from "./text-limits";
 
 export type ValidatedScheduleInput = {

@@ -192,6 +192,19 @@ export function formatDayMonthShort(date: string): string {
 }
 
 /**
+ * Formats a YYYY-MM-DD string as e.g. "6 September" — day and full month,
+ * no weekday and no year. Unlike formatDayHeading/formatDayHeadingLong
+ * (which both name the weekday) or formatRelativeDay (which prefers
+ * "Today"/"Yesterday"), this is for a plain list of past dates where the
+ * weekday adds nothing and a relative label would only apply to the first
+ * row — the workout detail page's "Sessions" panel.
+ */
+export function formatDayMonthLong(date: string): string {
+  const { month } = parseDateString(date);
+  return `${getDayNumber(date)} ${MONTH_NAMES[month - 1]}`;
+}
+
+/**
  * Monday-anchored week starts ending with the week containing `today`,
  * oldest first, length `count` — the weekly stats chart's x-axis and the
  * bucket keys for getWeeklySessionCountsForUser. Callers zero-fill any

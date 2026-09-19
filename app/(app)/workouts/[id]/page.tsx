@@ -3,27 +3,38 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
+import { formatDayMonthLong } from "@/lib/dates";
+import { getUpcomingScheduledForWorkout } from "@/lib/scheduled-workouts";
+import { isValidDateString } from "@/lib/scheduled-workouts-validation";
+import { firstValue } from "@/lib/search-params";
+import { getSessionsForWorkout } from "@/lib/sessions";
+import { toCalendarDayInTimezone } from "@/lib/timezone";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
   formatPaceTarget,
   formatWeightKg,
 } from "@/lib/units";
-import { isValidDateString } from "@/lib/scheduled-workouts-validation";
-import { firstValue } from "@/lib/search-params";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
+import {
+  formatBlockTimingLine,
+  formatItemSummaryLine,
+} from "@/lib/workout-summary";
 import { deleteWorkout, toggleFavorite } from "../actions";
 import BackLink from "../../_components/BackLink";
 import {
   resolveBackDestination,
   type BackDestination,
 } from "../../_components/back-destination";
+import CardMenu, {
+  MENU_ITEM_CLASSES,
+  MENU_ITEM_DANGER_CLASSES,
+} from "../../_components/CardMenu";
 import { BLOCK_TYPE_LABELS } from "../builder/block-type-labels";
 import { TARGET_PRESET_LABELS } from "../builder/target-preset-labels";
 import { TARGET_TYPE_LABELS } from "../builder/target-type-labels";
-import { VOLUME_TYPE_LABELS } from "../builder/volume-type-labels";
 import { DIFFICULTY_LABELS } from "../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../primary-type-labels";
 import { TAG_COLOR_CLASSES } from "../tag-colors";
@@ -53,6 +64,18 @@ const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
   workouts: { href: "/", label: "Home" },
 };
+
+const SESSIONS_LIMIT = 3;
+const SCHEDULED_LIMIT = 3;
+
+const HEADER_TRIGGER_CLASSES =
+  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+
+// Same look as the two components' own default trigger, with px-4 below sm
+// so "Schedule" and "Log a past session" (both flex-auto, nowrap) share one
+// row on a 360px phone with equal space either side of each label.
+const SECONDARY_ACTION_CLASSES =
+  "flex h-12 items-center justify-center rounded-control border border-hairline bg-surface-1 px-4 text-base font-medium text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:px-6";
 
 /**
  * Resolves the back link, same map-lookup contract as resolveBackDestination
@@ -89,9 +112,11 @@ function resolveBack(
 }
 
 /**
- * Workout detail page: the workout's own fields, then each block (title,
- * block_type, and whichever timing fields are set) with its items
- * underneath. Queries the database directly via lib/workouts rather than
+ * Workout detail page: one header group (back link, title, favorite, meta,
+ * tags, description, Start workout/Schedule/Log a past session, and
+ * Edit/Delete in the corner), the block/item structure, and — in a right-hand column
+ * from lg — this workout's most recent sessions and its upcoming scheduled
+ * entries. Queries the database directly via lib/workouts rather than
  * fetching /api/workouts/[id] — same reasoning as the /workouts list: a
  * Server Component runs in the same process as the database layer, so a
  * self-fetch would only add a network round trip and a duplicate auth
@@ -123,7 +148,7 @@ export default async function WorkoutDetailPage(
     notFound();
   }
 
-  const [workout, { unitSystem, today }] = await Promise.all([
+  const [workout, { unitSystem, today, timezone }] = await Promise.all([
     getWorkoutForUser(id, user.id),
     getUserContext(user.id),
   ]);
@@ -132,224 +157,360 @@ export default async function WorkoutDetailPage(
     notFound();
   }
 
+  const [sessions, scheduled] = await Promise.all([
+    getSessionsForWorkout(user.id, workout.id, SESSIONS_LIMIT),
+    getUpcomingScheduledForWorkout(user.id, workout.id, today, SCHEDULED_LIMIT),
+  ]);
+
   const deleteWorkoutWithId = deleteWorkout.bind(null, workout.id);
+  const description = workout.description?.trim() ?? "";
+
+  const blockCount = workout.blocks.length;
+  const itemCount = workout.blocks.reduce(
+    (sum, block) => sum + block.items.length,
+    0
+  );
+  const structureCount = `${blockCount} block${blockCount === 1 ? "" : "s"} · ${itemCount} item${itemCount === 1 ? "" : "s"}`;
+
+  const metaLine = [
+    PRIMARY_TYPE_LABELS[workout.primaryType].label,
+    DIFFICULTY_LABELS[workout.difficulty].label,
+    workout.estimatedDurationMinutes != null &&
+      `${workout.estimatedDurationMinutes} min`,
+    structureCount,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <RedirectSuccessBanner show={saved} label="Saved" paramName="saved" />
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-2">
-          <BackLink href={back.href} label={back.label} />
-          <h1 className="truncate text-xl font-semibold text-ink">
-            {workout.title}
-          </h1>
-          <FavoriteToggle
-            isFavorite={workout.isFavorite}
-            toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
-          />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href={`/workouts/${workout.id}/edit`}
-            className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          >
-            Edit
-          </Link>
-          <ConfirmModal
-            trigger="Delete"
-            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            title="Delete workout"
-            description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
-            confirmLabel="Delete"
-            action={deleteWorkoutWithId}
-          />
-        </div>
-      </div>
 
-      <div>
-        {workout.description && (
-          <p className="text-sm text-ink-subtle">{workout.description}</p>
-        )}
-        <p className="text-sm text-ink-subtle">
-          {[
-            PRIMARY_TYPE_LABELS[workout.primaryType].label,
-            DIFFICULTY_LABELS[workout.difficulty].label,
-            workout.estimatedDurationMinutes != null &&
-              `${workout.estimatedDurationMinutes} min`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        {workout.workoutTags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {workout.workoutTags.map(({ tag }) => (
-              <span
-                key={tag.id}
-                className={`rounded-small border px-3 py-1 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
-              >
-                {tag.name}
-              </span>
-            ))}
+      <div className="flex flex-col">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <BackLink href={back.href} label={back.label} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+                  {workout.title}
+                </h1>
+                <FavoriteToggle
+                  isFavorite={workout.isFavorite}
+                  toggleFavoriteAction={toggleFavorite.bind(null, workout.id)}
+                />
+              </div>
+              <p className="text-sm text-ink-tertiary">{metaLine}</p>
+              {workout.workoutTags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {workout.workoutTags.map(({ tag }) => (
+                    <span
+                      key={tag.id}
+                      className={`rounded-small border px-3 py-1 text-xs ${TAG_COLOR_CLASSES[tag.color]}`}
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Link
-          href={`/workouts/${workout.id}/start`}
-          className="flex h-12 items-center justify-center rounded-control bg-accent px-6 text-base font-medium text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          Start Workout
-        </Link>
-        <ScheduleWorkoutForm today={today} workoutId={workout.id} />
-        <LogPastSessionForm today={today} workoutId={workout.id} />
-      </div>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <Link
+              href={`/workouts/${workout.id}/edit`}
+              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              Edit
+            </Link>
+            <ConfirmModal
+              trigger="Delete"
+              triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              title="Delete workout"
+              description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
+              confirmLabel="Delete"
+              action={deleteWorkoutWithId}
+            />
+          </div>
 
-      {workout.blocks.length === 0 ? (
-        <p className="text-sm text-ink-subtle">
-          This workout has no blocks yet.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-4">
-          {workout.blocks.map((block) => {
-            const timing = [
-              block.durationSeconds != null &&
-                `Duration: ${formatDurationSeconds(block.durationSeconds)}`,
-              block.rounds != null && `Rounds: ${block.rounds}`,
-              block.workSeconds != null &&
-                `Work: ${formatDurationSeconds(block.workSeconds)}`,
-              block.restSeconds != null &&
-                `Rest: ${formatDurationSeconds(block.restSeconds)}`,
-              block.intervalSeconds != null &&
-                `Interval: ${formatDurationSeconds(block.intervalSeconds)}`,
-            ].filter(Boolean);
-
-            return (
-              <li
-                key={block.id}
-                className="rounded-card border border-hairline bg-surface-1 p-5"
+          <div className="shrink-0 sm:hidden">
+            <CardMenu>
+              <Link
+                href={`/workouts/${workout.id}/edit`}
+                className={MENU_ITEM_CLASSES}
               >
-                <p className="font-medium text-ink">
-                  {block.title ? `${block.title} — ` : ""}
-                  {BLOCK_TYPE_LABELS[block.blockType].label}
-                </p>
-                {timing.length > 0 && (
-                  <p className="text-sm text-ink-subtle">{timing.join(" · ")}</p>
-                )}
+                Edit
+              </Link>
+              <ConfirmModal
+                trigger="Delete"
+                triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                title="Delete workout"
+                description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
+                confirmLabel="Delete"
+                action={deleteWorkoutWithId}
+              />
+            </CardMenu>
+          </div>
+        </div>
+        <div className="sm:pl-11">
+          {description && (
+            <p className="mt-3.5 max-w-[600px] whitespace-pre-line break-words text-[13px] leading-[1.6] text-ink-subtle sm:mt-[18px] sm:text-sm">
+              {description}
+            </p>
+          )}
+          <div className="mt-4 flex flex-col gap-3 sm:mt-5 sm:flex-row sm:items-center">
+            <Link
+              href={`/workouts/${workout.id}/start`}
+              className="flex h-12 w-full items-center justify-center rounded-control bg-accent px-6 text-base font-medium text-ink hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+            >
+              Start workout
+            </Link>
+            <div className="flex gap-3">
+              <ScheduleWorkoutForm
+                today={today}
+                workoutId={workout.id}
+                triggerClassName={`${SECONDARY_ACTION_CLASSES} flex-auto whitespace-nowrap`}
+              />
+              <LogPastSessionForm
+                today={today}
+                workoutId={workout.id}
+                triggerClassName={`${SECONDARY_ACTION_CLASSES} flex-auto whitespace-nowrap`}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
-                {block.items.length === 0 ? (
-                  <p className="mt-2 text-sm text-ink-subtle">No items yet.</p>
-                ) : (
-                  <ul className="mt-2 flex flex-col gap-2">
-                    {block.items.map((item) => {
-                      const name =
-                        item.exercise?.name ??
-                        item.customName ??
-                        "Unnamed exercise";
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[5fr_3fr] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-6">
+          <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5 sm:p-6">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+                Structure
+              </h2>
+              <span className="text-xs text-ink-tertiary">{structureCount}</span>
+            </div>
 
-                      const isHyroxStation =
-                        item.exercise?.isHyroxStation ?? false;
-                      const isRestItem = item.exercise?.category === "rest";
+            <ul className="flex flex-col gap-4">
+              {workout.blocks.map((block, blockIndex) => {
+                const timingLine = formatBlockTimingLine({
+                  blockType: block.blockType,
+                  durationSeconds: block.durationSeconds,
+                  rounds: block.rounds,
+                  workSeconds: block.workSeconds,
+                  restSeconds: block.restSeconds,
+                  intervalSeconds: block.intervalSeconds,
+                });
 
-                      let volume: string | null = null;
-                      if (item.volumeType) {
-                        if (item.volumeValue == null) {
-                          volume = `${VOLUME_TYPE_LABELS[item.volumeType].label} (open ended)`;
-                        } else if (item.volumeType === "distance") {
-                          const d = formatDistanceMetres(
-                            Number(item.volumeValue),
-                            unitSystem,
-                            isHyroxStation
-                          );
-                          volume = `${d.value} ${d.unit}`;
-                        } else if (item.volumeType === "duration") {
-                          volume = formatDurationSeconds(
-                            Number(item.volumeValue)
-                          );
-                        } else {
-                          volume = `${item.volumeValue} ${VOLUME_TYPE_LABELS[item.volumeType].label}`;
-                        }
-                      }
+                return (
+                  <li
+                    key={block.id}
+                    className="rounded-card border border-hairline bg-surface-2 p-4"
+                  >
+                    <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="min-w-0 break-words text-sm font-medium text-ink">
+                          {block.title || `Block ${blockIndex + 1}`}
+                        </span>
+                        <span className="shrink-0 rounded-small border border-hairline bg-surface-3 px-2 py-[3px] text-[11px] font-medium text-ink-subtle">
+                          {BLOCK_TYPE_LABELS[block.blockType].label}
+                        </span>
+                      </div>
+                      {timingLine && (
+                        <span className="text-xs text-ink-tertiary">
+                          {timingLine}
+                        </span>
+                      )}
+                    </div>
 
-                      const target = item.targetPreset
-                        ? TARGET_PRESET_LABELS[item.targetPreset].label
-                        : item.targetType === "pace_500m" ||
-                            item.targetType === "pace_km"
-                          ? item.targetValue == null
-                            ? TARGET_TYPE_LABELS[item.targetType].label
-                            : formatPaceTarget(
-                                item.targetType,
-                                Number(item.targetValue),
-                                unitSystem
-                              )
-                          : item.targetType
-                            ? item.targetValue != null
-                              ? `${item.targetValue} ${TARGET_TYPE_LABELS[item.targetType].label}`
-                              : TARGET_TYPE_LABELS[item.targetType].label
+                    {block.items.length === 0 ? (
+                      <p className="text-sm text-ink-subtle">No items yet.</p>
+                    ) : (
+                      <div>
+                        {block.items.map((item) => {
+                          const name =
+                            item.exercise?.name ??
+                            item.customName ??
+                            "Unnamed exercise";
+                          const isHyroxStation =
+                            item.exercise?.isHyroxStation ?? false;
+                          const isRestItem =
+                            item.exercise?.category === "rest";
+
+                          let volume: string | null = null;
+                          if (item.volumeType) {
+                            if (item.volumeValue == null) {
+                              volume = "Open ended";
+                            } else if (item.volumeType === "distance") {
+                              const d = formatDistanceMetres(
+                                Number(item.volumeValue),
+                                unitSystem,
+                                isHyroxStation
+                              );
+                              volume = `${d.value} ${d.unit}`;
+                            } else if (item.volumeType === "duration") {
+                              volume = formatDurationSeconds(
+                                Number(item.volumeValue)
+                              );
+                            } else {
+                              const unitLabel =
+                                item.volumeType === "calories"
+                                  ? "kcal"
+                                  : "reps";
+                              volume = `${item.volumeValue} ${unitLabel}`;
+                            }
+                          }
+
+                          const target = item.targetPreset
+                            ? TARGET_PRESET_LABELS[item.targetPreset].label
+                            : item.targetType === "pace_500m" ||
+                                item.targetType === "pace_km"
+                              ? item.targetValue == null
+                                ? TARGET_TYPE_LABELS[item.targetType].label
+                                : formatPaceTarget(
+                                    item.targetType,
+                                    Number(item.targetValue),
+                                    unitSystem
+                                  )
+                              : item.targetType
+                                ? item.targetValue != null
+                                  ? `${TARGET_TYPE_LABELS[item.targetType].label} ${item.targetValue}`
+                                  : TARGET_TYPE_LABELS[item.targetType].label
+                                : null;
+
+                          // A stored 0 reads the same as unset (ItemEditor's
+                          // handleSave normalizes a typed 0 to null on save)
+                          // — only a legacy row can still hold a literal
+                          // 0kg, and there's nothing worth showing for a
+                          // bodyweight movement.
+                          const weightKgNum =
+                            item.weightKg != null
+                              ? Number(item.weightKg)
+                              : null;
+                          const weight =
+                            weightKgNum != null && weightKgNum > 0
+                              ? formatWeightKg(weightKgNum, unitSystem)
+                              : null;
+                          const weightText = weight
+                            ? `${weight.value} ${weight.unit}`
                             : null;
 
-                      // A stored 0 reads the same as unset (see
-                      // ItemEditor's handleSave, which normalizes a typed 0
-                      // to null on save) — only a legacy row can still hold
-                      // a literal 0kg, and there's nothing worth showing
-                      // for a bodyweight movement.
-                      const weightKgNum =
-                        item.weightKg != null ? Number(item.weightKg) : null;
-                      const weight =
-                        weightKgNum != null && weightKgNum > 0
-                          ? formatWeightKg(weightKgNum, unitSystem)
-                          : null;
-
-                      // A rest item has no sets/volume/target/weight — only
-                      // its own optional rest_seconds, which is its own
-                      // duration rather than rest following some other
-                      // exercise, so it's shown alone with no "Rest:" label
-                      // (the exercise name above already says "Rest").
-                      // Mirrors formatItemSummary in ItemEditor.tsx.
-                      const details = isRestItem
-                        ? [
-                            item.restSeconds != null
+                          const restBetweenText =
+                            item.restSeconds != null && item.restSeconds > 0
                               ? formatDurationSeconds(item.restSeconds)
-                              : "Open ended",
-                          ]
-                        : [
-                            `Sets: ${item.sets}`,
-                            volume && `Volume: ${volume}`,
-                            target && `Target: ${target}`,
-                            weight && `Weight: ${weight.value} ${weight.unit}`,
-                            // Zero rest is a legitimate stored value
-                            // (back-to-back sets), but a "Rest: 0:00" line
-                            // adds nothing an absent line doesn't already say.
-                            item.restSeconds != null &&
-                              item.restSeconds > 0 &&
-                              `Rest: ${formatDurationSeconds(item.restSeconds)}`,
-                          ].filter(Boolean);
+                              : null;
 
-                      return (
-                        <li
-                          key={item.id}
-                          className="border-t border-hairline pt-2"
-                        >
-                          <p className="text-sm font-medium text-ink">{name}</p>
-                          <p className="text-sm text-ink-subtle">
-                            {details.join(" · ")}
-                          </p>
-                          {item.notes && (
-                            <p className="text-sm text-ink-subtle">
-                              Notes: {item.notes}
-                            </p>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                          const summaryLine = formatItemSummaryLine({
+                            isRestItem,
+                            restSeconds: item.restSeconds,
+                            sets: item.sets,
+                            volumeText: volume,
+                            targetText: target,
+                            weightText,
+                            restBetweenText,
+                          });
+
+                          return (
+                            <div
+                              key={item.id}
+                              className="border-b border-surface-3 py-3 last:border-b-0"
+                            >
+                              <p className="break-words text-sm font-medium text-ink-muted">
+                                {name}
+                              </p>
+                              {summaryLine && (
+                                <p className="max-w-[600px] text-xs text-ink-tertiary">
+                                  {summaryLine}
+                                </p>
+                              )}
+                              {item.notes && (
+                                <p className="max-w-[600px] break-words text-xs text-ink-tertiary">
+                                  {item.notes}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <section className="flex flex-col gap-1 rounded-panel border border-hairline bg-surface-1 p-5">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+                Sessions
+              </h2>
+              <Link
+                href={`/history?from=workout&workout=${workout.id}`}
+                className={HEADER_TRIGGER_CLASSES}
+              >
+                Full history
+              </Link>
+            </div>
+
+            {sessions.length === 0 ? (
+              <p className="pt-2 text-sm text-ink-subtle">
+                No sessions of this workout yet.
+              </p>
+            ) : (
+              <ul>
+                {sessions.map((session) => (
+                  <li
+                    key={session.id}
+                    className="border-b border-surface-3 py-3 last:border-b-0"
+                  >
+                    <span className="text-sm font-medium text-ink-muted">
+                      {formatDayMonthLong(
+                        toCalendarDayInTimezone(session.completedAt, timezone)
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
+            <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+              Scheduled
+            </h2>
+
+            {scheduled.length === 0 ? (
+              <p className="text-sm text-ink-subtle">Nothing scheduled.</p>
+            ) : (
+              <ul>
+                {scheduled.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      <span className="text-sm font-medium text-ink-muted">
+                        {formatDayMonthLong(entry.scheduledDate)}
+                      </span>
+                    </div>
+                    {entry.scheduledTime && (
+                      <span className="shrink-0 text-xs text-ink-tertiary">
+                        {entry.scheduledTime.slice(0, 5)}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="pt-1 text-xs text-ink-tertiary">
+              Scheduling, marking done and removing a day all happen on Home.
+            </p>
+          </section>
+        </div>
       </div>
     </main>
   );

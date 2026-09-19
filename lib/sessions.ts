@@ -152,6 +152,33 @@ export async function getRecentSessionsForUser(userId: string, limit: number) {
 }
 
 /**
+ * Lists the most recent completed sessions of one specific workout,
+ * capped at `limit` — the workout detail page's "Sessions" panel. Same
+ * shape and snapshot-column reasoning as getRecentSessionsForUser, just
+ * scoped to one workoutId as well as userId. `limit` is required, not
+ * defaulted — see getRecentSessionsForUser's own doc comment for why an
+ * optional cap on a list query is one default value away from silently
+ * truncating it.
+ */
+export async function getSessionsForWorkout(
+  userId: string,
+  workoutId: string,
+  limit: number
+) {
+  return db
+    .select()
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(workoutSessions.userId, userId),
+        eq(workoutSessions.workoutId, workoutId)
+      )
+    )
+    .orderBy(desc(workoutSessions.completedAt))
+    .limit(limit);
+}
+
+/**
  * Deletes a workout session owned by `userId`, returning true if a row was
  * deleted and false otherwise — whether because the id doesn't exist or
  * because it belongs to a different user. Ownership is enforced in the

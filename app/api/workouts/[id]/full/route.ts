@@ -11,7 +11,7 @@ import { getAuthenticatedUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
 import { updateFullWorkoutForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 
 const STATIC_ENUM_OPTIONS = {
   primaryTypeOptions: workoutPrimaryTypeEnum.enumValues,

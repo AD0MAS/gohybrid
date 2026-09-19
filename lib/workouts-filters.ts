@@ -1,5 +1,6 @@
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
-import { isOneOf, isValidUuid } from "./workouts-validation";
+import { isValidUuid } from "./uuid";
+import { isOneOf } from "./workouts-validation";
 import { WORKOUT_SEARCH_MAX_LENGTH } from "./text-limits";
 import { firstValue } from "./search-params";
 

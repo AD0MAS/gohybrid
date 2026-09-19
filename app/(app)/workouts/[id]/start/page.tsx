@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 import BackLink from "../../../_components/BackLink";
 import { DIFFICULTY_LABELS } from "../../difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "../../primary-type-labels";

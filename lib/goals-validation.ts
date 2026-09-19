@@ -18,7 +18,8 @@ import {
   REPS_DIGIT_LIMIT,
   RESTING_HR_DIGIT_LIMIT,
 } from "./numeric-limits";
-import { isOneOf, isValidUuid } from "./workouts-validation";
+import { isValidUuid } from "./uuid";
+import { isOneOf } from "./workouts-validation";
 import {
   checkTextLength,
   GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,

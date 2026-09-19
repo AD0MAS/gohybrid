@@ -8,7 +8,7 @@ import {
 } from "@/lib/scheduled-workouts";
 import { validateScheduleInput } from "@/lib/scheduled-workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
-import { isValidUuid } from "@/lib/workouts-validation";
+import { isValidUuid } from "@/lib/uuid";
 
 /**
  * PATCH /api/scheduled-workouts/[id]

@@ -7,7 +7,8 @@ import {
   LIFTED_WEIGHT_DIGIT_LIMIT,
   REPS_DIGIT_LIMIT,
 } from "./numeric-limits";
-import { isOneOf, isValidUuid } from "./workouts-validation";
+import { isValidUuid } from "./uuid";
+import { isOneOf } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
 import {
   checkTextLength,

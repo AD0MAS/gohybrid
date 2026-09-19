@@ -37,9 +37,11 @@ const BACK_SOURCES: Record<string, BackDestination> = {
  * columns rather than joining against `workouts`, so a session survives
  * its workout being edited or deleted.
  *
- * Reachable from both /workouts (its corner button) and Home (the
- * recent-activity "Full history" link), so the back link's target depends
- * on the `from` search param each sets — see BACK_SOURCES/DEFAULT_BACK.
+ * Reachable from /workouts (its corner button), Home (the recent-activity
+ * "Full history" link) and a workout's detail page (`from=workout&workout=
+ * <id>`, the only entry point whose destination carries an id — validated
+ * inside resolveBackDestination), so the back link's target depends on the
+ * `from` search param each sets — see BACK_SOURCES/DEFAULT_BACK.
  *
  * `?finished=1` marks a landing from Start Workout Mode's Finish button
  * (StartWorkoutClient) — the only entry point that ever sets it, so
@@ -51,7 +53,12 @@ const BACK_SOURCES: Record<string, BackDestination> = {
 export default async function HistoryPage(props: PageProps<"/history">) {
   const user = await requireUser();
   const searchParams = await props.searchParams;
-  const back = resolveBackDestination(searchParams.from, BACK_SOURCES, DEFAULT_BACK);
+  const back = resolveBackDestination(
+    searchParams.from,
+    BACK_SOURCES,
+    DEFAULT_BACK,
+    searchParams.workout
+  );
   const finished =
     (Array.isArray(searchParams.finished)
       ? searchParams.finished[0]
