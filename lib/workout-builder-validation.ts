@@ -505,6 +505,63 @@ function parseOptionalNumber(value: unknown): number | null | typeof INVALID {
   return Number.isNaN(parsed) ? INVALID : parsed;
 }
 
+/** The one message for a block with no items — shared by parseBuilderBlock
+ * and the "items" requirement below, so the two cannot drift. */
+const NO_ITEMS_ERROR = "Add at least one item.";
+
+/** Whether one raw block carries at least one item. The "every block has an
+ * item" rule, used by parseBuilderBlock (the gate) and getBuilderRequirements
+ * (the checklist). */
+function blockHasItems(rawBlock: unknown): boolean {
+  if (typeof rawBlock !== "object" || rawBlock === null) return false;
+  const { items } = rawBlock as RawBuilderBlockPayload;
+  return Array.isArray(items) && items.length > 0;
+}
+
+function parseWorkoutTitle(
+  input: RawBuilderPayload
+): { title: string } | { error: string } {
+  const title = typeof input.title === "string" ? input.title.trim() : "";
+  if (!title) {
+    return { error: "Title is required." };
+  }
+  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
+  if (!titleCheck.ok) {
+    return { error: titleCheck.error };
+  }
+  return { title };
+}
+
+function parseWorkoutPrimaryType(
+  input: RawBuilderPayload,
+  options: BuilderEnumOptions
+): { primaryType: string } | { error: string } {
+  if (!isOneOf(input.primaryType, options.primaryTypeOptions)) {
+    return { error: "Choose a valid primary type." };
+  }
+  return { primaryType: input.primaryType };
+}
+
+function parseWorkoutDifficulty(
+  input: RawBuilderPayload,
+  options: BuilderEnumOptions
+): { difficulty: string } | { error: string } {
+  if (!isOneOf(input.difficulty, options.difficultyOptions)) {
+    return { error: "Choose a valid difficulty." };
+  }
+  return { difficulty: input.difficulty };
+}
+
+function parseWorkoutBlockList(
+  input: RawBuilderPayload
+): { blocks: unknown[] } | { error: string } {
+  const blocks = Array.isArray(input.blocks) ? input.blocks : [];
+  if (blocks.length === 0) {
+    return { error: "Add at least one block." };
+  }
+  return { blocks };
+}
+
 function parseBuilderItem(
   raw: unknown,
   options: BuilderEnumOptions,
@@ -914,10 +971,10 @@ function parseBuilderBlock(
     }
   }
 
-  const rawItems = Array.isArray(block.items) ? block.items : [];
-  if (rawItems.length === 0) {
-    return { error: "Add at least one item." };
+  if (!blockHasItems(block)) {
+    return { error: NO_ITEMS_ERROR };
   }
+  const rawItems = block.items as unknown[];
   const items: ValidatedBuilderItem[] = [];
   for (const [itemIndex, rawItem] of rawItems.entries()) {
     const parsed = parseBuilderItem(
@@ -977,30 +1034,23 @@ export function validateBuilderPayload(
   input: RawBuilderPayload,
   options: BuilderEnumOptions
 ): BuilderValidationResult {
-  const title = typeof input.title === "string" ? input.title.trim() : "";
-  if (!title) {
-    return { success: false, error: "Title is required." };
+  const parsedTitle = parseWorkoutTitle(input);
+  if ("error" in parsedTitle) {
+    return { success: false, error: parsedTitle.error };
   }
-  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
-  if (!titleCheck.ok) {
-    return { success: false, error: titleCheck.error };
-  }
+  const { title } = parsedTitle;
 
-  if (!isOneOf(input.primaryType, options.primaryTypeOptions)) {
-    return {
-      success: false,
-      error: "Choose a valid primary type.",
-    };
+  const parsedPrimaryType = parseWorkoutPrimaryType(input, options);
+  if ("error" in parsedPrimaryType) {
+    return { success: false, error: parsedPrimaryType.error };
   }
-  const primaryType = input.primaryType;
+  const { primaryType } = parsedPrimaryType;
 
-  if (!isOneOf(input.difficulty, options.difficultyOptions)) {
-    return {
-      success: false,
-      error: "Choose a valid difficulty.",
-    };
+  const parsedDifficulty = parseWorkoutDifficulty(input, options);
+  if ("error" in parsedDifficulty) {
+    return { success: false, error: parsedDifficulty.error };
   }
-  const difficulty = input.difficulty;
+  const { difficulty } = parsedDifficulty;
 
   const description =
     typeof input.description === "string" && input.description.trim() !== ""
@@ -1039,10 +1089,11 @@ export function validateBuilderPayload(
     estimatedDurationMinutes = digitCheck.value;
   }
 
-  const rawBlocks = Array.isArray(input.blocks) ? input.blocks : [];
-  if (rawBlocks.length === 0) {
-    return { success: false, error: "Add at least one block." };
+  const parsedBlockList = parseWorkoutBlockList(input);
+  if ("error" in parsedBlockList) {
+    return { success: false, error: parsedBlockList.error };
   }
+  const rawBlocks = parsedBlockList.blocks;
   const blocks: ValidatedBuilderBlock[] = [];
   for (const [index, rawBlock] of rawBlocks.entries()) {
     const parsed = parseBuilderBlock(rawBlock, index, options);
@@ -1068,5 +1119,70 @@ export function validateBuilderPayload(
       blocks,
       tagIds,
     },
+  };
+}
+
+/** The workout-level requirements the builder's checklist shows, in order.
+ * "items" means every block has at least one item, which is how the
+ * validator states the rule, so the checklist's row says the same. */
+export type BuilderRequirementKey =
+  | "title"
+  | "primaryType"
+  | "difficulty"
+  | "blocks"
+  | "items";
+
+export type BuilderRequirementResult = {
+  key: BuilderRequirementKey;
+  met: boolean;
+};
+
+export type BuilderRequirements = {
+  requirements: BuilderRequirementResult[];
+  /** Exactly validateBuilderPayload(...).success: the Save button's state. */
+  valid: boolean;
+  /** validateBuilderPayload's own message when every requirement above is
+   * met but validation still fails (block timing, an item's fields,
+   * duration, tags); null otherwise. */
+  remainingError: string | null;
+};
+
+/**
+ * Per-requirement results for the builder's checklist, derived from the
+ * same rule functions validateBuilderPayload runs (parseWorkoutTitle,
+ * parseWorkoutPrimaryType, parseWorkoutDifficulty, parseWorkoutBlockList,
+ * blockHasItems), so a row can only be green when the validator's own check
+ * for it passes. `valid` is validateBuilderPayload's own verdict, so the
+ * checklist and the Save button read one source. Labels are UI copy and
+ * live with the caller.
+ */
+export function getBuilderRequirements(
+  input: RawBuilderPayload,
+  options: BuilderEnumOptions
+): BuilderRequirements {
+  const blockList = parseWorkoutBlockList(input);
+  const requirements: BuilderRequirementResult[] = [
+    { key: "title", met: !("error" in parseWorkoutTitle(input)) },
+    {
+      key: "primaryType",
+      met: !("error" in parseWorkoutPrimaryType(input, options)),
+    },
+    {
+      key: "difficulty",
+      met: !("error" in parseWorkoutDifficulty(input, options)),
+    },
+    { key: "blocks", met: !("error" in blockList) },
+    {
+      key: "items",
+      met: !("error" in blockList) && blockList.blocks.every(blockHasItems),
+    },
+  ];
+
+  const result = validateBuilderPayload(input, options);
+  return {
+    requirements,
+    valid: result.success,
+    remainingError:
+      !result.success && requirements.every((r) => r.met) ? result.error : null,
   };
 }

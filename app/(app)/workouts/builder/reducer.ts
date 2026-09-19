@@ -54,6 +54,12 @@ export type BuilderItem = {
   weightKg: number | null;
   restSeconds: number | null;
   notes: string;
+  /** True from ADD_ITEM until the item's modal Save (CONFIRM_ITEM): an item
+   * the user has added but not yet entered anything for. Pending items are
+   * shown, but do not count towards the checklist, Save's enabled state, the
+   * dirty comparison or the saved payload (see getCommittedBlocks). Never
+   * set by DUPLICATE_ITEM or LOAD_WORKOUT. */
+  pending: boolean;
 };
 
 /**
@@ -73,6 +79,9 @@ export type BuilderBlock = {
   restSeconds: number | null;
   intervalSeconds: number | null;
   items: BuilderItem[];
+  /** Same as BuilderItem.pending, for a block from ADD_BLOCK until its modal
+   * Save (CONFIRM_BLOCK). */
+  pending: boolean;
 };
 
 export type BuilderState = {
@@ -313,8 +322,43 @@ type LoadWorkoutAction = { type: "LOAD_WORKOUT"; workout: LoadableWorkout };
  * catalog is fetched (not created) by the builder. */
 type ToggleTagAction = { type: "TOGGLE_TAG"; tagId: string };
 
+/**
+ * Moves one block to the position another block currently holds (the block
+ * dropped onto), shifting the ones in between — the drag-and-drop reorder.
+ * Ids are the client-side block ids. sort_order is never sent: the server
+ * assigns it from array position on save.
+ */
+type ReorderBlocksAction = {
+  type: "REORDER_BLOCKS";
+  activeId: string;
+  overId: string;
+};
+
+/** Same as ReorderBlocksAction, for the items of one block only — an item
+ * never moves to another block. */
+type ReorderItemsAction = {
+  type: "REORDER_ITEMS";
+  blockId: string;
+  activeId: string;
+  overId: string;
+};
+
+/** Clears a block's pending flag — dispatched by the block modal's Save. */
+type ConfirmBlockAction = { type: "CONFIRM_BLOCK"; blockId: string };
+
+/** Clears an item's pending flag — dispatched by the item modal's Save. */
+type ConfirmItemAction = {
+  type: "CONFIRM_ITEM";
+  blockId: string;
+  itemId: string;
+};
+
 export type BuilderAction =
+  | ConfirmBlockAction
+  | ConfirmItemAction
   | UpdateMetaFieldAction
+  | ReorderBlocksAction
+  | ReorderItemsAction
   | AddBlockAction
   | RemoveBlockAction
   | DuplicateBlockAction
@@ -341,9 +385,97 @@ export function createInitialBuilderState(): BuilderState {
   };
 }
 
+/** Returns a copy of `list` with the element at `from` moved to `to`. */
+function moveElement<T>(list: readonly T[], from: number, to: number): T[] {
+  const next = [...list];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
+}
+
+/** The starting state for a builder: empty for a new workout, or loaded from
+ * an existing one (LOAD_WORKOUT) for edit mode. */
+export function createBuilderStateFor(workout?: LoadableWorkout): BuilderState {
+  return workout
+    ? builderReducer(createInitialBuilderState(), { type: "LOAD_WORKOUT", workout })
+    : createInitialBuilderState();
+}
+
+function omitKeys<T extends object, K extends keyof T>(
+  value: T,
+  keys: readonly K[]
+): Omit<T, K> {
+  return Object.fromEntries(
+    Object.entries(value).filter(([key]) => !keys.includes(key as K))
+  ) as Omit<T, K>;
+}
+
+/** A block/item without its client-only `pending` flag. */
+export type CommittedItem = Omit<BuilderItem, "pending">;
+export type CommittedBlock = Omit<BuilderBlock, "pending" | "items"> & {
+  items: CommittedItem[];
+};
+
+/**
+ * The blocks and items that count: everything except entries the user has
+ * added but not yet saved from their modal (pending), including pending
+ * items inside a saved block. The flag is stripped too, so this is what the
+ * validator, the checklist, the dirty comparison and the Server Action all
+ * see — the pending flag never leaves the client state.
+ */
+export function getCommittedBlocks(state: BuilderState): CommittedBlock[] {
+  return state.blocks
+    .filter((block) => !block.pending)
+    .map((block) => ({
+      ...omitKeys(block, ["pending"]),
+      items: block.items
+        .filter((item) => !item.pending)
+        .map((item) => omitKeys(item, ["pending"])),
+    }));
+}
+
+function normalizeText(value: string): string {
+  return value.trim();
+}
+
+/**
+ * A comparable string for "has anything changed since the builder opened".
+ * Only committed entries count (see getCommittedBlocks). Client-only ids
+ * (fresh on every load and duplicate) are dropped, tag ids are sorted, and
+ * every free-text field is trimmed (a custom name that trims to nothing
+ * reads as unset), so the comparison is about content and order rather than
+ * identity or stray whitespace: duplicating a block and deleting the
+ * original, toggling a tag off and on, or typing only spaces all read as
+ * unchanged. This is comparison-only — the stored values and the validator
+ * are untouched (the validator trims on its own).
+ */
+export function serializeBuilderState(state: BuilderState): string {
+  return JSON.stringify({
+    meta: {
+      ...state.meta,
+      title: normalizeText(state.meta.title),
+      description: normalizeText(state.meta.description),
+      tagIds: [...state.meta.tagIds].sort(),
+    },
+    blocks: getCommittedBlocks(state).map((block) => ({
+      ...omitKeys(block, ["id"]),
+      title: normalizeText(block.title),
+      items: block.items.map((item) => ({
+        ...omitKeys(item, ["id"]),
+        customName:
+          item.customName === null || normalizeText(item.customName) === ""
+            ? null
+            : normalizeText(item.customName),
+        notes: normalizeText(item.notes),
+      })),
+    })),
+  });
+}
+
 function createBlock(id: string): BuilderBlock {
   return {
     id,
+    pending: true,
     title: "",
     blockType: "general",
     durationSeconds: null,
@@ -368,6 +500,7 @@ function numericStringToNumberOrNull(value: string | null): number | null {
 function createItem(id: string): BuilderItem {
   return {
     id,
+    pending: true,
     exerciseId: null,
     customName: null,
     sets: null,
@@ -409,6 +542,48 @@ export function builderReducer(
         },
       };
 
+    case "REORDER_BLOCKS": {
+      const from = state.blocks.findIndex((block) => block.id === action.activeId);
+      const to = state.blocks.findIndex((block) => block.id === action.overId);
+      if (from === -1 || to === -1 || from === to) return state;
+      return { ...state, blocks: moveElement(state.blocks, from, to) };
+    }
+
+    case "REORDER_ITEMS":
+      return {
+        ...state,
+        blocks: state.blocks.map((block) => {
+          if (block.id !== action.blockId) return block;
+          const from = block.items.findIndex((item) => item.id === action.activeId);
+          const to = block.items.findIndex((item) => item.id === action.overId);
+          if (from === -1 || to === -1 || from === to) return block;
+          return { ...block, items: moveElement(block.items, from, to) };
+        }),
+      };
+
+    case "CONFIRM_BLOCK":
+      return {
+        ...state,
+        blocks: state.blocks.map((block) =>
+          block.id === action.blockId ? { ...block, pending: false } : block
+        ),
+      };
+
+    case "CONFIRM_ITEM":
+      return {
+        ...state,
+        blocks: state.blocks.map((block) =>
+          block.id !== action.blockId
+            ? block
+            : {
+                ...block,
+                items: block.items.map((item) =>
+                  item.id === action.itemId ? { ...item, pending: false } : item
+                ),
+              }
+        ),
+      };
+
     case "ADD_BLOCK":
       return {
         ...state,
@@ -431,9 +606,11 @@ export function builderReducer(
       const duplicate: BuilderBlock = {
         ...original,
         id: crypto.randomUUID(),
+        pending: false,
         items: original.items.map((item) => ({
           ...item,
           id: crypto.randomUUID(),
+          pending: false,
         })),
       };
 
@@ -508,6 +685,7 @@ export function builderReducer(
           const duplicate: BuilderItem = {
             ...block.items[index],
             id: crypto.randomUUID(),
+            pending: false,
           };
 
           return {
@@ -602,6 +780,7 @@ export function builderReducer(
         },
         blocks: action.workout.blocks.map((block) => ({
           id: crypto.randomUUID(),
+          pending: false,
           title: block.title ?? "",
           blockType: block.blockType,
           durationSeconds: block.durationSeconds,
@@ -611,6 +790,7 @@ export function builderReducer(
           intervalSeconds: block.intervalSeconds,
           items: block.items.map((item) => ({
             id: crypto.randomUUID(),
+            pending: false,
             exerciseId: item.exerciseId,
             customName: item.customName,
             sets: item.sets,

@@ -28,6 +28,9 @@ const EYEBROW_CLASSES =
 type TodayHeroProps = {
   userId: string;
   today: string;
+  /** Where Reschedule comes back to when it moves the entry off today — the
+   * week-strip view the user is on. See lib/redirect-back.ts. */
+  returnTo: string;
 };
 
 /**
@@ -50,7 +53,11 @@ type TodayHeroProps = {
  * (markScheduledWorkoutDone, ScheduleWorkoutForm) — this card is a shortcut
  * to the same actions, not a parallel implementation of them.
  */
-export default async function TodayHero({ userId, today }: TodayHeroProps) {
+export default async function TodayHero({
+  userId,
+  today,
+  returnTo,
+}: TodayHeroProps) {
   const entry = await getNextScheduledForUserOnDate(userId, today);
 
   if (!entry) {
@@ -82,9 +89,9 @@ export default async function TodayHero({ userId, today }: TodayHeroProps) {
 
   return (
     <section className="flex flex-col gap-6 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7">
-      <div className="flex flex-col gap-2.5">
+      <div className="flex min-w-0 flex-col gap-2.5">
         <p className={EYEBROW_CLASSES}>Today</p>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+        <h2 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
           {entry.workout.title}
         </h2>
         <p className="flex flex-wrap items-center gap-2 text-sm text-ink-subtle">
@@ -110,7 +117,11 @@ export default async function TodayHero({ userId, today }: TodayHeroProps) {
             </SubmitButton>
           </form>
           <ScheduleWorkoutForm
+            // Keyed by entry so a reschedule that hands the card to the next
+            // entry remounts the form instead of reusing this instance.
+            key={entry.id}
             today={today}
+            returnTo={returnTo}
             entry={{
               id: entry.id,
               scheduledDate: entry.scheduledDate,

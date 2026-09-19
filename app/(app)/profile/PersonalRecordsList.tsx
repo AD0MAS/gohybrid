@@ -84,7 +84,10 @@ export default async function PersonalRecordsList({
   const groups = groupPersonalRecordsBySubject(records);
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+    <section
+      id="records"
+      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Personal records</h2>
         {!isEmpty && (
@@ -162,6 +165,7 @@ export default async function PersonalRecordsList({
                       today={today}
                       unitSystem={unitSystem}
                       entry={group.best}
+                      returnTo="/profile#records"
                     />
                     <ConfirmModal
                       trigger={<X className="h-4 w-4" aria-hidden="true" />}
@@ -177,7 +181,7 @@ export default async function PersonalRecordsList({
 
                 {rest.length > 0 && (
                   <details className="mt-1">
-                    <summary className="cursor-pointer text-xs text-ink-tertiary hover:text-ink-subtle">
+                    <summary className="cursor-pointer text-xs text-ink-tertiary hover:text-ink-subtle active:text-ink-subtle">
                       {rest.length} earlier attempt{rest.length === 1 ? "" : "s"}
                     </summary>
                     <div className="mt-2 flex flex-col">
@@ -210,6 +214,7 @@ export default async function PersonalRecordsList({
                                 today={today}
                                 unitSystem={unitSystem}
                                 entry={entry}
+                                returnTo="/profile#records"
                               />
                               <ConfirmModal
                                 trigger={<X className="h-4 w-4" aria-hidden="true" />}

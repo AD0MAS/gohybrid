@@ -48,6 +48,7 @@ type ScheduleWorkoutFormProps = {
        * the rest of that card's row, without touching the workout detail
        * page's own larger button, which stays on the default. */
       triggerClassName?: string;
+      returnTo?: never;
     }
   | {
       /** Reschedules this existing entry instead, bound to
@@ -59,6 +60,15 @@ type ScheduleWorkoutFormProps = {
       triggerVariant?: "button" | "menu-item";
       /** See the sibling branch's own doc comment. */
       triggerClassName?: string;
+      /** The Home view to come back to when the new date moves the entry off
+       * the day (or off TODAY) this form is rendered in. A same-site path
+       * supplied by the Server Component that renders the form: the form's
+       * own "Rescheduled" banner would be unmounted along with the moved
+       * entry, so a date change submits this and rescheduleWorkout ends with
+       * a redirect back here carrying `?saved=rescheduled` (see
+       * lib/redirect-back.ts). A time- or notes-only change stays in place
+       * and takes the ordinary path. */
+      returnTo?: string;
     }
 );
 
@@ -126,6 +136,7 @@ export default function ScheduleWorkoutForm({
   entry,
   triggerVariant = "button",
   triggerClassName,
+  returnTo,
 }: ScheduleWorkoutFormProps) {
   const [open, setOpen] = useState(false);
   const action = entry
@@ -158,6 +169,13 @@ export default function ScheduleWorkoutForm({
     setOpen(true);
   }
 
+  function submit(formData: FormData) {
+    if (entry && returnTo && formData.get("scheduledDate") !== entry.scheduledDate) {
+      formData.set("returnTo", returnTo);
+    }
+    formAction(formData);
+  }
+
   return (
     <>
       <FormSuccessBanner
@@ -181,7 +199,7 @@ export default function ScheduleWorkoutForm({
         onClose={() => setOpen(false)}
         title={entry ? "Reschedule this workout" : "Schedule this workout"}
       >
-        <form key={formKey} action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={submit} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm">
             Date
             <input

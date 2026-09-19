@@ -1,16 +1,29 @@
 import { useRef, useState, type Dispatch } from "react";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Copy, Pencil, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import { ROUNDS_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { BLOCK_TITLE_MAX_LENGTH } from "@/lib/text-limits";
-import { formatDurationSeconds } from "@/lib/units";
 import {
   validateBuilderBlockDraft,
   type BuilderBlockDraftErrors,
 } from "@/lib/workout-builder-validation";
+import { formatBlockSummary } from "@/lib/workout-summary";
+import CardMenu, {
+  MENU_ITEM_CLASSES,
+  MENU_ITEM_DANGER_CLASSES,
+} from "../../_components/CardMenu";
 import DurationInput from "../../_components/DurationInput";
 import Modal from "../../_components/Modal";
 import { BLOCK_TYPE_LABELS } from "./block-type-labels";
+import { ADD_BUTTON_TEXT_CLASSES } from "./add-button-classes";
+import DragHandle from "./DragHandle";
+import type { BuilderSortableData } from "./dnd";
 import ItemEditor from "./ItemEditor";
 import type {
   BlockType,
@@ -25,6 +38,15 @@ import {
   numberInputGuardProps,
   sanitizeNumberInputChange,
 } from "../../_components/sanitize-live-number";
+
+const BLOCK_SUMMARY_LABELS = { blockType: BLOCK_TYPE_LABELS };
+
+const ICON_BUTTON_CLASSES =
+  "flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+const DANGER_ICON_BUTTON_CLASSES =
+  "flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+const ADD_ITEM_CLASSES =
+  `flex h-10 items-center justify-center rounded-control border border-hairline bg-surface-3 ${ADD_BUTTON_TEXT_CLASSES} hover:border-hairline-strong active:border-hairline-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus`;
 
 type BlockEditorProps = {
   block: BuilderBlock;
@@ -43,43 +65,6 @@ type BlockEditorProps = {
   unitSystem: (typeof unitSystemEnum.enumValues)[number];
   dispatch: Dispatch<BuilderAction>;
 };
-
-/**
- * One-line rendering of a block's timing fields, per block_type, in the
- * same units DurationInput edits them in (formatDurationSeconds — the same
- * helper the read-only workout detail page uses for this). Returns null
- * when the type has no timing fields (general) or none are filled in yet,
- * so the summary row can omit the " · " separator entirely.
- */
-function formatBlockTiming(block: BuilderBlock): string | null {
-  switch (block.blockType) {
-    case "for_time": {
-      const parts = [
-        block.durationSeconds != null && formatDurationSeconds(block.durationSeconds),
-        block.rounds != null && `${block.rounds} rounds`,
-      ].filter((part): part is string => Boolean(part));
-      return parts.length > 0 ? parts.join(" · ") : null;
-    }
-    case "amrap":
-      return block.durationSeconds != null
-        ? formatDurationSeconds(block.durationSeconds)
-        : null;
-    case "on_off":
-      if (
-        block.workSeconds == null ||
-        block.restSeconds == null ||
-        block.rounds == null
-      ) {
-        return null;
-      }
-      return `${formatDurationSeconds(block.workSeconds)} on / ${formatDurationSeconds(block.restSeconds)} off × ${block.rounds}`;
-    case "emom":
-      if (block.intervalSeconds == null || block.rounds == null) return null;
-      return `${formatDurationSeconds(block.intervalSeconds)} × ${block.rounds}`;
-    case "general":
-      return null;
-  }
-}
 
 /** The draft BlockEditorModalFields edits: title and the five timing
  * fields, plus blockType — everything the modal's Save button commits to
@@ -109,18 +94,23 @@ function draftFromBlock(block: BuilderBlock): BlockDraft {
 }
 
 /**
- * Editor for a single block: the summary row (title, block type label,
- * timing summary) always shown on the builder page, plus a Configure
- * control opening a Modal with the full editor — an optional title, the
- * block_type select, and only the timing fields relevant to the selected
- * type, per block type:
+ * Editor for a single block: a sortable card (drag handle, title, a summary
+ * line with the type label, timing and item count, and edit/duplicate/remove
+ * controls) holding its items, plus a Modal with the full editor — an
+ * optional title, the block_type select, and only the timing fields relevant
+ * to the selected type, per block type:
  *   for_time — duration (optional), rounds (optional)
  *   on_off   — work seconds, rest seconds, rounds (all required)
  *   amrap    — duration (required)
  *   emom     — interval seconds, rounds (both required; no duration)
  *   general  — no timing fields
  * Every timing field is entered through DurationInput as h:mm:ss or mm:ss
- * boxes and stored as seconds either way.
+ * boxes and stored as seconds either way. The summary line comes from
+ * formatBlockSummary (lib/workout-summary.ts), the same wording the workout
+ * detail page uses for block timing.
+ *
+ * From sm the three controls are icon buttons; below sm they collapse into
+ * one CardMenu (the same three-dot menu Home and /profile use).
  *
  * The modal is a draft, not a live view of the reducer: BlockEditorModalFields
  * (below) holds its own title/blockType/timing-field state, seeded from
@@ -171,11 +161,35 @@ export default function BlockEditor({
    * same tick as the dispatch — see AddItemAction's doc comment in
    * reducer.ts. */
   const [lastAddedItemId, setLastAddedItemId] = useState<string | null>(null);
-  const timing = formatBlockTiming(block);
+  const summary = formatBlockSummary(
+    block,
+    block.items.length,
+    BLOCK_SUMMARY_LABELS
+  );
+  const displayTitle = block.title || `Block ${index + 1}`;
+
+  const sortableData: BuilderSortableData = { type: "block" };
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id, data: sortableData });
 
   function openFresh() {
     setOpenCount((count) => count + 1);
     setOpen(true);
+  }
+
+  function duplicate() {
+    dispatch({ type: "DUPLICATE_BLOCK", blockId: block.id });
+  }
+
+  function remove() {
+    dispatch({ type: "REMOVE_BLOCK", blockId: block.id });
   }
 
   function handleModalClose() {
@@ -201,56 +215,81 @@ export default function BlockEditor({
     dispatch({ type: "UPDATE_BLOCK_FIELD", blockId: block.id, field: "workSeconds", value: draft.workSeconds });
     dispatch({ type: "UPDATE_BLOCK_FIELD", blockId: block.id, field: "restSeconds", value: draft.restSeconds });
     dispatch({ type: "UPDATE_BLOCK_FIELD", blockId: block.id, field: "intervalSeconds", value: draft.intervalSeconds });
+    dispatch({ type: "CONFIRM_BLOCK", blockId: block.id });
     hasSavedRef.current = true;
     setOpen(false);
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-card border border-hairline bg-surface-1 p-5">
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={`flex min-w-0 flex-col gap-3 rounded-card border border-hairline bg-surface-2 p-4 ${
+        isDragging ? "relative z-10 opacity-70" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">
-            {block.title || `Block ${index + 1}`}
-          </p>
-          <p className="text-sm text-ink-subtle">
-            {BLOCK_TYPE_LABELS[block.blockType].label}
-            {timing ? ` · ${timing}` : ""}
-          </p>
+        <div className="flex min-w-0 flex-1 items-start gap-2">
+          <DragHandle
+            label="Reorder block"
+            setActivatorNodeRef={setActivatorNodeRef}
+            attributes={attributes}
+            listeners={listeners}
+          />
+          <div className="flex min-w-0 flex-col gap-1 pt-1">
+            <p className="break-words text-sm font-medium text-ink">
+              {displayTitle}
+            </p>
+            <p className="break-words text-xs text-ink-tertiary">{summary}</p>
+          </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="hidden shrink-0 items-center gap-1 sm:flex">
           <button
             type="button"
             onClick={openFresh}
             aria-label="Configure"
-            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={ICON_BUTTON_CLASSES}
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
-            onClick={() => dispatch({ type: "DUPLICATE_BLOCK", blockId: block.id })}
+            onClick={duplicate}
             aria-label="Duplicate block"
-            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={ICON_BUTTON_CLASSES}
           >
             <Copy className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
-            onClick={() => dispatch({ type: "REMOVE_BLOCK", blockId: block.id })}
+            onClick={remove}
             aria-label="Remove block"
-            className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={DANGER_ICON_BUTTON_CLASSES}
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
+
+        <div className="shrink-0 sm:hidden">
+          <CardMenu>
+            <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Edit
+            </button>
+            <button type="button" onClick={duplicate} className={MENU_ITEM_CLASSES}>
+              <Copy className="h-4 w-4" aria-hidden="true" />
+              Duplicate
+            </button>
+            <button type="button" onClick={remove} className={MENU_ITEM_DANGER_CLASSES}>
+              <X className="h-4 w-4" aria-hidden="true" />
+              Delete
+            </button>
+          </CardMenu>
+        </div>
       </div>
 
-      <Modal
-        open={open}
-        onClose={handleModalClose}
-        title={block.title || `Block ${index + 1}`}
-      >
+      <Modal open={open} onClose={handleModalClose} title={displayTitle}>
         <BlockEditorModalFields
           key={openCount}
           block={block}
@@ -260,27 +299,30 @@ export default function BlockEditor({
       </Modal>
 
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium">Items</p>
-
         {block.items.length === 0 ? (
-          <p className="text-sm text-ink-subtle">No items yet.</p>
+          <p className="text-xs text-ink-tertiary">No items yet.</p>
         ) : (
-          <ul className="flex flex-col gap-2">
-            {block.items.map((item) => (
-              <ItemEditor
-                key={item.id}
-                blockId={block.id}
-                item={item}
-                autoOpen={item.id === lastAddedItemId}
-                catalog={catalog}
-                volumeTypeOptions={volumeTypeOptions}
-                targetTypeOptions={targetTypeOptions}
-                targetPresetOptions={targetPresetOptions}
-                unitSystem={unitSystem}
-                dispatch={dispatch}
-              />
-            ))}
-          </ul>
+          <SortableContext
+            items={block.items.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="flex flex-col gap-2">
+              {block.items.map((item) => (
+                <ItemEditor
+                  key={item.id}
+                  blockId={block.id}
+                  item={item}
+                  autoOpen={item.id === lastAddedItemId}
+                  catalog={catalog}
+                  volumeTypeOptions={volumeTypeOptions}
+                  targetTypeOptions={targetTypeOptions}
+                  targetPresetOptions={targetPresetOptions}
+                  unitSystem={unitSystem}
+                  dispatch={dispatch}
+                />
+              ))}
+            </ul>
+          </SortableContext>
         )}
 
         <button
@@ -290,7 +332,7 @@ export default function BlockEditor({
             setLastAddedItemId(id);
             dispatch({ type: "ADD_ITEM", blockId: block.id, id });
           }}
-          className="flex h-11 items-center justify-center self-start rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={ADD_ITEM_CLASSES}
         >
           Add item
         </button>

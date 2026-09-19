@@ -3,6 +3,7 @@ import Link from "next/link";
 import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { getTotalGoalCountForUser } from "@/lib/goals";
+import { parseSavedParam } from "@/lib/search-params";
 import BodyMetricsList from "./BodyMetricsList";
 import EventsList from "./EventsList";
 import GoalForm from "./GoalForm";
@@ -122,15 +123,18 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
     props.searchParams,
     getTotalGoalCountForUser(user.id),
   ]);
-  const saved =
-    (Array.isArray(searchParams.saved)
-      ? searchParams.saved[0]
-      : searchParams.saved) === "1";
+  const savedParam = parseSavedParam(searchParams.saved);
+  const saved = savedParam?.value === "1";
   const hasAnyGoal = totalGoalCount > 0;
 
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <RedirectSuccessBanner show={saved} label="Saved" paramName="saved" />
+      <RedirectSuccessBanner
+        show={saved}
+        label="Saved"
+        paramName="saved"
+        nonce={savedParam?.nonce}
+      />
 
       <div className="flex flex-col gap-5 sm:gap-3">
         <div className="flex items-center justify-between gap-4">

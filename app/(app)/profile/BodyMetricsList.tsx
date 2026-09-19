@@ -108,7 +108,10 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
     .filter((group) => group.entries.length > 0);
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+    <section
+      id="metrics"
+      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Body metrics</h2>
         {!isEmpty && <BodyMetricFields today={today} unitSystem={unitSystem} />}
@@ -215,7 +218,12 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-1.5">
-                          <BodyMetricFields today={today} unitSystem={unitSystem} entry={entry} />
+                          <BodyMetricFields
+                            today={today}
+                            unitSystem={unitSystem}
+                            entry={entry}
+                            returnTo="/profile#metrics"
+                          />
                           <ConfirmModal
                             trigger={<X className="h-4 w-4" aria-hidden="true" />}
                             triggerClassName={DELETE_ICON_BUTTON_CLASSES}

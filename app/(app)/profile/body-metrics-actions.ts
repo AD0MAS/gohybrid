@@ -11,6 +11,7 @@ import { validateBodyMetricInput } from "@/lib/body-metrics-validation";
 import { convertWeightInputToKg } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import { echoFormValues } from "@/lib/form-state";
+import { redirectBackWithSaved } from "@/lib/redirect-back";
 
 export type BodyMetricFormState =
   | { status: "idle" }
@@ -135,6 +136,9 @@ export async function updateBodyMetric(
   }
 
   revalidatePath("/profile");
+  // Set by BodyMetricFields only when the metric type changed, which moves
+  // the entry to another type's list — see redirectBackWithSaved.
+  redirectBackWithSaved(formData.get("returnTo"));
   return { status: "success" };
 }
 

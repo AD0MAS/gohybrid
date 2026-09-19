@@ -52,6 +52,11 @@ type BodyMetricFieldsProps = {
    * non-empty, since that's the one save whose own success would otherwise
    * be discarded by unmounting the very instance that just recorded it. */
   hidden?: boolean;
+  /** Where to come back to when this edit changes the metric type, which
+   * moves the entry to another type's list and unmounts its form (and the
+   * banner it would show) — see lib/redirect-back.ts. Only meaningful with
+   * `entry`. */
+  returnTo?: string;
 };
 
 const initialState: BodyMetricFormState = { status: "idle" };
@@ -141,6 +146,7 @@ export default function BodyMetricFields({
   entry,
   ctaLabel,
   hidden = false,
+  returnTo,
 }: BodyMetricFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry ? updateBodyMetric.bind(null, entry.id) : addBodyMetric;
@@ -165,6 +171,13 @@ export default function BodyMetricFields({
     setFormKey((key) => key + 1);
     setErrorActive(false);
     setOpen(true);
+  }
+
+  function submit(formData: FormData) {
+    if (entry && returnTo && formData.get("metricType") !== entry.metricType) {
+      formData.set("returnTo", returnTo);
+    }
+    formAction(formData);
   }
 
   return (
@@ -204,7 +217,7 @@ export default function BodyMetricFields({
           unitSystem={unitSystem}
           entry={entry}
           state={visibleState}
-          formAction={formAction}
+          formAction={submit}
           onCancel={() => setOpen(false)}
         />
       </Modal>

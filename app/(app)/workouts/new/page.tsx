@@ -11,7 +11,6 @@ import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { getTagCatalog } from "@/lib/tags";
 import { getUserContext } from "@/lib/user-settings";
-import BackLink from "../../_components/BackLink";
 import {
   resolveBackDestination,
   type BackDestination,
@@ -61,25 +60,22 @@ export default async function NewWorkoutPage(
   ]);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-        <div className="flex items-center gap-2">
-          <BackLink href={back.href} label={back.label} />
-          <h1 className="text-xl font-semibold">New workout</h1>
-        </div>
-
-        <WorkoutBuilder
-          primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
-          difficultyOptions={workoutDifficultyEnum.enumValues}
-          blockTypeOptions={blockTypeEnum.enumValues}
-          volumeTypeOptions={volumeTypeEnum.enumValues}
-          targetTypeOptions={targetTypeEnum.enumValues}
-          targetPresetOptions={targetPresetEnum.enumValues}
-          exerciseCatalog={exerciseCatalog}
-          tagCatalog={tagCatalog}
-          unitSystem={unitSystem}
-        />
-      </div>
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <WorkoutBuilder
+        heading="New workout"
+        backHref={back.href}
+        backLabel={back.label}
+        discardHref={back.href}
+        primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
+        difficultyOptions={workoutDifficultyEnum.enumValues}
+        blockTypeOptions={blockTypeEnum.enumValues}
+        volumeTypeOptions={volumeTypeEnum.enumValues}
+        targetTypeOptions={targetTypeEnum.enumValues}
+        targetPresetOptions={targetPresetEnum.enumValues}
+        exerciseCatalog={exerciseCatalog}
+        tagCatalog={tagCatalog}
+        unitSystem={unitSystem}
+      />
     </main>
   );
 }

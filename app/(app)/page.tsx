@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { getTotalSessionCountForUser } from "@/lib/activity";
 import { formatDayHeadingLong } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutCountForUser } from "@/lib/workouts";
-import { resolveWeekStripView } from "@/lib/week-strip";
+import { parseSavedParam } from "@/lib/search-params";
+import { resolveWeekStripView, weekStripHref } from "@/lib/week-strip";
 import MonthCalendarPreview from "./MonthCalendarPreview";
 import NextEventCard from "./NextEventCard";
 import QuickActions from "./QuickActions";
@@ -65,8 +67,27 @@ export default async function Home(props: PageProps<"/">) {
   ]);
   const isNewUser = workoutCount === 0 && sessionCount === 0;
 
+  // `?saved=…` is where an edit that moved its own entry out from under its
+  // form (an event or a scheduled workout to another day) lands — the form's
+  // banner unmounted with the entry, so the confirmation is rendered here
+  // instead (lib/redirect-back.ts). The page decides which values it accepts
+  // and what each says.
+  const saved = parseSavedParam(searchParams.saved);
+  const savedLabel =
+    saved?.value === "1"
+      ? "Saved"
+      : saved?.value === "rescheduled"
+        ? "Rescheduled"
+        : null;
+
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <RedirectSuccessBanner
+        show={savedLabel !== null}
+        label={savedLabel ?? ""}
+        paramName="saved"
+        nonce={saved?.nonce}
+      />
       <div className="sm:hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-lockup.svg" alt="GoHybrid" className="h-7 w-auto" />
@@ -95,7 +116,11 @@ export default async function Home(props: PageProps<"/">) {
                 </Link>
               </section>
             ) : (
-              <TodayHero userId={user.id} today={today} />
+              <TodayHero
+                userId={user.id}
+                today={today}
+                returnTo={weekStripHref(view)}
+              />
             )}
           </div>
           <div className="order-2 lg:order-none">

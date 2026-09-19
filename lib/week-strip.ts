@@ -63,3 +63,20 @@ export function formatWeekHeading(view: WeekStripView): string {
   if (view.weekOffset === -1) return "Last week";
   return formatMonthYearHeading(view.monday);
 }
+
+/**
+ * The Home URL for a week-strip view — "/" when it is exactly the default
+ * (this week, today selected), otherwise `?week=…&day=…`. Used to send a user
+ * back to the view they were looking at after an action that redirects.
+ */
+export function weekStripHref(view: WeekStripView): string {
+  if (
+    view.weekOffset === 0 &&
+    (view.selectedDate === null || view.selectedDate === view.today)
+  ) {
+    return "/";
+  }
+  return view.selectedDate === null
+    ? `/?week=${view.weekOffset}`
+    : `/?week=${view.weekOffset}&day=${view.selectedDate}`;
+}

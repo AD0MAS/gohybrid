@@ -51,7 +51,7 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
               key={session.id}
               className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
             >
-              <p className="break-words text-sm font-medium text-ink">
+              <p className="min-w-0 break-words text-sm font-medium text-ink">
                 {session.workoutTitle}
               </p>
               <p className="shrink-0 text-xs text-ink-tertiary">

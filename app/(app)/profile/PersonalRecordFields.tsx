@@ -73,6 +73,12 @@ type PersonalRecordFieldsProps = {
    * otherwise be discarded by unmounting the very instance that just
    * recorded it. */
   hidden?: boolean;
+  /** Where to come back to after an edit. Every edit submits it: changing a
+   * record's value, date, exercise or type can move it between groups or
+   * between a group's best and its earlier attempts, unmounting its form
+   * (and the banner it would show) — see lib/redirect-back.ts. Only
+   * meaningful with `entry`. */
+  returnTo?: string;
 };
 
 const initialState: PersonalRecordFormState = { status: "idle" };
@@ -174,6 +180,7 @@ export default function PersonalRecordFields({
   entry,
   ctaLabel,
   hidden = false,
+  returnTo,
 }: PersonalRecordFieldsProps) {
   const [open, setOpen] = useState(false);
   const action = entry
@@ -202,6 +209,11 @@ export default function PersonalRecordFields({
     setFormKey((key) => key + 1);
     setErrorActive(false);
     setOpen(true);
+  }
+
+  function submit(formData: FormData) {
+    if (entry && returnTo) formData.set("returnTo", returnTo);
+    formAction(formData);
   }
 
   return (
@@ -243,7 +255,7 @@ export default function PersonalRecordFields({
           unitSystem={unitSystem}
           entry={entry}
           state={visibleState}
-          formAction={formAction}
+          formAction={submit}
           onCancel={() => setOpen(false)}
         />
       </Modal>

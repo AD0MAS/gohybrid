@@ -17,6 +17,7 @@ import {
 import { isOneOf } from "@/lib/workouts-validation";
 import { getUserContext } from "@/lib/user-settings";
 import { echoFormValues } from "@/lib/form-state";
+import { redirectBackWithSaved } from "@/lib/redirect-back";
 
 export type PersonalRecordFormState =
   | { status: "idle" }
@@ -188,6 +189,10 @@ export async function updatePersonalRecord(
   }
 
   revalidatePath("/profile");
+  // Set by PersonalRecordFields for every edit: a change can move the record
+  // between groups or between "best" and "earlier attempts", unmounting its
+  // form — see redirectBackWithSaved.
+  redirectBackWithSaved(formData.get("returnTo"));
   return { status: "success" };
 }
 

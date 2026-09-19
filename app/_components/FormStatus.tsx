@@ -147,15 +147,28 @@ export function PendingBanner({
  */
 export function PendingSubmitButton({
   pending,
+  disabled = false,
+  form,
   children,
   className,
 }: {
   pending: boolean;
+  /** An additional reason to disable the button (e.g. the form is not yet
+   * valid), independent of a submission being in flight. */
+  disabled?: boolean;
+  /** The id of the <form> this button submits, for a button rendered
+   * outside that form. */
+  form?: string;
   children: React.ReactNode;
   className: string;
 }) {
   return (
-    <button type="submit" disabled={pending} className={className}>
+    <button
+      type="submit"
+      form={form}
+      disabled={pending || disabled}
+      className={className}
+    >
       {children}
     </button>
   );
@@ -256,10 +269,24 @@ export function FormSuccessBanner({
  *
  * `useState(show)` — not `useState(false)` — so the banner is already
  * visible on the very first paint instead of flashing in a frame late.
- * `show` itself never changes after mount (the page it's rendered on
- * doesn't re-run this component's props reactively — a fresh navigation
- * mounts a fresh instance), so unlike FormSuccessBanner there's no
- * "retrigger on a later change" case to support.
+ *
+ * A fresh mount is not guaranteed, though. The App Router's state key for a
+ * page segment leaves out its search params (layout-router.js: "search
+ * params do not cause state to be lost"; create-router-cache-key.js returns
+ * plain `__PAGE__` for it), so a redirect to the *same route* with a new
+ * `?saved=` — an edit that moves an entry, redirecting back to the page it
+ * was made on — updates this still-mounted instance's props instead of
+ * mounting a new one. A page that was cached and is restored keeps its state
+ * too. `useState(show)` alone would then ignore the change and show
+ * nothing. So it reacts to a change, the same idiom as FormSuccessBanner's
+ * `trigger`: `token` is `null` when nothing should show, otherwise the
+ * redirect's `nonce` ("" when it has none), and a render that sees a
+ * different token than the last one — off to on, or one redirect to the
+ * next — shows the banner again. `nonce` is what makes two consecutive
+ * redirects that would otherwise carry identical props distinguishable
+ * (lib/redirect-back.ts puts a fresh one in every `?saved=` it builds);
+ * redirects from another page (Settings, the builder) mount fresh or change
+ * `show`, and need none.
  *
  * The query param is stripped via a raw `history.replaceState` call, not
  * `router.replace()`: the App Router treats a changed search string as a
@@ -275,12 +302,22 @@ export function RedirectSuccessBanner({
   show,
   label,
   paramName,
+  nonce,
 }: {
   show: boolean;
   label: string;
   paramName: string;
+  /** Identifies this particular redirect; see the doc comment above. */
+  nonce?: string | null;
 }) {
   const [visible, setVisible] = useState(show);
+
+  const token = show ? (nonce ?? "") : null;
+  const [prevToken, setPrevToken] = useState(token);
+  if (token !== prevToken) {
+    setPrevToken(token);
+    setVisible(token !== null);
+  }
 
   useEffect(() => {
     if (!show) return;
@@ -291,7 +328,7 @@ export function RedirectSuccessBanner({
 
     const timeout = setTimeout(() => setVisible(false), 2000);
     return () => clearTimeout(timeout);
-  }, [show, paramName]);
+  }, [show, paramName, nonce]);
 
   if (!visible) return null;
 

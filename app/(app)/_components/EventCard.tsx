@@ -1,5 +1,6 @@
 "use client";
 
+import { Pencil, X } from "lucide-react";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import { EVENT_TYPE_LABELS } from "../profile/event-labels";
@@ -9,6 +10,9 @@ import CardMenu, { MENU_ITEM_CLASSES, MENU_ITEM_DANGER_CLASSES } from "./CardMen
 
 type EventCardProps = {
   event: Event;
+  /** The week-strip view to come back to when editing moves the event to
+   * another day — see EventForm's `returnTo`. */
+  returnTo: string;
 };
 
 /**
@@ -45,17 +49,19 @@ type EventCardProps = {
  * workout cards, since deleting an event has no session/history side
  * effect to warn about.
  */
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, returnTo }: EventCardProps) {
   return (
     <li className="flex items-center justify-between gap-4 rounded-card border border-hairline bg-surface-2 p-4">
       <div className="min-w-0 flex flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="break-words font-medium text-ink">{event.title}</span>
+          <span className="min-w-0 break-words font-medium text-ink">
+            {event.title}
+          </span>
           <span className="shrink-0 rounded-small bg-accent/15 px-3 py-0.5 text-xs text-accent">
             Event
           </span>
         </div>
-        <p className="text-sm text-ink-subtle">
+        <p className="break-words text-sm text-ink-subtle">
           {[EVENT_TYPE_LABELS[event.eventType].label, event.location]
             .filter(Boolean)
             .join(" · ")}
@@ -65,14 +71,17 @@ export default function EventCard({ event }: EventCardProps) {
       <CardMenu>
         <EventForm
           entry={event}
+          returnTo={returnTo}
           renderTrigger={(open) => (
             <button type="button" onClick={open} className={MENU_ITEM_CLASSES}>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
               Edit
             </button>
           )}
         />
         <form action={deleteEvent.bind(null, event.id)}>
           <SubmitButton className={MENU_ITEM_DANGER_CLASSES}>
+            <X className="h-4 w-4" aria-hidden="true" />
             Remove
           </SubmitButton>
         </form>

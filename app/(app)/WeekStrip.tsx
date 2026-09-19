@@ -23,11 +23,13 @@ import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
 import { toClockTimeInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
-import { formatWeekHeading, resolveWeekStripView } from "@/lib/week-strip";
+import {
+  formatWeekHeading,
+  resolveWeekStripView,
+  weekStripHref,
+} from "@/lib/week-strip";
 import { DIFFICULTY_LABELS } from "./workouts/difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "./workouts/primary-type-labels";
-
-const DESCRIPTION_TRUNCATE_LENGTH = 100;
 
 /** Background + text per scheduled-entry status. Each status tints its own
  * colour into the background at low opacity (same `/NN` pattern as the
@@ -41,12 +43,6 @@ const STATUS_PILL_CLASSES = {
   Skipped: "bg-ink-tertiary/15 text-ink-tertiary",
   Planned: "bg-ink-subtle/15 text-ink-subtle",
 } as const;
-
-function truncate(text: string, maxLength: number): string {
-  return text.length > maxLength
-    ? `${text.slice(0, maxLength).trimEnd()}…`
-    : text;
-}
 
 type WeekStripProps = {
   userId: string;
@@ -149,6 +145,11 @@ export default async function WeekStrip({
   const openWorkoutHref = (workoutId: string, date: string) =>
     `/workouts/${workoutId}?from=workouts&week=${view.weekOffset}&day=${date}`;
   const calendarMonth = getMonthString(view.selectedDate ?? today);
+  // Where an edit that moves an entry to another day comes back to: this
+  // same view, scrolled to the strip. The moved entry's card (and any banner
+  // its own form would show) is gone by then, so the confirmation comes from
+  // the page instead — see lib/redirect-back.ts.
+  const returnTo = `${weekStripHref(view)}#week-strip`;
 
   // Both the week-arrow and day-cell Links below pass scroll={false}: App
   // Router scrolls to the top of the page after every navigation by
@@ -159,7 +160,10 @@ export default async function WeekStrip({
   // what's expected.
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+    <section
+      id="week-strip"
+      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+    >
       <div className="flex items-center justify-between">
         <Link
           href={weekHref(-1)}
@@ -193,7 +197,7 @@ export default async function WeekStrip({
               key={date}
               href={dayHref(date)}
               scroll={false}
-              className="flex flex-col items-center gap-1 rounded-control p-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className="flex flex-col items-center gap-1 rounded-control p-1 text-sm hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             >
               <span className="text-xs text-ink-subtle">
                 {WEEKDAY_INITIALS[i]}
@@ -262,7 +266,7 @@ export default async function WeekStrip({
                   >
                     <div className="min-w-0 flex flex-col gap-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="break-words font-medium text-ink">
+                        <span className="min-w-0 break-words font-medium text-ink">
                           {entry.workout.title}
                         </span>
                         <span
@@ -271,15 +275,6 @@ export default async function WeekStrip({
                           {status}
                         </span>
                       </div>
-
-                      {entry.workout.description && (
-                        <p className="text-sm text-ink-subtle">
-                          {truncate(
-                            entry.workout.description,
-                            DESCRIPTION_TRUNCATE_LENGTH
-                          )}
-                        </p>
-                      )}
 
                       <p className="text-sm text-ink-subtle">
                         {[
@@ -327,6 +322,7 @@ export default async function WeekStrip({
                             notes: entry.notes,
                           }}
                           triggerVariant="menu-item"
+                          returnTo={returnTo}
                         />
                       )}
                       <Link
@@ -360,7 +356,7 @@ export default async function WeekStrip({
               })}
 
               {selectedEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard key={event.id} event={event} returnTo={returnTo} />
               ))}
             </ul>
           )}

@@ -39,7 +39,7 @@ export default function BodyMetricTypeTabs({ tabs }: BodyMetricTypeTabsProps) {
             className={`rounded-control border px-4 py-1.5 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
               active === tab.key
                 ? "border-hairline-strong bg-surface-3 text-ink"
-                : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink"
+                : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
             }`}
           >
             {tab.label}

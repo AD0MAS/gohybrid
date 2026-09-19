@@ -1,4 +1,6 @@
 import { useRef, useState, type Dispatch } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Copy, Pencil, StickyNote, X } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import {
@@ -11,10 +13,6 @@ import {
 } from "@/lib/numeric-limits";
 import { ITEM_NOTES_MAX_LENGTH } from "@/lib/text-limits";
 import {
-  formatDistanceMetres,
-  formatDurationSeconds,
-  formatPaceTarget,
-  formatWeightKg,
   secondsPerKmToSecondsPerMile,
   secondsPerMileToSecondsPerKm,
 } from "@/lib/units";
@@ -22,9 +20,16 @@ import {
   validateBuilderItemDraft,
   type BuilderItemDraftErrors,
 } from "@/lib/workout-builder-validation";
+import { formatItemSummary } from "@/lib/workout-summary";
+import CardMenu, {
+  MENU_ITEM_CLASSES,
+  MENU_ITEM_DANGER_CLASSES,
+} from "../../_components/CardMenu";
 import DistanceInput from "../../_components/DistanceInput";
 import DurationInput from "../../_components/DurationInput";
 import Modal from "../../_components/Modal";
+import DragHandle from "./DragHandle";
+import type { BuilderSortableData } from "./dnd";
 import ExercisePicker from "./ExercisePicker";
 import type {
   BuilderAction,
@@ -41,6 +46,16 @@ import {
 import { TARGET_PRESET_LABELS } from "./target-preset-labels";
 import { TARGET_TYPE_LABELS } from "./target-type-labels";
 import { VOLUME_TYPE_LABELS } from "./volume-type-labels";
+
+const ITEM_SUMMARY_LABELS = {
+  targetPreset: TARGET_PRESET_LABELS,
+  targetType: TARGET_TYPE_LABELS,
+};
+
+const ICON_BUTTON_CLASSES =
+  "flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
+const DANGER_ICON_BUTTON_CLASSES =
+  "flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type ItemEditorProps = {
   blockId: string;
@@ -146,118 +161,6 @@ function paceValueFromDisplay(
   return unit === "mi" ? secondsPerMileToSecondsPerKm(seconds) : seconds;
 }
 
-/**
- * One-line rendering of what's configured on an item so far. A rest item
- * (isRestItem — see ItemEditor's own computation of it from the catalog) is
- * a completely different shape (change 2): it has no sets/volume/target/
- * weight, only its own optional rest_seconds, so it short-circuits into
- * just the mm:ss when a time is set, or "Open ended" when it isn't — no
- * "Rest" prefix, since the exercise name line right above this one already
- * says "Rest" (it's the exercise's own catalog name) and repeating it here
- * would be redundant. Report the exact wording, since it's user-facing
- * copy, not derived from a shared label map.
- *
- * For every other item: sets × volume, target, weight, rest, joined the
- * same way formatBlockTiming (BlockEditor.tsx) joins block timing parts —
- * each part computed independently, filtered, then " · "-separated, so an
- * unset part is simply absent rather than leaving a stray separator. Notes
- * are deliberately not part of this string — see the StickyNote icon
- * rendered alongside it in ItemEditor's own JSX, which flags a note's
- * presence without showing its text (the note itself stays in the modal).
- *
- * Volume reads in the unit its volume_type implies — duration via
- * formatDurationSeconds, distance via formatDistanceMetres for the current
- * unit system, reps/calories as a plain count. Every non-rest item now
- * requires both a volumeType and a volumeValue to be saved (change 1), so
- * a missing volumeValue here only happens for a pre-existing row saved
- * before that rule existed — the volume part is simply omitted rather than
- * labelled "Open Ended", the concept that rule removed. Target reads as the
- * preset's label (TARGET_PRESET_LABELS) when a preset is set, or the target
- * type's label (TARGET_TYPE_LABELS) plus its value when a type is set
- * instead — they're alternatives, same as everywhere else this pair
- * appears (see the reducer). Weight reads via formatWeightKg. Rest reads
- * via formatDurationSeconds, suffixed "rest" so it isn't mistaken for
- * another duration-shaped part.
- *
- * Always reads off `item` — the committed reducer state, never the modal's
- * draft — same as BlockEditor's formatBlockTiming reading off `block`.
- *
- * Returns null when nothing is configured yet, so the summary row can omit
- * the line entirely rather than render an empty one. Never null for a rest
- * item — it always has at least the "Open ended" fallback.
- */
-function formatItemSummary(
-  item: BuilderItem,
-  unitSystem: (typeof unitSystemEnum.enumValues)[number],
-  isHyroxStation: boolean,
-  isRestItem: boolean
-): string | null {
-  if (isRestItem) {
-    // No "Rest" prefix — the exercise name line right above this one
-    // already says "Rest" (it's the exercise's own name), so repeating it
-    // here would be redundant. Just the detail: the time, or "Open ended".
-    return item.restSeconds != null
-      ? formatDurationSeconds(item.restSeconds)
-      : "Open ended";
-  }
-
-  const volume = (() => {
-    if (item.volumeType === "" || item.volumeValue == null) return null;
-    if (item.volumeType === "duration") {
-      return `${item.sets} × ${formatDurationSeconds(item.volumeValue)}`;
-    }
-    if (item.volumeType === "distance") {
-      const distance = formatDistanceMetres(
-        item.volumeValue,
-        unitSystem,
-        isHyroxStation
-      );
-      return `${item.sets} × ${distance.value} ${distance.unit}`;
-    }
-    const unitLabel = item.volumeType === "calories" ? "kcal" : "reps";
-    return `${item.sets} × ${item.volumeValue} ${unitLabel}`;
-  })();
-
-  const target = (() => {
-    if (item.targetPreset !== "") {
-      return TARGET_PRESET_LABELS[item.targetPreset].label;
-    }
-    if (item.targetType === "pace_500m" || item.targetType === "pace_km") {
-      if (item.targetValue == null) {
-        return TARGET_TYPE_LABELS[item.targetType].label;
-      }
-      return formatPaceTarget(item.targetType, item.targetValue, unitSystem);
-    }
-    if (item.targetType !== "") {
-      const label = TARGET_TYPE_LABELS[item.targetType].label;
-      return item.targetValue != null ? `${label} ${item.targetValue}` : label;
-    }
-    return null;
-  })();
-
-  const weight = (() => {
-    // A stored 0 reads the same as unset (see ItemEditor's handleSave,
-    // which normalizes a typed 0 to null before it ever reaches the
-    // reducer) — only a legacy row can still hold a literal 0kg, and
-    // there's nothing worth showing for a bodyweight movement.
-    if (item.weightKg == null || item.weightKg <= 0) return null;
-    const display = formatWeightKg(item.weightKg, unitSystem);
-    return `${display.value} ${display.unit}`;
-  })();
-
-  // Zero rest is a legitimate stored value (back-to-back sets), but a
-  // "0:00 rest" part adds nothing an absent part doesn't already say.
-  const rest =
-    item.restSeconds != null && item.restSeconds > 0
-      ? `${formatDurationSeconds(item.restSeconds)} rest`
-      : null;
-
-  const parts = [volume, target, weight, rest].filter(
-    (part): part is string => Boolean(part)
-  );
-  return parts.length > 0 ? parts.join(" · ") : null;
-}
-
 /** The draft ItemEditorModalFields edits: every one of an item's editable
  * fields except `id` — everything the modal's Save button commits to the
  * reducer in one go. Kept as its own type (rather than reused directly)
@@ -354,8 +257,31 @@ export default function ItemEditor({
   const isHyroxStation = exercise?.isHyroxStation ?? false;
   const isRestItem = exercise?.category === "rest";
   const itemName = exercise?.name || item.customName || "New item";
-  const summary = formatItemSummary(item, unitSystem, isHyroxStation, isRestItem);
+  const summary = formatItemSummary(
+    { ...item, isRestItem, isHyroxStation },
+    unitSystem,
+    ITEM_SUMMARY_LABELS
+  );
   const hasNotes = item.notes.trim() !== "";
+
+  const sortableData: BuilderSortableData = { type: "item", blockId };
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id, data: sortableData });
+
+  function duplicate() {
+    dispatch({ type: "DUPLICATE_ITEM", blockId, itemId: item.id });
+  }
+
+  function remove() {
+    dispatch({ type: "REMOVE_ITEM", blockId, itemId: item.id });
+  }
 
   function openFresh() {
     setOpenCount((count) => count + 1);
@@ -505,59 +431,89 @@ export default function ItemEditor({
       value: draft.notes,
     });
 
+    dispatch({ type: "CONFIRM_ITEM", blockId, itemId: item.id });
     hasSavedRef.current = true;
     setOpen(false);
   }
 
   return (
-    <li className="flex items-start justify-between gap-3 rounded-card border border-hairline bg-surface-1 p-5">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{itemName}</p>
-        {(summary || hasNotes) && (
-          <p className="text-sm text-ink-subtle">
-            {summary}
-            {hasNotes && (
-              <>
-                {summary && " "}
-                <StickyNote
-                  className="inline h-3.5 w-3.5 align-middle"
-                  aria-label="Has notes"
-                />
-              </>
-            )}
+    <li
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={`flex min-w-0 items-start justify-between gap-3 rounded-card border border-hairline bg-surface-3 px-3 py-2.5 ${
+        isDragging ? "relative z-10 opacity-70" : ""
+      }`}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-2">
+        <DragHandle
+          label="Reorder item"
+          setActivatorNodeRef={setActivatorNodeRef}
+          attributes={attributes}
+          listeners={listeners}
+        />
+        <div className="flex min-w-0 flex-col gap-1 pt-1">
+          <p className="break-words text-[13px] font-medium text-ink-muted">
+            {itemName}
           </p>
-        )}
+          {(summary || hasNotes) && (
+            <p className="break-words text-xs text-ink-tertiary">
+              {summary}
+              {hasNotes && (
+                <>
+                  {summary && " "}
+                  <StickyNote
+                    className="inline h-3.5 w-3.5 align-middle"
+                    aria-label="Has notes"
+                  />
+                </>
+              )}
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="hidden shrink-0 items-center gap-1 sm:flex">
         <button
           type="button"
           onClick={openFresh}
           aria-label="Configure"
-          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={ICON_BUTTON_CLASSES}
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           type="button"
-          onClick={() =>
-            dispatch({ type: "DUPLICATE_ITEM", blockId, itemId: item.id })
-          }
+          onClick={duplicate}
           aria-label="Duplicate item"
-          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-ink active:bg-surface-2 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={ICON_BUTTON_CLASSES}
         >
           <Copy className="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           type="button"
-          onClick={() =>
-            dispatch({ type: "REMOVE_ITEM", blockId, itemId: item.id })
-          }
+          onClick={remove}
           aria-label="Remove item"
-          className="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={DANGER_ICON_BUTTON_CLASSES}
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
+      </div>
+
+      <div className="shrink-0 sm:hidden">
+        <CardMenu>
+          <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+          <button type="button" onClick={duplicate} className={MENU_ITEM_CLASSES}>
+            <Copy className="h-4 w-4" aria-hidden="true" />
+            Duplicate
+          </button>
+          <button type="button" onClick={remove} className={MENU_ITEM_DANGER_CLASSES}>
+            <X className="h-4 w-4" aria-hidden="true" />
+            Delete
+          </button>
+        </CardMenu>
       </div>
 
       <Modal open={open} onClose={handleModalClose} title={itemName}>

@@ -70,7 +70,10 @@ export default async function EventsList({ userId }: EventsListProps) {
   const isEmpty = upcoming.length === 0 && past.length === 0;
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+    <section
+      id="events"
+      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Events</h2>
         {!isEmpty && <EventForm />}
@@ -138,7 +141,7 @@ export default async function EventsList({ userId }: EventsListProps) {
                       );
                     })()}
                     <div className="flex items-center gap-1.5">
-                      <EventForm entry={event} />
+                      <EventForm entry={event} returnTo="/profile#events" today={today} />
                       <ConfirmModal
                         trigger={<X className="h-4 w-4" aria-hidden="true" />}
                         triggerClassName={DELETE_ICON_BUTTON_CLASSES}
@@ -191,7 +194,7 @@ export default async function EventsList({ userId }: EventsListProps) {
                       )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <EventForm entry={event} />
+                      <EventForm entry={event} returnTo="/profile#events" today={today} />
                       <ConfirmModal
                         trigger={<X className="h-4 w-4" aria-hidden="true" />}
                         triggerClassName={DELETE_ICON_BUTTON_CLASSES}

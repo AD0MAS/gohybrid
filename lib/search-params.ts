@@ -10,3 +10,19 @@ export function firstValue(
 ): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+/**
+ * Reads a `?saved=` param: `<value>` or `<value>.<nonce>`, where value is
+ * lowercase letters/digits ("1", "rescheduled") and nonce a short
+ * alphanumeric token. lib/redirect-back.ts appends a fresh nonce to every
+ * redirect it builds, so two redirects to the same page and view are
+ * distinguishable (RedirectSuccessBanner reacts to the nonce changing);
+ * Settings and the builder redirect with a bare `1`. Anything else, or a
+ * missing param, is null. Imports nothing, like the rest of this module.
+ */
+export function parseSavedParam(
+  raw: string | string[] | undefined
+): { value: string; nonce: string | null } | null {
+  const match = /^([a-z0-9]+)(?:\.([a-z0-9]{1,16}))?$/.exec(firstValue(raw) ?? "");
+  return match ? { value: match[1], nonce: match[2] ?? null } : null;
+}

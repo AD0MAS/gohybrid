@@ -1,3 +1,4 @@
+import { Pencil, X } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,18 +10,12 @@ import { isValidDateString } from "@/lib/scheduled-workouts-validation";
 import { firstValue } from "@/lib/search-params";
 import { getSessionsForWorkout } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
-import {
-  formatDistanceMetres,
-  formatDurationSeconds,
-  formatPaceTarget,
-  formatWeightKg,
-} from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/uuid";
 import {
   formatBlockTimingLine,
-  formatItemSummaryLine,
+  formatItemSummary,
 } from "@/lib/workout-summary";
 import { deleteWorkout, toggleFavorite } from "../actions";
 import BackLink from "../../_components/BackLink";
@@ -63,6 +58,11 @@ const DEFAULT_BACK: BackDestination = {
 const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
   workouts: { href: "/", label: "Home" },
+};
+
+const ITEM_SUMMARY_LABELS = {
+  targetPreset: TARGET_PRESET_LABELS,
+  targetType: TARGET_TYPE_LABELS,
 };
 
 const SESSIONS_LIMIT = 3;
@@ -239,10 +239,16 @@ export default async function WorkoutDetailPage(
                 href={`/workouts/${workout.id}/edit`}
                 className={MENU_ITEM_CLASSES}
               >
+                <Pencil className="h-4 w-4" aria-hidden="true" />
                 Edit
               </Link>
               <ConfirmModal
-                trigger="Delete"
+                trigger={
+                  <>
+                    <X className="h-4 w-4" aria-hidden="true" />
+                    Delete
+                  </>
+                }
                 triggerClassName={MENU_ITEM_DANGER_CLASSES}
                 title="Delete workout"
                 description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
@@ -332,83 +338,23 @@ export default async function WorkoutDetailPage(
                             item.exercise?.name ??
                             item.customName ??
                             "Unnamed exercise";
-                          const isHyroxStation =
-                            item.exercise?.isHyroxStation ?? false;
-                          const isRestItem =
-                            item.exercise?.category === "rest";
-
-                          let volume: string | null = null;
-                          if (item.volumeType) {
-                            if (item.volumeValue == null) {
-                              volume = "Open ended";
-                            } else if (item.volumeType === "distance") {
-                              const d = formatDistanceMetres(
-                                Number(item.volumeValue),
-                                unitSystem,
-                                isHyroxStation
-                              );
-                              volume = `${d.value} ${d.unit}`;
-                            } else if (item.volumeType === "duration") {
-                              volume = formatDurationSeconds(
-                                Number(item.volumeValue)
-                              );
-                            } else {
-                              const unitLabel =
-                                item.volumeType === "calories"
-                                  ? "kcal"
-                                  : "reps";
-                              volume = `${item.volumeValue} ${unitLabel}`;
-                            }
-                          }
-
-                          const target = item.targetPreset
-                            ? TARGET_PRESET_LABELS[item.targetPreset].label
-                            : item.targetType === "pace_500m" ||
-                                item.targetType === "pace_km"
-                              ? item.targetValue == null
-                                ? TARGET_TYPE_LABELS[item.targetType].label
-                                : formatPaceTarget(
-                                    item.targetType,
-                                    Number(item.targetValue),
-                                    unitSystem
-                                  )
-                              : item.targetType
-                                ? item.targetValue != null
-                                  ? `${TARGET_TYPE_LABELS[item.targetType].label} ${item.targetValue}`
-                                  : TARGET_TYPE_LABELS[item.targetType].label
-                                : null;
-
-                          // A stored 0 reads the same as unset (ItemEditor's
-                          // handleSave normalizes a typed 0 to null on save)
-                          // — only a legacy row can still hold a literal
-                          // 0kg, and there's nothing worth showing for a
-                          // bodyweight movement.
-                          const weightKgNum =
-                            item.weightKg != null
-                              ? Number(item.weightKg)
-                              : null;
-                          const weight =
-                            weightKgNum != null && weightKgNum > 0
-                              ? formatWeightKg(weightKgNum, unitSystem)
-                              : null;
-                          const weightText = weight
-                            ? `${weight.value} ${weight.unit}`
-                            : null;
-
-                          const restBetweenText =
-                            item.restSeconds != null && item.restSeconds > 0
-                              ? formatDurationSeconds(item.restSeconds)
-                              : null;
-
-                          const summaryLine = formatItemSummaryLine({
-                            isRestItem,
-                            restSeconds: item.restSeconds,
-                            sets: item.sets,
-                            volumeText: volume,
-                            targetText: target,
-                            weightText,
-                            restBetweenText,
-                          });
+                          const summaryLine = formatItemSummary(
+                            {
+                              isRestItem: item.exercise?.category === "rest",
+                              isHyroxStation:
+                                item.exercise?.isHyroxStation ?? false,
+                              sets: item.sets,
+                              volumeType: item.volumeType,
+                              volumeValue: item.volumeValue,
+                              targetType: item.targetType,
+                              targetValue: item.targetValue,
+                              targetPreset: item.targetPreset,
+                              weightKg: item.weightKg,
+                              restSeconds: item.restSeconds,
+                            },
+                            unitSystem,
+                            ITEM_SUMMARY_LABELS
+                          );
 
                           return (
                             <div

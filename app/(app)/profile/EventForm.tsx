@@ -81,6 +81,20 @@ type EventFormProps = {
    * that's the one save whose own success would otherwise be discarded by
    * unmounting the very instance that just recorded it. */
   hidden?: boolean;
+  /** Where to come back to when this edit moves the event out of the list
+   * the form is rendered in — a same-site path (with hash) supplied by the
+   * server component that renders the form. Only meaningful with `entry`.
+   * The form's own success banner would be unmounted along with the moved
+   * event, so an edit that relocates it submits this and the action ends
+   * with a redirect back here carrying `?saved=1` (see
+   * lib/redirect-back.ts); an edit that leaves the event where it is takes
+   * the ordinary in-place path. */
+  returnTo?: string;
+  /** With `returnTo`: today's date, when the list has an upcoming/past
+   * split (/profile) so only an edit that crosses today moves the event.
+   * Absent means any date change moves it (Home's day cards, which show one
+   * day). */
+  today?: string;
 };
 
 /**
@@ -150,6 +164,8 @@ export default function EventForm({
   renderTrigger,
   ctaLabel,
   hidden = false,
+  returnTo,
+  today,
 }: EventFormProps) {
   const uid = useId();
   const [open, setOpen] = useState(false);
@@ -179,6 +195,17 @@ export default function EventForm({
     setFormKey((key) => key + 1);
     setErrorActive(false);
     setOpen(true);
+  }
+
+  function submit(formData: FormData) {
+    const nextDate = formData.get("eventDate");
+    if (entry && returnTo && typeof nextDate === "string" && nextDate !== entry.eventDate) {
+      const relocates =
+        today === undefined ||
+        entry.eventDate >= today !== nextDate >= today;
+      if (relocates) formData.set("returnTo", returnTo);
+    }
+    formAction(formData);
   }
 
   return (
@@ -214,7 +241,7 @@ export default function EventForm({
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title={entry ? "Edit event" : "Add event"}>
-        <form key={formKey} action={formAction} className="flex flex-col gap-3">
+        <form key={formKey} action={submit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor={`${uid}-title`} className="text-xs font-medium text-ink-subtle">
               Title

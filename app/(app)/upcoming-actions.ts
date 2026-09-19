@@ -13,6 +13,7 @@ import { createSessionForWorkout } from "@/lib/sessions";
 import { toNoonInstant } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
 import { echoFormValues } from "@/lib/form-state";
+import { redirectBackWithSaved } from "@/lib/redirect-back";
 import type { ScheduleFormState } from "./workouts/actions";
 
 /**
@@ -113,6 +114,10 @@ export async function rescheduleWorkout(
 
   revalidatePath("/");
   revalidatePath("/calendar");
+  // Set by ScheduleWorkoutForm only when the date changed, which moves the
+  // entry off the day (or off TODAY) its form is rendered in — see
+  // redirectBackWithSaved for why the confirmation must come from the page.
+  redirectBackWithSaved(formData.get("returnTo"), "rescheduled");
   return { status: "success" };
 }
 

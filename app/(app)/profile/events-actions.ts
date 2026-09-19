@@ -9,6 +9,7 @@ import {
 } from "@/lib/events";
 import { validateEventInput } from "@/lib/events-validation";
 import { echoFormValues } from "@/lib/form-state";
+import { redirectBackWithSaved } from "@/lib/redirect-back";
 
 export type EventFormState =
   | { status: "idle" }
@@ -100,6 +101,10 @@ export async function updateEvent(
   revalidatePath("/profile");
   revalidatePath("/");
   revalidatePath("/calendar");
+  // Set by EventForm only when this edit moves the event out of the list its
+  // form is rendered in — the form would unmount before its own banner could
+  // show, so the confirmation comes back through the page instead.
+  redirectBackWithSaved(formData.get("returnTo"));
   return { status: "success" };
 }
 

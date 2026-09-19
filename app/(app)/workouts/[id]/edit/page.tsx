@@ -14,7 +14,6 @@ import { getTagCatalog } from "@/lib/tags";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/uuid";
-import BackLink from "../../../_components/BackLink";
 import WorkoutBuilder from "../../builder/WorkoutBuilder";
 
 export const metadata: Metadata = {
@@ -52,27 +51,24 @@ export default async function EditWorkoutPage(
   }
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-        <div className="flex items-center gap-2">
-          <BackLink href={`/workouts/${workout.id}`} label={workout.title} />
-          <h1 className="text-xl font-semibold">Edit workout</h1>
-        </div>
-
-        <WorkoutBuilder
-          primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
-          difficultyOptions={workoutDifficultyEnum.enumValues}
-          blockTypeOptions={blockTypeEnum.enumValues}
-          volumeTypeOptions={volumeTypeEnum.enumValues}
-          targetTypeOptions={targetTypeEnum.enumValues}
-          targetPresetOptions={targetPresetEnum.enumValues}
-          exerciseCatalog={exerciseCatalog}
-          tagCatalog={tagCatalog}
-          unitSystem={unitSystem}
-          initialWorkout={workout}
-          workoutId={workout.id}
-        />
-      </div>
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <WorkoutBuilder
+        heading="Edit workout"
+        backHref={`/workouts/${workout.id}`}
+        backLabel={workout.title}
+        discardHref={`/workouts/${workout.id}`}
+        primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
+        difficultyOptions={workoutDifficultyEnum.enumValues}
+        blockTypeOptions={blockTypeEnum.enumValues}
+        volumeTypeOptions={volumeTypeEnum.enumValues}
+        targetTypeOptions={targetTypeEnum.enumValues}
+        targetPresetOptions={targetPresetEnum.enumValues}
+        exerciseCatalog={exerciseCatalog}
+        tagCatalog={tagCatalog}
+        unitSystem={unitSystem}
+        initialWorkout={workout}
+        workoutId={workout.id}
+      />
     </main>
   );
 }

@@ -12,6 +12,9 @@ type Executor = typeof db | Transaction;
 const upcomingScheduledWorkoutQuery = {
   with: {
     workout: {
+      // Home's day cards no longer show a workout's description and nothing
+      // else reading these entries does, so it isn't fetched.
+      columns: { description: false },
       with: {
         workoutTags: { with: { tag: true } },
       },
