@@ -24,7 +24,7 @@ type LogPastSessionFormProps = {
    * case. */
   today: string;
   /** Overrides BUTTON_TRIGGER_CLASSES below. Home's Quick Actions passes its
-   * own smaller, left-aligned treatment (docs/design/home.html) so this
+   * own smaller, left-aligned treatment so this
    * button matches its sibling "New workout" Link, without touching the
    * workout detail page's own larger button, which stays on the default. */
   triggerClassName?: string;
@@ -50,11 +50,9 @@ const BUTTON_TRIGGER_CLASSES =
  * rejects it — see logPastSession's own doc comment for the exact rule and
  * why today (with a time) is allowed at all.
  *
- * `workoutId` known — the /workouts/[id] entry point, wired now — renders it
- * as a hidden field. `workouts` — Home's quick action, built here but not
- * yet wired, since Home's own quick-actions section belongs to its upcoming
- * redesign pass — renders WorkoutPicker instead, so the user names the
- * workout themselves. Either way `workoutId` travels as a plain FormData
+ * `workoutId` known — the /workouts/[id] entry point — renders it as a hidden
+ * field. `workouts` — Home's Quick actions entry point — renders
+ * WorkoutPicker instead, so the user names the workout themselves. Either way `workoutId` travels as a plain FormData
  * field the one action reads (see logPastSession's own doc comment for why
  * it's never a bound argument here, unlike scheduleWorkout).
  *

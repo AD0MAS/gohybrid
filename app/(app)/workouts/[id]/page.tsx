@@ -49,15 +49,15 @@ const DEFAULT_BACK: BackDestination = {
 
 /** Where the `from` search param can send the back link, keyed by the value
  * each entry point passes — see resolveBackDestination for why `from` is
- * looked up here rather than trusted directly. "workouts" is a base value
- * only: resolveBack below rebuilds its href with the week strip's `week`/
- * `day` restored, once each is independently re-validated. Both "home" and
- * "workouts" resolve to "/" now that the week strip lives on Home alongside
- * Upcoming — they stay two separate keys because only "workouts" carries
- * week/day state back with it. */
+ * looked up here rather than trusted directly. "home-strip" is a base
+ * value only: resolveBack below rebuilds its href with the week strip's
+ * `week`/`day` restored, once each is independently re-validated. Both
+ * "home" and "home-strip" resolve to "/" (the week strip lives on Home) —
+ * they stay two separate keys because only "home-strip" carries week/day
+ * state back with it. */
 const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
-  workouts: { href: "/", label: "Home" },
+  "home-strip": { href: "/", label: "Home" },
 };
 
 const ITEM_SUMMARY_LABELS = {
@@ -79,7 +79,7 @@ const SECONDARY_ACTION_CLASSES =
 
 /**
  * Resolves the back link, same map-lookup contract as resolveBackDestination
- * — but when `from=workouts`, the week strip's selected week/day are also
+ * — but when `from=home-strip`, the week strip's selected week/day are also
  * restored onto the fixed / (Home) base, so returning to the strip doesn't
  * lose which day was open. `week`/`day` are re-validated here (an integer,
  * and lib/scheduled-workouts-validation's YYYY-MM-DD check) rather than
@@ -92,7 +92,7 @@ function resolveBack(
   const from = firstValue(searchParams.from);
   const base = resolveBackDestination(from, BACK_SOURCES, DEFAULT_BACK);
 
-  if (from !== "workouts") {
+  if (from !== "home-strip") {
     return base;
   }
 
@@ -124,13 +124,13 @@ function resolveBack(
  *
  * A missing id, a malformed id, and an id belonging to another user all
  * render the same not-found page, so this page never confirms whether a
- * given id exists. Reachable from Home's Upcoming, /workouts (the library),
- * and the week strip on Home, so the back link's target depends on the
+ * given id exists. Reachable from /workouts (the library) and
+ * the week strip on Home, so the back link's target depends on the
  * `from` search param each sets — see resolveBack above.
  *
  * `?saved=1` marks a landing from createFullWorkout/updateFullWorkout's
  * redirect (builder/actions.ts) — none of this page's other entry points
- * (`from=home`, `from=workouts&week=...&day=...`, or no param at all from
+ * (`from=home`, `from=home-strip&week=...&day=...`, or no param at all from
  * the library) ever set it, so RedirectSuccessBanner (app/_components/
  * FormStatus.tsx) only shows right after a builder Save, never on a plain
  * visit.

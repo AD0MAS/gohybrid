@@ -161,8 +161,7 @@ export async function markSkippedForUser(
  * markSkippedForUser, plus a session_id IS NULL condition — a completed
  * entry (session_id set) is never eligible: its session's completed_at is
  * the real record of when the work happened, and moving the entry would put
- * the calendar and stats in disagreement about it (docs/GOHYBRID_PLAN.md
- * §7). rescheduleWorkout (app/(app)/upcoming-actions.ts) already checks this
+ * the calendar and stats in disagreement about it. rescheduleWorkout (app/(app)/upcoming-actions.ts) already checks this
  * before calling in, so the WHERE clause is defense against the race where
  * the entry gets linked to a session between that check and this UPDATE —
  * two concurrent requests can't both succeed. Returns the updated row, or

@@ -61,8 +61,7 @@ export function isValidTimeString(value: unknown): value is string {
  * reschedule, the entry's own unchanged workoutId is passed in — this
  * function doesn't distinguish "creating a plan" from "moving one");
  * scheduledDate must be a YYYY-MM-DD string no earlier than `today`
- * (GOHYBRID_PLAN.md §7 — scheduling, like rescheduling, can no longer target
- * a past date); scheduledTime, if present, must be an HH:MM or HH:MM:SS
+ * (scheduling, like rescheduling, can't target a past date); scheduledTime, if present, must be an HH:MM or HH:MM:SS
  * string, and is normalized to null when absent or empty — a scheduled
  * workout with no specific time is a normal, common state, not a missing
  * value; notes, if present, is trimmed and normalized to null when empty.

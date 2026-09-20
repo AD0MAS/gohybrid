@@ -16,8 +16,8 @@ import { isValidUuid } from "@/lib/uuid";
  * workouts, distinguished by which key the body carries — mirrors
  * rescheduleWorkout/markScheduledWorkoutSkipped
  * (app/(app)/upcoming-actions.ts), the Server Actions this route stays in
- * sync with rather than being called by (see "REST routes stay, unused",
- * docs/GOHYBRID_PLAN.md §7):
+ * sync with rather than being called by (the REST routes stay as the app's
+ * HTTP surface, unused by its own pages):
  *   - `{ isSkipped: boolean }` sets is_skipped, unchanged from before.
  *   - `{ scheduledDate: string, scheduledTime?, notes? }` reschedules the
  *     entry via the same validateScheduleInput + rescheduleForUser pair the

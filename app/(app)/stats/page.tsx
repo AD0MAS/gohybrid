@@ -38,8 +38,7 @@ function labelProgressSeries(series: ProgressSeries): LabeledProgressSeries {
  * and the weekly volume / primary-type distribution charts — all sourced
  * from workout_sessions. Plus Progress Charts, sourced ONLY from
  * Personal Records/Body Metrics, never from sessions (avoids "fake
- * analytics"). Will grow into the Dashboard's
- * analytics section; for now it's its own page.
+ * analytics").
  */
 export default async function StatsPage() {
   const user = await requireUser();

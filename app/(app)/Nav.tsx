@@ -32,7 +32,7 @@ type NavProps = {
  * desktop (sm and up) and a fixed bottom bar on mobile, both driven by the
  * same NAV_ITEMS list so the two platforms can't drift out of sync — only
  * the surrounding markup and classes differ per breakpoint. Sign-out lives
- * only in the sidebar; on mobile it lives on /profile instead.
+ * in the sidebar; on mobile it lives on /settings instead.
  */
 export default function Nav({ userEmail, signOutAction }: NavProps) {
   const pathname = usePathname();

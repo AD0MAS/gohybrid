@@ -15,8 +15,8 @@ type BodyMetricTypeTabsProps = {
 /**
  * Toggles which metric type's reading list is visible — client state only,
  * same "which one am I looking at is a glance, not a view worth a
- * navigation" reasoning ProgressChart's own series selector uses (§7 Layer
- * 4). BodyMetricsList (a Server Component) still does every query and
+ * navigation" reasoning ProgressChart's own series selector uses.
+ * BodyMetricsList (a Server Component) still does every query and
  * renders every tab's actual rows; this component only decides which one's
  * wrapper loses `hidden`, so no metric data — and no client-side fetching —
  * ever needs to move to the browser. Each tab's content stays mounted at

@@ -103,7 +103,7 @@ const CTA_CLASSES =
 // (border-hairline-strong, bg-surface-3) as the pressed/hovered state — the
 // same transition the tabs already define between their two states, just
 // triggered by a pseudo-class instead of a click, and active: mirrors hover:
-// per the app-wide touch-feedback convention (see globals.css/CLAUDE.md).
+// per the app-wide touch-feedback convention.
 const HEADER_TRIGGER_CLASSES =
   "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 

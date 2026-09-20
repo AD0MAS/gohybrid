@@ -84,7 +84,7 @@ type WeekStripProps = {
  * Mark done, Mark skipped, Reschedule, Open workout, Remove, whichever
  * subset applies to that entry's status. The card itself is no longer a
  * link: Open workout (a plain Link inside the menu, carrying the same
- * `from=workouts&week=&day=` query the title link used to) replaces that,
+ * `from=home-strip&week=&day=` query the title link used to) replaces that,
  * so a tap anywhere on the row no longer competes with the menu's own
  * click-to-open-then-click-an-item gesture.
  *
@@ -143,7 +143,7 @@ export default async function WeekStrip({
   const dayHref = (date: string) =>
     isDefaultView(0, date) ? "/" : `/?week=${view.weekOffset}&day=${date}`;
   const openWorkoutHref = (workoutId: string, date: string) =>
-    `/workouts/${workoutId}?from=workouts&week=${view.weekOffset}&day=${date}`;
+    `/workouts/${workoutId}?from=home-strip&week=${view.weekOffset}&day=${date}`;
   const calendarMonth = getMonthString(view.selectedDate ?? today);
   // Where an edit that moves an entry to another day comes back to: this
   // same view, scrolled to the strip. The moved entry's card (and any banner
