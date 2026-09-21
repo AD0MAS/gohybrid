@@ -306,6 +306,9 @@ export const workoutSessions = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    // Active time with pauses excluded. Written only by the Start flow; null
+    // for Mark done, Log a past session and every session that predates it.
+    durationSeconds: integer("duration_seconds"),
   },
   (table) => [
     index("workout_sessions_user_id_completed_at_idx").on(

@@ -31,12 +31,17 @@ export type SessionLinkTarget =
  * template is later edited or deleted. Returns null if the workout doesn't
  * exist or isn't owned by `userId`, in which case no session is created.
  *
- * `completedAt`, if omitted, leaves the column to its DB default
+ * `options.completedAt`, if omitted, leaves the column to its DB default
  * (`now()`) — the common case of finishing a workout as it happens
  * (finishWorkout). The backdating caller (markScheduledWorkoutDone) passes
  * an explicit instant instead (see toNoonInstant in lib/timezone.ts), so a
  * workout recorded as done on an earlier day lands in that day's heatmap
  * cell and streak, not today's.
+ *
+ * `options.durationSeconds` is the active time (pauses excluded) measured by
+ * the Start flow. Only finishWorkout and the sessions API route pass it; Mark
+ * done and Log a past session leave it null, since nothing was timed. The
+ * caller validates it (lib/sessions-validation.ts) — this function trusts it.
  *
  * `link` decides which scheduled_workouts entry (if any) to attach the new
  * session to, in the same transaction as the insert — see
@@ -55,8 +60,10 @@ export async function createSessionForWorkout(
   userId: string,
   workoutId: string,
   link: SessionLinkTarget,
-  completedAt?: Date
+  options: { completedAt?: Date; durationSeconds?: number | null } = {}
 ) {
+  const { completedAt, durationSeconds } = options;
+
   const [workout] = await db
     .select({
       id: workouts.id,
@@ -79,6 +86,7 @@ export async function createSessionForWorkout(
         workoutTitle: workout.title,
         workoutPrimaryType: workout.primaryType,
         ...(completedAt ? { completedAt } : {}),
+        ...(durationSeconds != null ? { durationSeconds } : {}),
       })
       .returning();
 

@@ -20,8 +20,10 @@ import { useFormStatus } from "react-dom";
 // just closed — which it does on every click inside it, Save included,
 // synchronously on the same click that submits the form and well before
 // the Server Action's async result ever sets this banner's own state.
-const BANNER_CLASSES =
-  "visible pointer-events-auto fixed inset-x-0 bottom-20 sm:bottom-4 z-50 mx-auto w-fit rounded-control border px-4 py-2 text-sm";
+const BANNER_LOOK =
+  "visible pointer-events-auto z-50 mx-auto w-fit rounded-control border px-4 py-2 text-sm";
+const BANNER_PLACEMENT = "fixed inset-x-0 bottom-20 sm:bottom-4";
+const BANNER_CLASSES = `${BANNER_LOOK} ${BANNER_PLACEMENT}`;
 
 /**
  * Fixed-bottom "Saving…" banner for the pending half of a form submission —
@@ -127,14 +129,19 @@ export function FormErrorMessage({
 export function PendingBanner({
   pending,
   label,
+  placement = BANNER_PLACEMENT,
 }: {
   pending: boolean;
   label: string;
+  /** Positioning classes, replacing the default fixed bottom-of-viewport
+   * spot — for a page whose own bottom bar that spot would sit over (Start
+   * anchors the banner to its bar instead). */
+  placement?: string;
 }) {
   if (!pending) return null;
 
   return (
-    <p role="status" className={`${BANNER_CLASSES} border-hairline-strong bg-surface-2 text-ink`}>
+    <p role="status" className={`${BANNER_LOOK} ${placement} border-hairline-strong bg-surface-2 text-ink`}>
       {label}
     </p>
   );

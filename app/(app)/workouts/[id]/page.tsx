@@ -10,6 +10,7 @@ import { isValidDateString } from "@/lib/scheduled-workouts-validation";
 import { firstValue } from "@/lib/search-params";
 import { getSessionsForWorkout } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
+import { formatDurationSeconds } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/uuid";
@@ -411,11 +412,18 @@ export default async function WorkoutDetailPage(
                     key={session.id}
                     className="border-b border-surface-3 py-3 last:border-b-0"
                   >
-                    <span className="text-sm font-medium text-ink-muted">
-                      {formatDayMonthLong(
-                        toCalendarDayInTimezone(session.completedAt, timezone)
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-sm font-medium text-ink-muted">
+                        {formatDayMonthLong(
+                          toCalendarDayInTimezone(session.completedAt, timezone)
+                        )}
+                      </span>
+                      {session.durationSeconds != null && (
+                        <span className="shrink-0 text-xs text-ink-tertiary">
+                          {formatDurationSeconds(session.durationSeconds)}
+                        </span>
                       )}
-                    </span>
+                    </div>
                   </li>
                 ))}
               </ul>

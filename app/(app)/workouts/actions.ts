@@ -207,7 +207,7 @@ export async function logPastSession(
     user.id,
     result.data.workoutId,
     { kind: "sameDay", date: result.data.date, timezone },
-    completedAt
+    { completedAt }
   );
 
   if (!session) {

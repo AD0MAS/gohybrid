@@ -171,7 +171,7 @@ export async function markScheduledWorkoutDone(id: string) {
     user.id,
     entry.workoutId,
     { kind: "specific", scheduledWorkoutId: entry.id },
-    completedAt
+    { completedAt }
   );
 
   if (!session) {
