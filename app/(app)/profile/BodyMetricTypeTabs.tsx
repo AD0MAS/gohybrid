@@ -29,14 +29,14 @@ export default function BodyMetricTypeTabs({ tabs }: BodyMetricTypeTabsProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActive(tab.key)}
             aria-pressed={active === tab.key}
-            className={`rounded-control border px-4 py-1.5 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
+            className={`min-w-0 flex-1 truncate rounded-control border px-2 py-1.5 text-center text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
               active === tab.key
                 ? "border-hairline-strong bg-surface-3 text-ink"
                 : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"

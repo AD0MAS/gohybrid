@@ -11,8 +11,8 @@ import { BODY_METRIC_LABELS } from "./body-metric-labels";
 
 const DELETE_ICON_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-// Same low-emphasis bordered-button look as the empty-state CTA button
-// (BodyMetricFields' own ctaLabel) — "All readings" reads as the same kind
+// Same low-emphasis bordered-button look as the section's own "Add
+// measurement" button (SECTION_BUTTON_CLASSES) — "All readings" reads as the same kind
 // of control as every other quiet button in the app, not a bare native
 // <summary> marker, matching GoalsList's "Show N more goals" and
 // EventsList's "Past events". list-none plus the webkit-marker override
@@ -64,36 +64,21 @@ function formatDayGap(days: number): string {
  * embeds a BodyMetricFields instance directly (entry={entry}) — same
  * one-modal-per-row wiring as GoalsList/EventsList, since BodyMetricFields
  * already owns its own open/close state and useActionState call. Every
- * delete (the header's own empty-state CTA aside) is confirmed via
- * ConfirmModal.
+ * delete is confirmed via ConfirmModal.
  *
- * The hero's own BodyMetricFields instance (ctaLabel="Add a measurement")
- * is rendered *unconditionally* — every render, regardless of `isEmpty` —
- * with only its own trigger button hidden (via the `hidden` prop, applied
- * to that one `<button>`, never a wrapping element) once a measurement
- * exists. This looks backwards next to this file's other
- * `{condition && <JSX/>}` branches, but it fixes a real bug: BodyMetricFields
- * owns its own useActionState result and the `successCount` driving its
- * `FormSuccessBanner` (see BodyMetricFields' own doc comment) — state that
- * lives entirely in *this* component instance. The save that records a
- * user's first-ever measurement is also the save that flips `isEmpty` from
- * true to false, in the same transition (the Server Action's
- * revalidatePath("/profile") and the client's own success state update
- * land together). If that BodyMetricFields instance only ever existed
- * inside an `{isEmpty && <hero/>}` block, the instant `isEmpty` turned
- * false this section's whole hero subtree — including the exact instance
- * that had just bumped its own successCount — would get unmounted in that
- * same render, before the browser ever painted the "Saved" banner it had
- * just set up to show. Same bug class as CardMenu's own doc comment
- * describes for Edit/Archive/Delete failing silently (something set its own
- * state, then got torn down in the same tick before that state took
- * visible effect), fixed the same way: keep the stateful instance mounted
- * always, and toggle only its visual presentation. `FormSuccessBanner` is a
- * plain sibling inside BodyMetricFields, not a descendant of anything
- * conditional, so it's never affected by what `isEmpty` becomes the moment
- * the hero's own save succeeds. GoalsList carries the identical fix, and
- * the same latent issue exists in principle for EventsList/
- * PersonalRecordsList's own hero CTAs.
+ * The one "Add measurement" BodyMetricFields is rendered *unconditionally*,
+ * in the same spot after the readings, whether or not `isEmpty` — never
+ * inside an `{isEmpty && …}` or `{!isEmpty && …}` block. It owns its own
+ * useActionState result and the `successCount` driving its
+ * `FormSuccessBanner` (see BodyMetricFields' own doc comment), and the save
+ * that records a user's first-ever measurement is also the save that flips
+ * `isEmpty` from true to false in the same transition (the Server Action's
+ * revalidatePath("/profile") and the client's own success state update land
+ * together). A conditional would unmount that exact instance in that same
+ * render, discarding the just-set success state before the browser ever
+ * painted the "Saved" banner. Same bug class as CardMenu's own doc comment
+ * describes: something set its own state, then got torn down in the same
+ * tick.
  */
 export default async function BodyMetricsList({ userId }: BodyMetricsListProps) {
   const [metrics, { today, unitSystem }] = await Promise.all([
@@ -112,10 +97,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
       id="metrics"
       className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Body metrics</h2>
-        {!isEmpty && <BodyMetricFields today={today} unitSystem={unitSystem} />}
-      </div>
+      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Body metrics</h2>
 
       {isEmpty && (
         <p className="text-sm text-ink-subtle">
@@ -123,21 +105,6 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
           draw the trend.
         </p>
       )}
-
-      {/* Always mounted, regardless of isEmpty — see this file's own doc
-          comment for why. `hidden` disables only this button once a
-          measurement exists; FormSuccessBanner (a plain sibling inside
-          BodyMetricFields) is never affected by it, so the save that
-          records the first measurement can still show "Saved" even though
-          isEmpty flips false in that same render. */}
-      <div>
-        <BodyMetricFields
-          today={today}
-          unitSystem={unitSystem}
-          ctaLabel="Add a measurement"
-          hidden={!isEmpty}
-        />
-      </div>
 
       {!isEmpty && (
         <>
@@ -287,6 +254,12 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
           })()}
         </>
       )}
+
+      {/* Always mounted, in this one place, regardless of isEmpty — see this
+          file's own doc comment for why. */}
+      <div>
+        <BodyMetricFields today={today} unitSystem={unitSystem} />
+      </div>
     </section>
   );
 }

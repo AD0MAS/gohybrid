@@ -55,8 +55,8 @@ export async function getPastEventsForUser(
 /**
  * Lists `userId`'s events with an event_date between `from` and `to` (both
  * YYYY-MM-DD, inclusive), soonest first — follows the shape of
- * getScheduledForUserInRange (lib/scheduled-workouts.ts) so /calendar and
- * WeekStrip can fetch events for their date range the same way they fetch
+ * getScheduledForUserInRange (lib/scheduled-workouts.ts) so the month calendar
+ * and WeekStrip can fetch events for their date range the same way they fetch
  * scheduled workouts. A plain date-range query with no other filtering,
  * same as that function.
  */

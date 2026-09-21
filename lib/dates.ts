@@ -13,7 +13,9 @@ const MONTH_NAMES = [
   "December",
 ];
 
-const WEEKDAY_SHORT_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** Weekday labels, Monday first — the one format for every weekday column
+ * header (month grids, the week strip) and for formatDayHeading. */
+export const WEEKDAY_SHORT_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const WEEKDAY_FULL_NAMES = [
   "Monday",
@@ -40,7 +42,8 @@ const MONTH_SHORT_NAMES = [
   "Dec",
 ];
 
-/** Weekday initials, Monday first — for the week strip's day cells. */
+/** Weekday initials, Monday first — for the activity heatmap's row labels,
+ * where a full label would not fit; column headers use WEEKDAY_SHORT_NAMES. */
 export const WEEKDAY_INITIALS = ["M", "T", "W", "T", "F", "S", "S"];
 
 /**
@@ -59,8 +62,7 @@ function parseDateString(date: string): {
 
 /**
  * Splits a YYYY-MM string into its numeric parts. No validation — callers
- * only ever pass strings that already passed isValidMonthString or were
- * derived from getMonthString.
+ * only ever pass strings derived from getMonthString.
  */
 function parseMonthString(month: string): { year: number; month: number } {
   const [year, m] = month.split("-").map(Number);
@@ -257,4 +259,16 @@ export function addMonths(month: string, months: number): string {
   const y = result.getUTCFullYear();
   const mm = String(result.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${mm}`;
+}
+
+/**
+ * `date` moved by `months` (negative to go back), keeping its day of the
+ * month, clamped to the last day of the target month — 31 January + 1 is
+ * 28 (or 29) February. The clamp is one-way: moving on by another month
+ * from 28 February lands on the 28th, not the 31st.
+ */
+export function shiftMonthClamped(date: string, months: number): string {
+  const target = addMonths(getMonthString(date), months);
+  const day = Math.min(getDayNumber(date), getDaysInMonth(target));
+  return `${target}-${String(day).padStart(2, "0")}`;
 }

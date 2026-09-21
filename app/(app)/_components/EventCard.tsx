@@ -18,15 +18,15 @@ type EventCardProps = {
 /**
  * One event rendered as a day card, the same shape as WeekStrip's own
  * scheduled-workout cards — title, a pill, a CardMenu — for WeekStrip's day
- * list, and available to /calendar later if it grows a similar list. A
- * client component (unlike WeekStrip/CalendarPage, both Server Components)
+ * list. A client component (unlike WeekStrip and MonthCalendar, both Server
+ * Components)
  * purely so it can hand EventForm's `renderTrigger` a function: that prop
  * can only ever be passed by a client-component caller, since a function
  * can't cross from a Server Component into a Client Component (see
  * EventForm's own doc comment) — client-to-client, an ordinary closure
  * prop is fine. Splitting this out keeps that requirement local to one
  * small leaf instead of forcing WeekStrip itself to become a client
- * component (the week strip and calendar are deliberately kept as pure
+ * component (the week strip and month calendar are deliberately kept as pure
  * Server Components driven by search-param navigation).
  *
  * Lives in app/(app)/_components — not under workouts/, its only caller

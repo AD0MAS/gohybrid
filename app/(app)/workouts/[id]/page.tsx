@@ -6,7 +6,7 @@ import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { formatDayMonthLong } from "@/lib/dates";
 import { getUpcomingScheduledForWorkout } from "@/lib/scheduled-workouts";
-import { isValidDateString } from "@/lib/scheduled-workouts-validation";
+import { parseDayParam } from "@/lib/home-view";
 import { firstValue } from "@/lib/search-params";
 import { getSessionsForWorkout } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
@@ -24,6 +24,7 @@ import {
   resolveBackDestination,
   type BackDestination,
 } from "../../_components/back-destination";
+import { SECTION_BUTTON_CLASSES } from "../../_components/section-button";
 import CardMenu, {
   MENU_ITEM_CLASSES,
   MENU_ITEM_DANGER_CLASSES,
@@ -51,11 +52,10 @@ const DEFAULT_BACK: BackDestination = {
 /** Where the `from` search param can send the back link, keyed by the value
  * each entry point passes — see resolveBackDestination for why `from` is
  * looked up here rather than trusted directly. "home-strip" is a base
- * value only: resolveBack below rebuilds its href with the week strip's
- * `week`/`day` restored, once each is independently re-validated. Both
- * "home" and "home-strip" resolve to "/" (the week strip lives on Home) —
- * they stay two separate keys because only "home-strip" carries week/day
- * state back with it. */
+ * value only: resolveBack below rebuilds its href with the selected `day`
+ * restored, once it is re-validated. Both "home" and "home-strip" resolve to
+ * "/" — they stay two separate keys because only "home-strip" carries the
+ * selected day back with it. */
 const BACK_SOURCES: Record<string, BackDestination> = {
   home: { href: "/", label: "Home" },
   "home-strip": { href: "/", label: "Home" },
@@ -69,9 +69,6 @@ const ITEM_SUMMARY_LABELS = {
 const SESSIONS_LIMIT = 3;
 const SCHEDULED_LIMIT = 3;
 
-const HEADER_TRIGGER_CLASSES =
-  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-
 // Same look as the two components' own default trigger, with px-4 below sm
 // so "Schedule" and "Log a past session" (both flex-auto, nowrap) share one
 // row on a 360px phone with equal space either side of each label.
@@ -80,12 +77,12 @@ const SECONDARY_ACTION_CLASSES =
 
 /**
  * Resolves the back link, same map-lookup contract as resolveBackDestination
- * — but when `from=home-strip`, the week strip's selected week/day are also
- * restored onto the fixed / (Home) base, so returning to the strip doesn't
- * lose which day was open. `week`/`day` are re-validated here (an integer,
- * and lib/scheduled-workouts-validation's YYYY-MM-DD check) rather than
- * trusted as received, so a malformed pair degrades to a bare / instead of
- * ever being passed through unchecked.
+ * — but when `from=home-strip`, the selected `day` is also restored onto the
+ * fixed / (Home) base, so returning to Home doesn't lose which day was open.
+ * `day` is re-validated here (a real date, via parseDayParam) rather than
+ * trusted as received, so a malformed value degrades to a bare / instead of
+ * ever being passed through unchecked. A leftover `week` param from an old
+ * link is ignored.
  */
 function resolveBack(
   searchParams: Record<string, string | string[] | undefined>
@@ -97,19 +94,8 @@ function resolveBack(
     return base;
   }
 
-  const rawWeek = firstValue(searchParams.week);
-  const week = rawWeek !== undefined && Number.isInteger(Number(rawWeek))
-    ? rawWeek
-    : undefined;
-  const rawDay = firstValue(searchParams.day);
-  const day = isValidDateString(rawDay) ? rawDay : undefined;
-
-  const query = new URLSearchParams();
-  if (week !== undefined) query.set("week", week);
-  if (day !== undefined) query.set("day", day);
-  const qs = query.toString();
-
-  return { href: qs ? `/?${qs}` : base.href, label: base.label };
+  const day = parseDayParam(searchParams.day);
+  return { href: day ? `/?day=${day}` : base.href, label: base.label };
 }
 
 /**
@@ -389,17 +375,9 @@ export default async function WorkoutDetailPage(
 
         <div className="flex flex-col gap-6">
           <section className="flex flex-col gap-1 rounded-panel border border-hairline bg-surface-1 p-5">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
-                Sessions
-              </h2>
-              <Link
-                href={`/history?from=workout&workout=${workout.id}`}
-                className={HEADER_TRIGGER_CLASSES}
-              >
-                Full history
-              </Link>
-            </div>
+            <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+              Sessions
+            </h2>
 
             {sessions.length === 0 ? (
               <p className="pt-2 text-sm text-ink-subtle">
@@ -428,6 +406,13 @@ export default async function WorkoutDetailPage(
                 ))}
               </ul>
             )}
+
+            <Link
+              href={`/history?from=workout&workout=${workout.id}`}
+              className={`${SECTION_BUTTON_CLASSES} mt-3`}
+            >
+              Full history
+            </Link>
           </section>
 
           <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">

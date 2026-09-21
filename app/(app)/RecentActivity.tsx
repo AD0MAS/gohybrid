@@ -3,11 +3,9 @@ import { formatRelativeDay } from "@/lib/dates";
 import { getRecentSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
+import { SECTION_BUTTON_CLASSES } from "./_components/section-button";
 
 const RECENT_ACTIVITY_LIMIT = 3;
-
-const HEADER_TRIGGER_CLASSES =
-  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type RecentActivityProps = {
   userId: string;
@@ -15,7 +13,7 @@ type RecentActivityProps = {
 
 /**
  * Home's recent sessions: the last 3 completed workout sessions, newest
- * first, read-only. Renders workout_title and workout_primary_type from
+ * first, read-only, with a full-width "Full history" button under them. Renders workout_title and workout_primary_type from
  * each session's own snapshot columns, same as
  * Training History — but this is a fixed three-row list with no actions,
  * not the full chronological list, so it stays its own component rather
@@ -31,14 +29,9 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
 
   return (
     <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
-          Recent sessions
-        </h2>
-        <Link href="/history?from=home" className={HEADER_TRIGGER_CLASSES}>
-          Full history
-        </Link>
-      </div>
+      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+        Recent sessions
+      </h2>
 
       {sessions.length === 0 ? (
         <p className="text-sm text-ink-subtle">
@@ -65,6 +58,10 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
           ))}
         </ul>
       )}
+
+      <Link href="/history?from=home" className={SECTION_BUTTON_CLASSES}>
+        Full history
+      </Link>
     </section>
   );
 }

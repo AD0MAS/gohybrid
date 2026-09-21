@@ -14,8 +14,8 @@ const ICON_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 const DELETE_ICON_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-// Same low-emphasis bordered-button look as the empty-state CTAs
-// (EventForm/BodyMetricFields/PersonalRecordFields' own ctaLabel button) —
+// Same low-emphasis bordered-button look as the other /profile section
+// buttons (SECTION_BUTTON_CLASSES) —
 // shared by both of this file's disclosures ("Show N more goals" and
 // "Archived goals") so every disclosure summary in /profile reads as the
 // same kind of control, not a bare native <summary> marker. list-none plus
@@ -320,7 +320,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
             // that was never collapsed: the visible grid and the revealed
             // extras used to be two direct children of the *section's* flex
             // column, so the section's own between-blocks gap-4 (plus the
-            // details' own pt-1) landed between the 4th card and the 5th,
+            // details' own top padding) landed between the 4th card and the 5th,
             // wider than the gap-3 every other pair of cards uses. Grouping
             // them under one gap-3 wrapper instead means that boundary gets
             // the same gap as any other, on both the mobile disclosure and
@@ -364,7 +364,11 @@ export default async function GoalsList({ userId }: GoalsListProps) {
                       `sm:hidden` in their own right at that point, so there's no
                       closed-by-default state left to fight in the first place. */}
                   <details className="group flex flex-col gap-3 sm:hidden">
-                    <summary className={`order-2 ${DISCLOSURE_SUMMARY_CLASSES}`}>
+                    {/* mt-1 on top of the wrapper's gap-3 puts the button
+                        16px under the last card — the gap every /profile
+                        section keeps between its last row and its first
+                        bottom button (the section's gap-4). */}
+                    <summary className={`order-2 mt-1 ${DISCLOSURE_SUMMARY_CLASSES}`}>
                       <span className="group-open:hidden">
                         Show {extraGoals.length} more goal{extraGoals.length === 1 ? "" : "s"}
                       </span>
@@ -388,11 +392,9 @@ export default async function GoalsList({ userId }: GoalsListProps) {
         // `group-open:` rather than `open:` or a client toggle. Four
         // disclosures in /profile, one behaviour: full width below sm,
         // content-sized from sm up, revealed content above the button.
-        <details className="group flex flex-col gap-3 pt-1">
+        <details className="group flex flex-col gap-3">
           <summary className={`order-2 ${DISCLOSURE_SUMMARY_CLASSES}`}>
-            <span className="group-open:hidden">
-              Archived goals ({archivedGoals.length})
-            </span>
+            <span className="group-open:hidden">Archived goals</span>
             <span className="hidden group-open:inline">
               Hide archived goals
             </span>

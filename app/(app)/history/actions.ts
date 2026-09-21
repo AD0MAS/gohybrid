@@ -16,8 +16,8 @@ import { deleteAllSessionsForUser, deleteSessionForUser } from "@/lib/sessions";
  * strip and recent activity, since a completed scheduled workout reverts to
  * Planned via scheduled_workouts.session_id's ON DELETE SET NULL, or — if it
  * was backfilled by finishWorkout — is deleted along with the session, see
- * deleteSessionForUser), /stats (all charts), /calendar (the same
- * backfilled/reverted entry), and /profile (goals that count sessions).
+ * deleteSessionForUser), /stats (all charts), and /profile (goals that
+ * count sessions).
  */
 export async function deleteSession(id: string) {
   const user = await requireUser();
@@ -31,7 +31,6 @@ export async function deleteSession(id: string) {
   revalidatePath("/history");
   revalidatePath("/");
   revalidatePath("/stats");
-  revalidatePath("/calendar");
   revalidatePath("/profile");
 }
 
@@ -49,6 +48,5 @@ export async function deleteAllSessions() {
   revalidatePath("/history");
   revalidatePath("/");
   revalidatePath("/stats");
-  revalidatePath("/calendar");
   revalidatePath("/profile");
 }

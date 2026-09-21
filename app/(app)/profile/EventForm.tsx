@@ -16,34 +16,17 @@ import {
   EVENT_TITLE_MAX_LENGTH,
 } from "@/lib/text-limits";
 import Modal from "../_components/Modal";
+import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { addEvent, updateEvent, type EventFormState } from "./events-actions";
 
 const initialState: EventFormState = { status: "idle" };
 
-// w-full sm:w-auto matches GoalFields' own empty-state button ("Set your
-// first goal") — every empty-state CTA in /profile spans the full panel
-// width below sm and sizes to its own text from sm up.
+// NextEventCard's empty-state button ("Add an event"): full width below sm,
+// sized to its own text from sm up. The section-footer "Add event" on
+// /profile is SECTION_BUTTON_CLASSES instead.
 const CTA_CLASSES =
   "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
-
-// The section heading's own trigger, rebuilt from BodyMetricTypeTabs' own tab
-// button (the closest existing "small secondary button inside a panel"):
-// rounded-control, border, px-4 py-1.5 (this is what gives the height — no
-// separate h-* class, same as the tabs), text-xs font-medium, and the same
-// focus ring, copied as-is. Two deliberate departures from an inactive tab:
-// bg-surface-2 (the panel behind it is bg-surface-1 — one step darker — so
-// surface-2 is one step lighter, same value the tabs already rest at, chosen
-// so the button reads as raised rather than an outlined hole) with text-ink
-// rather than text-ink-subtle, since this is the section's one primary
-// action and should carry more visual weight than an inactive tab's muted
-// label. hover:/active: reuse the tabs' own *active-tab* values
-// (border-hairline-strong, bg-surface-3) as the pressed/hovered state — the
-// same transition the tabs already define between their two states, just
-// triggered by a pseudo-class instead of a click, and active: mirrors hover:
-// per the app-wide touch-feedback convention.
-const HEADER_TRIGGER_CLASSES =
-  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type EventFormProps = {
   /** Absent renders the Add-event button + form; present renders a Pencil
@@ -64,21 +47,20 @@ type EventFormProps = {
   renderTrigger?: (open: () => void) => ReactNode;
   /** Only meaningful when `entry` is absent and `renderTrigger` isn't
    * supplied: renders the default Add-event trigger as a full CTA button
-   * with this label instead of the quiet header-style text link —
-   * EventsList's empty state passes "Add an event". A plain string, not a
-   * second renderTrigger-shaped callback: EventsList, which needs this
+   * with this label instead of the full-width section-footer button —
+   * NextEventCard's empty state passes "Add an event". A plain string, not a
+   * second renderTrigger-shaped callback: NextEventCard, which needs this
    * variant, is a Server Component, and only serializable props (never
    * functions) can cross into a Client Component like this one — the same
    * reason `renderTrigger` itself is documented above as client-caller-only. */
   ctaLabel?: string;
   /** Only meaningful when `ctaLabel` is also set: hides the CTA button
    * itself via `hidden` (display: none) without unmounting this component
-   * — EventsList's hero instance passes this once an event exists, instead
-   * of EventsList conditionally rendering (and thereby destroying) the
-   * instance itself. See EventsList's own doc comment for why: this
-   * component's `successCount`/FormSuccessBanner state must survive the
-   * exact render that flips the section from empty to non-empty, since
-   * that's the one save whose own success would otherwise be discarded by
+   * — NextEventCard passes this once an event exists, instead of
+   * conditionally rendering (and thereby destroying) the instance itself:
+   * this component's `successCount`/FormSuccessBanner state must survive the
+   * exact render that flips the card from empty to non-empty, since that's
+   * the one save whose own success would otherwise be discarded by
    * unmounting the very instance that just recorded it. */
   hidden?: boolean;
   /** Where to come back to when this edit moves the event out of the list
@@ -235,7 +217,7 @@ export default function EventForm({
           {ctaLabel}
         </button>
       ) : (
-        <button type="button" onClick={openFresh} className={HEADER_TRIGGER_CLASSES}>
+        <button type="button" onClick={openFresh} className={SECTION_BUTTON_CLASSES}>
           Add event
         </button>
       )}

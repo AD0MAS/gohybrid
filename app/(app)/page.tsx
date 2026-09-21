@@ -7,8 +7,8 @@ import { formatDayHeadingLong } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
 import { getWorkoutCountForUser } from "@/lib/workouts";
 import { parseSavedParam } from "@/lib/search-params";
-import { resolveWeekStripView, weekStripHref } from "@/lib/week-strip";
-import MonthCalendarPreview from "./MonthCalendarPreview";
+import { homeHref, resolveHomeView } from "@/lib/home-view";
+import MonthCalendar from "./MonthCalendar";
 import NextEventCard from "./NextEventCard";
 import QuickActions from "./QuickActions";
 import RecentActivity from "./RecentActivity";
@@ -38,8 +38,9 @@ const HOW_IT_WORKS_STEPS = [
 
 /**
  * Home: "what do I do today" — the date, a TODAY card for the nearest
- * workout scheduled today, the week strip, a month-calendar preview, the
- * next event's countdown, recent sessions and two quick actions. Deliberately
+ * workout scheduled today, the week strip and the month calendar (both
+ * driven by the `?day` and `?view` params, resolved here once), the next
+ * event's countdown, recent sessions and two quick actions. Deliberately
  * does not repeat /stats' own summary cards (This week/This month/Current
  * streak, or a streak/session count of its own beside the title): those
  * answer "how am I doing," which is /stats' job — Home answers "what's
@@ -59,7 +60,7 @@ export default async function Home(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
 
   const { today } = await getUserContext(user.id);
-  const view = resolveWeekStripView(searchParams, today);
+  const view = resolveHomeView(searchParams, today);
 
   const [workoutCount, sessionCount] = await Promise.all([
     getWorkoutCountForUser(user.id),
@@ -119,12 +120,12 @@ export default async function Home(props: PageProps<"/">) {
               <TodayHero
                 userId={user.id}
                 today={today}
-                returnTo={weekStripHref(view)}
+                returnTo={homeHref(view.selectedDate, view.viewDate, today)}
               />
             )}
           </div>
           <div className="order-2 lg:order-none">
-            <WeekStrip userId={user.id} searchParams={searchParams} />
+            <WeekStrip userId={user.id} view={view} />
           </div>
           <div className="order-5 lg:order-none">
             {isNewUser ? (
@@ -153,12 +154,8 @@ export default async function Home(props: PageProps<"/">) {
         </div>
 
         <div className="contents min-w-0 lg:flex lg:flex-col lg:gap-6">
-          <div className="order-3 hidden sm:block lg:order-none">
-            <MonthCalendarPreview
-              userId={user.id}
-              anchorDate={view.selectedDate ?? today}
-              today={today}
-            />
+          <div className="order-3 lg:order-none">
+            <MonthCalendar userId={user.id} view={view} />
           </div>
           <div className="order-4 lg:order-none">
             <NextEventCard userId={user.id} today={today} />

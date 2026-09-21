@@ -32,6 +32,7 @@ import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import NumberField from "../_components/NumberField";
+import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import {
   addPersonalRecord,
@@ -54,25 +55,6 @@ type PersonalRecordFieldsProps = {
    * edit trigger + the same form pre-filled from this entry, submitting to
    * updatePersonalRecord instead of addPersonalRecord. */
   entry?: PersonalRecord;
-  /** Only meaningful when `entry` is absent: renders the default Add-record
-   * trigger as a full CTA button with this label instead of the quiet
-   * header-style text link — PersonalRecordsList's empty state passes
-   * "Add a record". A plain string, not a renderTrigger callback (an
-   * earlier version of this prop): PersonalRecordsList, which needs this
-   * variant, is a Server Component, and only serializable props — never
-   * functions — can cross into a Client Component like this one. */
-  ctaLabel?: string;
-  /** Only meaningful when `ctaLabel` is also set: hides the CTA button
-   * itself via `hidden` (display: none) without unmounting this component
-   * — PersonalRecordsList's hero instance passes this once a record exists,
-   * instead of PersonalRecordsList conditionally rendering (and thereby
-   * destroying) the instance itself. See PersonalRecordsList's own doc
-   * comment for why: this component's `successCount`/FormSuccessBanner
-   * state must survive the exact render that flips the section from empty
-   * to non-empty, since that's the one save whose own success would
-   * otherwise be discarded by unmounting the very instance that just
-   * recorded it. */
-  hidden?: boolean;
   /** Where to come back to after an edit. Every edit submits it: changing a
    * record's value, date, exercise or type can move it between groups or
    * between a group's best and its earlier attempts, unmounting its form
@@ -82,30 +64,6 @@ type PersonalRecordFieldsProps = {
 };
 
 const initialState: PersonalRecordFormState = { status: "idle" };
-
-// w-full sm:w-auto matches GoalFields' own empty-state button ("Set your
-// first goal") — every empty-state CTA in /profile spans the full panel
-// width below sm and sizes to its own text from sm up.
-const CTA_CLASSES =
-  "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
-
-// The section heading's own trigger, rebuilt from BodyMetricTypeTabs' own tab
-// button (the closest existing "small secondary button inside a panel"):
-// rounded-control, border, px-4 py-1.5 (this is what gives the height — no
-// separate h-* class, same as the tabs), text-xs font-medium, and the same
-// focus ring, copied as-is. Two deliberate departures from an inactive tab:
-// bg-surface-2 (the panel behind it is bg-surface-1 — one step darker — so
-// surface-2 is one step lighter, same value the tabs already rest at, chosen
-// so the button reads as raised rather than an outlined hole) with text-ink
-// rather than text-ink-subtle, since this is the section's one primary
-// action and should carry more visual weight than an inactive tab's muted
-// label. hover:/active: reuse the tabs' own *active-tab* values
-// (border-hairline-strong, bg-surface-3) as the pressed/hovered state — the
-// same transition the tabs already define between their two states, just
-// triggered by a pseudo-class instead of a click, and active: mirrors hover:
-// per the app-wide touch-feedback convention.
-const HEADER_TRIGGER_CLASSES =
-  "rounded-control border border-hairline bg-surface-2 px-4 py-1.5 text-xs font-medium text-ink hover:border-hairline-strong hover:bg-surface-3 active:border-hairline-strong active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 /** Prefix marking a <select> value as one of `customNames` rather than a
  * catalog exercise id or the "type a new name" sentinel ("") — see the
@@ -178,8 +136,6 @@ export default function PersonalRecordFields({
   today,
   unitSystem,
   entry,
-  ctaLabel,
-  hidden = false,
   returnTo,
 }: PersonalRecordFieldsProps) {
   const [open, setOpen] = useState(false);
@@ -228,20 +184,8 @@ export default function PersonalRecordFields({
         >
           <Pencil className="h-4 w-4" aria-hidden="true" />
         </button>
-      ) : ctaLabel ? (
-        // Swaps the whole className rather than adding a `hidden` attribute
-        // alongside CTA_CLASSES' own `flex` — see GoalFields' matching
-        // button for why: `flex` is author-origin and would beat the
-        // user-agent-origin `[hidden]` rule regardless of order.
-        <button
-          type="button"
-          onClick={openFresh}
-          className={hidden ? "hidden" : CTA_CLASSES}
-        >
-          {ctaLabel}
-        </button>
       ) : (
-        <button type="button" onClick={openFresh} className={HEADER_TRIGGER_CLASSES}>
+        <button type="button" onClick={openFresh} className={SECTION_BUTTON_CLASSES}>
           Add record
         </button>
       )}

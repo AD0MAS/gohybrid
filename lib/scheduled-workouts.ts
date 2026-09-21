@@ -24,8 +24,8 @@ const upcomingScheduledWorkoutQuery = {
     // Fetched here rather than in a second query so WeekStrip's day cards and
     // Home's TODAY card can show it without a per-entry lookup; always null
     // for getNextScheduledForUserOnDate (its own WHERE already excludes
-    // anything with a session) and unused by /calendar (no times rendered
-    // there), but a one-column join costs all three nothing to carry.
+    // anything with a session) and unused by the month calendar (no times
+    // rendered there), but a one-column join costs all three nothing to carry.
     session: {
       columns: { completedAt: true },
     },
@@ -77,7 +77,7 @@ export async function scheduleWorkoutForUser(
  * workout's tags) nested. A plain date-range query with no filtering
  * beyond ownership — skipped and completed entries are included, and both
  * past and future dates are returned — so the same function serves the
- * home page's week strip and the /calendar month grid, each rendering
+ * home page's week strip and month calendar, each rendering
  * skipped/completed/planned entries differently. Ordered by date, then
  * (within a day) by scheduled_time — entries with a time before ones
  * without, earliest first (ASC ordering sorts NULLs last in Postgres).
@@ -196,8 +196,7 @@ export async function rescheduleForUser(
  * "Upcoming" means scheduled_date >= today (today included — see
  * getNextScheduledForUserOnDate for the same convention), not yet linked
  * to a session, and not skipped: a completed or skipped entry isn't
- * something still to come, so it belongs on Home/`/calendar`'s full
- * picture, not this preview. A narrow select, not upcomingScheduledWorkoutQuery's
+ * something still to come, so it belongs on Home's full picture, not this preview. A narrow select, not upcomingScheduledWorkoutQuery's
  * `with: { workout, session }` — this page already has the workout, and an
  * open entry has no linked session to fetch. `limit` is required, not
  * defaulted, same reasoning as getSessionsForWorkout in lib/sessions.ts.

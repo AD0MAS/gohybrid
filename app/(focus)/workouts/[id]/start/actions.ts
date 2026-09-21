@@ -26,7 +26,7 @@ import { getUserContext } from "@/lib/user-settings";
  * agrees with every other "what day is it" read in this codebase. When
  * nothing matches, createSessionForWorkout backfills a scheduled_workouts
  * row instead, so an unplanned Finish still shows up as Completed on the
- * week strip and calendar — hence revalidating those routes too, not just
+ * week strip and month calendar — hence revalidating Home too, not just
  * /history. The workout's own page lists its sessions with their duration, so
  * it is revalidated as well.
  */
@@ -60,7 +60,6 @@ export async function finishWorkout(
 
   revalidatePath("/history");
   revalidatePath("/");
-  revalidatePath("/calendar");
   revalidatePath("/stats");
   revalidatePath(`/workouts/${workoutId}`);
 

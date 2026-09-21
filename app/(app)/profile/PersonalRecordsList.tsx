@@ -53,22 +53,17 @@ type PersonalRecordsListProps = {
  * PersonalRecordFields instance directly (entry={entry}) — same one-modal-
  * per-row wiring as GoalsList/EventsList, since PersonalRecordFields
  * already owns its own open/close state and useActionState call. `catalog`
- * and `today`, fetched here, also seed this section's own header Add
- * trigger. Every delete (the header's own empty-state CTA aside) is
- * confirmed via ConfirmModal.
+ * and `today`, fetched here, also seed this section's own "Add record"
+ * button, a full-width footer. Every delete is confirmed via ConfirmModal.
  *
- * The hero's own PersonalRecordFields instance (ctaLabel="Add a record") is
- * rendered *unconditionally* — every render, regardless of `isEmpty` — with
- * only its own trigger button hidden (via the `hidden` prop, applied to
- * that one `<button>`, never a wrapping element) once a record exists. See
- * GoalsList's and BodyMetricsList's own doc comments for the full
- * rationale: PersonalRecordFields owns its own useActionState result and
- * the `successCount` driving its `FormSuccessBanner`, and the save that
- * creates a user's first-ever record is also the save that flips `isEmpty`
- * false in the same transition — an `{isEmpty && <hero/>}` block would
- * unmount that exact instance, discarding the just-set success state,
- * before the browser ever painted the "Saved" banner it had set up to
- * show.
+ * The one "Add record" PersonalRecordFields is rendered *unconditionally*,
+ * in the same spot after the list, whether or not `isEmpty` — never inside
+ * an `{isEmpty && …}` or `{!isEmpty && …}` block. It owns its own
+ * useActionState result and the `successCount` driving its
+ * `FormSuccessBanner`, and the save that creates a user's first-ever record
+ * is also the save that flips `isEmpty` false in the same transition: a
+ * conditional would unmount that exact instance, discarding the just-set
+ * success state, before the browser ever painted the "Saved" banner.
  */
 export default async function PersonalRecordsList({
   userId,
@@ -88,17 +83,7 @@ export default async function PersonalRecordsList({
       id="records"
       className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Personal records</h2>
-        {!isEmpty && (
-          <PersonalRecordFields
-            catalog={catalog}
-            customNames={customNames}
-            today={today}
-            unitSystem={unitSystem}
-          />
-        )}
-      </div>
+      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Personal records</h2>
 
       {isEmpty && (
         <p className="text-sm text-ink-subtle">
@@ -106,23 +91,6 @@ export default async function PersonalRecordsList({
           goal targets.
         </p>
       )}
-
-      {/* Always mounted, regardless of isEmpty — see this file's own doc
-          comment for why. `hidden` disables only this button once a record
-          exists; FormSuccessBanner (a plain sibling inside
-          PersonalRecordFields) is never affected by it, so the save that
-          creates the first record can still show "Saved" even though
-          isEmpty flips false in that same render. */}
-      <div>
-        <PersonalRecordFields
-          catalog={catalog}
-          customNames={customNames}
-          today={today}
-          unitSystem={unitSystem}
-          ctaLabel="Add a record"
-          hidden={!isEmpty}
-        />
-      </div>
 
       {!isEmpty && (
         <div className="flex flex-col">
@@ -237,6 +205,17 @@ export default async function PersonalRecordsList({
           })}
         </div>
       )}
+
+      {/* Always mounted, in this one place, regardless of isEmpty — see this
+          file's own doc comment for why. */}
+      <div>
+        <PersonalRecordFields
+          catalog={catalog}
+          customNames={customNames}
+          today={today}
+          unitSystem={unitSystem}
+        />
+      </div>
     </section>
   );
 }

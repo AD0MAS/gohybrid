@@ -113,7 +113,6 @@ export async function rescheduleWorkout(
   }
 
   revalidatePath("/");
-  revalidatePath("/calendar");
   // Set by ScheduleWorkoutForm only when the date changed, which moves the
   // entry off the day (or off TODAY) its form is rendered in — see
   // redirectBackWithSaved for why the confirmation must come from the page.
@@ -198,7 +197,6 @@ export async function unscheduleWorkout(id: string) {
   await unscheduleForUser(id, user.id);
 
   revalidatePath("/");
-  revalidatePath("/calendar");
   revalidatePath("/history");
   revalidatePath("/stats");
 }
