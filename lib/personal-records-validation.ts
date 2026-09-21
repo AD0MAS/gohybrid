@@ -12,8 +12,8 @@ import { isOneOf } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
 import {
   checkTextLength,
-  RECORD_CUSTOM_NAME_MAX_LENGTH,
-  RECORD_NOTES_MAX_LENGTH,
+  NAME_MAX_LENGTH,
+  LONG_TEXT_MAX_LENGTH,
 } from "./text-limits";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
@@ -119,7 +119,7 @@ export function validatePersonalRecordInput(
   if (customName !== null) {
     const customNameCheck = checkTextLength(
       customName,
-      RECORD_CUSTOM_NAME_MAX_LENGTH,
+      NAME_MAX_LENGTH,
       "Custom name"
     );
     if (!customNameCheck.ok) {
@@ -195,7 +195,7 @@ export function validatePersonalRecordInput(
       ? input.notes.trim()
       : null;
   if (notes !== null) {
-    const notesCheck = checkTextLength(notes, RECORD_NOTES_MAX_LENGTH, "Notes");
+    const notesCheck = checkTextLength(notes, LONG_TEXT_MAX_LENGTH, "Notes");
     if (!notesCheck.ok) {
       return { success: false, error: notesCheck.error };
     }

@@ -11,9 +11,9 @@ import {
 } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import {
-  EVENT_LOCATION_MAX_LENGTH,
-  EVENT_NOTES_MAX_LENGTH,
-  EVENT_TITLE_MAX_LENGTH,
+  SHORT_TEXT_MAX_LENGTH,
+  LONG_TEXT_MAX_LENGTH,
+  NAME_MAX_LENGTH,
 } from "@/lib/text-limits";
 import Modal from "../_components/Modal";
 import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
@@ -235,7 +235,7 @@ export default function EventForm({
               placeholder="Event title"
               defaultValue={fieldDefault("title", entry?.title)}
               required
-              maxLength={EVENT_TITLE_MAX_LENGTH}
+              maxLength={NAME_MAX_LENGTH}
               className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
@@ -273,6 +273,19 @@ export default function EventForm({
           </div>
 
           <div className="flex flex-col gap-1.5">
+            <label htmlFor={`${uid}-eventTime`} className="text-xs font-medium text-ink-subtle">
+              Time (optional)
+            </label>
+            <input
+              type="time"
+              id={`${uid}-eventTime`}
+              name="eventTime"
+              defaultValue={fieldDefault("eventTime", entry?.eventTime?.slice(0, 5))}
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
             <label htmlFor={`${uid}-location`} className="text-xs font-medium text-ink-subtle">
               Location (optional)
             </label>
@@ -282,7 +295,7 @@ export default function EventForm({
               name="location"
               placeholder="Location (optional)"
               defaultValue={fieldDefault("location", entry?.location ?? "")}
-              maxLength={EVENT_LOCATION_MAX_LENGTH}
+              maxLength={SHORT_TEXT_MAX_LENGTH}
               className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>
@@ -297,7 +310,7 @@ export default function EventForm({
               name="notes"
               placeholder="Notes (optional)"
               defaultValue={fieldDefault("notes", entry?.notes ?? "")}
-              maxLength={EVENT_NOTES_MAX_LENGTH}
+              maxLength={LONG_TEXT_MAX_LENGTH}
               className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </div>

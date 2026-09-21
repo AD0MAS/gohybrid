@@ -15,7 +15,7 @@ type RecentActivityProps = {
  * Home's recent sessions: the last 3 completed workout sessions, newest
  * first, read-only, with a full-width "Full history" button under them. Renders workout_title and workout_primary_type from
  * each session's own snapshot columns, same as
- * Training History — but this is a fixed three-row list with no actions,
+ * /history — but this is a fixed three-row list with no actions,
  * not the full chronological list, so it stays its own component rather
  * than a shared one with /history. `userId` arrives as a prop from Home
  * rather than a local requireUser() call — same pattern as /stats.

@@ -8,7 +8,7 @@ import {
 } from "./numeric-limits";
 import { isOneOf } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
-import { BODY_METRIC_NOTES_MAX_LENGTH, checkTextLength } from "./text-limits";
+import { LONG_TEXT_MAX_LENGTH, checkTextLength } from "./text-limits";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
@@ -118,7 +118,7 @@ export function validateBodyMetricInput(
   if (notes !== null) {
     const notesCheck = checkTextLength(
       notes,
-      BODY_METRIC_NOTES_MAX_LENGTH,
+      LONG_TEXT_MAX_LENGTH,
       "Notes"
     );
     if (!notesCheck.ok) {

@@ -18,9 +18,7 @@ export const metadata: Metadata = {
 };
 
 /** The three explanatory cards under the empty-state hero's divider —
- * orients a brand-new user to what this page holds once workouts exist,
- * mirroring the corner button's own "History" wording rather than the
- * fuller "Training history" phrase used elsewhere. */
+ * orients a brand-new user to what this page holds once workouts exist. */
 const EMPTY_STATE_HINTS = [
   {
     title: "The full list",

@@ -28,12 +28,9 @@ import {
   SETS_DIGIT_LIMIT,
 } from "./numeric-limits";
 import {
-  BLOCK_TITLE_MAX_LENGTH,
+  NAME_MAX_LENGTH,
   checkTextLength,
-  ITEM_CUSTOM_NAME_MAX_LENGTH,
-  ITEM_NOTES_MAX_LENGTH,
-  WORKOUT_DESCRIPTION_MAX_LENGTH,
-  WORKOUT_TITLE_MAX_LENGTH,
+  LONG_TEXT_MAX_LENGTH,
 } from "./text-limits";
 import { isValidUuid } from "./uuid";
 
@@ -151,7 +148,7 @@ const INVALID = Symbol("invalid");
 
 /** The subset of a block's editable fields BlockEditor's modal holds as a
  * draft — title is deliberately excluded: its only rule is the
- * BLOCK_TITLE_MAX_LENGTH cap (lib/text-limits.ts), enforced by the input's
+ * NAME_MAX_LENGTH cap (lib/text-limits.ts), enforced by the input's
  * own maxLength and by parseBuilderBlock at the real gate, not by this
  * per-field draft validator. */
 export type BuilderBlockDraft = {
@@ -252,7 +249,7 @@ export function validateBuilderBlockDraft(
 
 /** The subset of an item's editable fields ItemEditor's modal holds as a
  * draft — notes is deliberately excluded: its only rule is the
- * ITEM_NOTES_MAX_LENGTH cap (lib/text-limits.ts), enforced by the
+ * LONG_TEXT_MAX_LENGTH cap (lib/text-limits.ts), enforced by the
  * textarea's own maxLength and by parseBuilderItem at the real gate, not by
  * this per-field draft validator. */
 export type BuilderItemDraft = {
@@ -525,7 +522,7 @@ function parseWorkoutTitle(
   if (!title) {
     return { error: "Title is required." };
   }
-  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
+  const titleCheck = checkTextLength(title, NAME_MAX_LENGTH, "Title");
   if (!titleCheck.ok) {
     return { error: titleCheck.error };
   }
@@ -583,7 +580,7 @@ function parseBuilderItem(
   if (customName !== null) {
     const customNameCheck = checkTextLength(
       customName,
-      ITEM_CUSTOM_NAME_MAX_LENGTH,
+      NAME_MAX_LENGTH,
       `${context} custom name`
     );
     if (!customNameCheck.ok) {
@@ -817,7 +814,7 @@ function parseBuilderItem(
   if (notes !== null) {
     const notesCheck = checkTextLength(
       notes,
-      ITEM_NOTES_MAX_LENGTH,
+      LONG_TEXT_MAX_LENGTH,
       `${context} notes`
     );
     if (!notesCheck.ok) {
@@ -864,7 +861,7 @@ function parseBuilderBlock(
   if (title !== null) {
     const titleCheck = checkTextLength(
       title,
-      BLOCK_TITLE_MAX_LENGTH,
+      NAME_MAX_LENGTH,
       `Block ${index + 1} title`
     );
     if (!titleCheck.ok) {
@@ -1059,7 +1056,7 @@ export function validateBuilderPayload(
   if (description !== null) {
     const descriptionCheck = checkTextLength(
       description,
-      WORKOUT_DESCRIPTION_MAX_LENGTH,
+      LONG_TEXT_MAX_LENGTH,
       "Description"
     );
     if (!descriptionCheck.ok) {

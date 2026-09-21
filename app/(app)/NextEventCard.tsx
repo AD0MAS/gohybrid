@@ -1,4 +1,5 @@
 import { daysUntil, formatCountdown, getNextEventForUser } from "@/lib/events";
+import { formatEventDateTime } from "@/lib/events-format";
 import EventForm from "./profile/EventForm";
 import { EVENT_TYPE_LABELS } from "./profile/event-labels";
 
@@ -42,7 +43,9 @@ export default async function NextEventCard({
             </p>
             <p className="mt-1.5 text-xs text-ink-tertiary">
               {EVENT_TYPE_LABELS[event.eventType].label}
-              {event.eventDate ? ` · ${event.eventDate}` : ""}
+              {event.eventDate
+                ? ` · ${formatEventDateTime(event.eventDate, event.eventTime)}`
+                : ""}
             </p>
           </div>
           {days > 1 ? (

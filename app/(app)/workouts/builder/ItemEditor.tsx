@@ -11,7 +11,7 @@ import {
   REPS_DIGIT_LIMIT,
   SETS_DIGIT_LIMIT,
 } from "@/lib/numeric-limits";
-import { ITEM_NOTES_MAX_LENGTH } from "@/lib/text-limits";
+import { LONG_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import {
   secondsPerKmToSecondsPerMile,
   secondsPerMileToSecondsPerKm,
@@ -1152,7 +1152,7 @@ function ItemEditorModalFields({
               Notes<span className="text-xs text-ink-subtle">(optional)</span>
             </span>
             <textarea
-              maxLength={ITEM_NOTES_MAX_LENGTH}
+              maxLength={LONG_TEXT_MAX_LENGTH}
               value={draft.notes}
               onChange={(e) => updateNotes(e.target.value)}
               className="rounded-control border border-hairline bg-surface-1 px-4 py-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"

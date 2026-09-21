@@ -1,7 +1,7 @@
 import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
 import { isValidUuid } from "./uuid";
 import { isOneOf } from "./workouts-validation";
-import { WORKOUT_SEARCH_MAX_LENGTH } from "./text-limits";
+import { SHORT_TEXT_MAX_LENGTH } from "./text-limits";
 import { firstValue } from "./search-params";
 
 export const WORKOUT_SORT_OPTIONS = [
@@ -48,7 +48,7 @@ function toIdList(value: string | string[] | undefined): string[] {
  * `q` is never persisted (it only ever reaches an `ilike` in
  * getWorkoutsForUser), so it has no dedicated validator of its own the way
  * every DB-written text field does (lib/text-limits.ts) — the
- * WORKOUT_SEARCH_MAX_LENGTH cap is applied right here instead, by
+ * SHORT_TEXT_MAX_LENGTH cap is applied right here instead, by
  * truncating rather than dropping the param: a hand-edited URL with an
  * overlong `q` should still search on the part that fits, the same
  * "degrade gracefully" spirit as every other field above, not lose the
@@ -61,7 +61,7 @@ export function parseWorkoutListSearchParams(
 
   const q = firstValue(searchParams.q)?.trim();
   if (q) {
-    filters.q = q.slice(0, WORKOUT_SEARCH_MAX_LENGTH);
+    filters.q = q.slice(0, SHORT_TEXT_MAX_LENGTH);
   }
 
   const primaryType = firstValue(searchParams.primaryType);

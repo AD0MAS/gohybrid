@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import type { CatalogTag, Difficulty, PrimaryType } from "./builder/reducer";
 import { DIFFICULTY_LABELS } from "./difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
-import { WORKOUT_SEARCH_MAX_LENGTH } from "@/lib/text-limits";
+import { SHORT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
 
 type WorkoutFiltersProps = {
@@ -149,7 +149,7 @@ export default function WorkoutFilters({
           value={qInput}
           onChange={(event) => setQInput(event.target.value)}
           placeholder="Search by title"
-          maxLength={WORKOUT_SEARCH_MAX_LENGTH}
+          maxLength={SHORT_TEXT_MAX_LENGTH}
           className="col-span-2 h-11 rounded-control border border-hairline bg-surface-2 px-4 text-sm text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:min-w-0 sm:flex-1"
         />
 

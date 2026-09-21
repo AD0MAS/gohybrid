@@ -7,11 +7,16 @@ import {
   FormSuccessBanner,
   SubmitButton,
 } from "@/app/_components/FormStatus";
-import { SCHEDULE_NOTES_MAX_LENGTH } from "@/lib/text-limits";
+import { LONG_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { rescheduleWorkout } from "../upcoming-actions";
-import { scheduleWorkout, type ScheduleFormState } from "../workouts/actions";
+import {
+  scheduleWorkout,
+  scheduleWorkoutFromPicker,
+  type ScheduleFormState,
+} from "../workouts/actions";
 import { MENU_ITEM_CLASSES } from "./CardMenu";
 import Modal from "./Modal";
+import WorkoutPicker from "./WorkoutPicker";
 
 type ScheduleEntry = {
   id: string;
@@ -39,6 +44,7 @@ type ScheduleWorkoutFormProps = {
       /** Creates a new plan for this workout, bound to scheduleWorkout. */
       workoutId: string;
       entry?: never;
+      workouts?: never;
       triggerVariant?: "button" | "menu-item";
       /** Only meaningful with `triggerVariant="button"`: overrides
        * BUTTON_TRIGGER_CLASSES below. Home's TODAY card passes its own
@@ -57,6 +63,7 @@ type ScheduleWorkoutFormProps = {
        * action and the field defaults differ. */
       entry: ScheduleEntry;
       workoutId?: never;
+      workouts?: never;
       triggerVariant?: "button" | "menu-item";
       /** See the sibling branch's own doc comment. */
       triggerClassName?: string;
@@ -69,6 +76,18 @@ type ScheduleWorkoutFormProps = {
        * lib/redirect-back.ts). A time- or notes-only change stays in place
        * and takes the ordinary path. */
       returnTo?: string;
+    }
+  | {
+      /** No workout known ahead of time — Home's Quick actions entry point.
+       * Renders WorkoutPicker and binds scheduleWorkoutFromPicker, which reads
+       * `workoutId` from FormData. Same fields as the other branches — the
+       * picker plus date, time and notes — and the same action rules. */
+      workouts: readonly { id: string; title: string }[];
+      workoutId?: never;
+      entry?: never;
+      triggerVariant?: never;
+      triggerClassName?: string;
+      returnTo?: never;
     }
 );
 
@@ -93,7 +112,10 @@ const BUTTON_TRIGGER_CLASSES =
  * the entry/renderTrigger-less half of EventForm's own create-vs-edit
  * pattern (app/(app)/profile/EventForm.tsx), which this mirrors closely
  * enough that its doc comment is worth reading for the parts not repeated
- * here.
+ * here. `workouts` (Home's Quick actions) is the third shape: no workout is
+ * known, so WorkoutPicker submits `workoutId` and scheduleWorkoutFromPicker
+ * reads it — the same validation, action body and fields as `workoutId`,
+ * with the picker on top, laid out like LogPastSessionForm's picker branch.
  *
  * Uses useActionState rather than useTransition + try/catch: a validation
  * failure from scheduleWorkout/rescheduleWorkout (including the past-date
@@ -133,6 +155,7 @@ const BUTTON_TRIGGER_CLASSES =
 export default function ScheduleWorkoutForm({
   today,
   workoutId,
+  workouts,
   entry,
   triggerVariant = "button",
   triggerClassName,
@@ -141,7 +164,9 @@ export default function ScheduleWorkoutForm({
   const [open, setOpen] = useState(false);
   const action = entry
     ? rescheduleWorkout.bind(null, entry.id)
-    : scheduleWorkout.bind(null, workoutId);
+    : workoutId
+      ? scheduleWorkout.bind(null, workoutId)
+      : scheduleWorkoutFromPicker;
   const [state, formAction] = useActionState(action, initialState);
   const [prevState, setPrevState] = useState(state);
   const [formKey, setFormKey] = useState(0);
@@ -191,15 +216,28 @@ export default function ScheduleWorkoutForm({
             : (triggerClassName ?? BUTTON_TRIGGER_CLASSES)
         }
       >
-        {entry ? "Reschedule" : "Schedule"}
+        {entry ? "Reschedule" : workouts ? "Schedule a workout" : "Schedule"}
       </button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={entry ? "Reschedule this workout" : "Schedule this workout"}
+        title={
+          entry
+            ? "Reschedule this workout"
+            : workouts
+              ? "Schedule a workout"
+              : "Schedule this workout"
+        }
       >
         <form key={formKey} action={submit} className="flex flex-col gap-3">
+          {workouts && (
+            <WorkoutPicker
+              workouts={workouts}
+              defaultValue={fieldDefault("workoutId")}
+            />
+          )}
+
           <label className="flex flex-col gap-1 text-sm">
             Date
             <input
@@ -231,7 +269,7 @@ export default function ScheduleWorkoutForm({
               type="text"
               name="notes"
               defaultValue={fieldDefault("notes", entry?.notes ?? "")}
-              maxLength={SCHEDULE_NOTES_MAX_LENGTH}
+              maxLength={LONG_TEXT_MAX_LENGTH}
               className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
             />
           </label>

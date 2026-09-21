@@ -19,10 +19,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import type { unitSystemEnum } from "@/db/schema";
 import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
 import { DURATION_MINUTES_DIGIT_LIMIT } from "@/lib/numeric-limits";
-import {
-  WORKOUT_DESCRIPTION_MAX_LENGTH,
-  WORKOUT_TITLE_MAX_LENGTH,
-} from "@/lib/text-limits";
+import { LONG_TEXT_MAX_LENGTH, NAME_MAX_LENGTH } from "@/lib/text-limits";
 import {
   getBuilderRequirements,
   validateBuilderPayload,
@@ -433,7 +430,7 @@ export default function WorkoutBuilder({
               <input
                 type="text"
                 required
-                maxLength={WORKOUT_TITLE_MAX_LENGTH}
+                maxLength={NAME_MAX_LENGTH}
                 value={state.meta.title}
                 onChange={(e) =>
                   dispatch({
@@ -451,7 +448,7 @@ export default function WorkoutBuilder({
                 Description <span className={FIELD_HINT_CLASSES}>optional</span>
               </span>
               <textarea
-                maxLength={WORKOUT_DESCRIPTION_MAX_LENGTH}
+                maxLength={LONG_TEXT_MAX_LENGTH}
                 value={state.meta.description}
                 onChange={(e) =>
                   dispatch({

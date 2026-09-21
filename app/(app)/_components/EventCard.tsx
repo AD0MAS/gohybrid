@@ -3,6 +3,7 @@
 import { Pencil, X } from "lucide-react";
 import { SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
+import { formatEventTime } from "@/lib/events-format";
 import { EVENT_TYPE_LABELS } from "../profile/event-labels";
 import EventForm from "../profile/EventForm";
 import { deleteEvent } from "../profile/events-actions";
@@ -62,7 +63,11 @@ export default function EventCard({ event, returnTo }: EventCardProps) {
           </span>
         </div>
         <p className="break-words text-sm text-ink-subtle">
-          {[EVENT_TYPE_LABELS[event.eventType].label, event.location]
+          {[
+            EVENT_TYPE_LABELS[event.eventType].label,
+            event.location,
+            formatEventTime(event.eventTime),
+          ]
             .filter(Boolean)
             .join(" · ")}
         </p>

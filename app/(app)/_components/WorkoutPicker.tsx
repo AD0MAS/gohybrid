@@ -4,9 +4,8 @@ type WorkoutPickerProps = {
 };
 
 /**
- * Plain workout <select>, for LogPastSessionForm's no-known-workoutId
- * branch (Home's quick action — not yet wired, see LogPastSessionForm's own
- * doc comment). Unlike ExercisePicker (app/(app)/workouts/builder/
+ * Plain workout <select>, for the no-known-workoutId branch of
+ * LogPastSessionForm and ScheduleWorkoutForm (Home's quick actions). Unlike ExercisePicker (app/(app)/workouts/builder/
  * ExercisePicker.tsx), a workout has no custom-name duality and no
  * category to group by — a user's own workout list is a small,
  * already-title-sorted set (getWorkoutsForUser(userId, { sort: "title" })),

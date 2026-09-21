@@ -5,6 +5,7 @@ import {
   getPastEventsForUser,
   getUpcomingEventsForUser,
 } from "@/lib/events";
+import { formatEventDateTime } from "@/lib/events-format";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
 import EventForm from "./EventForm";
@@ -99,7 +100,7 @@ export default async function EventsList({ userId }: EventsListProps) {
                     <p className="break-words text-xs text-ink-tertiary">
                       {EVENT_TYPE_LABELS[event.eventType].label}
                       {event.location ? ` · ${event.location}` : ""} ·{" "}
-                      {event.eventDate}
+                      {formatEventDateTime(event.eventDate, event.eventTime)}
                     </p>
                     {event.notes && (
                       <p className="break-words text-xs text-ink-tertiary">
@@ -168,7 +169,7 @@ export default async function EventsList({ userId }: EventsListProps) {
                       <p className="break-words text-xs text-ink-tertiary">
                         {EVENT_TYPE_LABELS[event.eventType].label}
                         {event.location ? ` · ${event.location}` : ""} ·{" "}
-                        {event.eventDate}
+                        {formatEventDateTime(event.eventDate, event.eventTime)}
                       </p>
                       {event.notes && (
                         <p className="break-words text-xs text-ink-tertiary">

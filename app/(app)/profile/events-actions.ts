@@ -38,6 +38,7 @@ export async function addEvent(
   const result = validateEventInput({
     title: formData.get("title"),
     eventDate: formData.get("eventDate"),
+    eventTime: formData.get("eventTime"),
     eventType: formData.get("eventType"),
     location: formData.get("location"),
     notes: formData.get("notes"),
@@ -79,6 +80,7 @@ export async function updateEvent(
   const result = validateEventInput({
     title: formData.get("title"),
     eventDate: formData.get("eventDate"),
+    eventTime: formData.get("eventTime"),
     eventType: formData.get("eventType"),
     location: formData.get("location"),
     notes: formData.get("notes"),

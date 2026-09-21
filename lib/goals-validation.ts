@@ -20,11 +20,7 @@ import {
 } from "./numeric-limits";
 import { isValidUuid } from "./uuid";
 import { isOneOf } from "./workouts-validation";
-import {
-  checkTextLength,
-  GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,
-  GOAL_TITLE_MAX_LENGTH,
-} from "./text-limits";
+import { checkTextLength, NAME_MAX_LENGTH } from "./text-limits";
 
 type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
 
@@ -197,7 +193,7 @@ export function validateGoalInput(
   if (!title) {
     return { success: false, error: "Title is required." };
   }
-  const titleCheck = checkTextLength(title, GOAL_TITLE_MAX_LENGTH, "Title");
+  const titleCheck = checkTextLength(title, NAME_MAX_LENGTH, "Title");
   if (!titleCheck.ok) {
     return { success: false, error: titleCheck.error };
   }
@@ -306,7 +302,7 @@ export function validateGoalInput(
   if (targetCustomName !== null) {
     const targetCustomNameCheck = checkTextLength(
       targetCustomName,
-      GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH,
+      NAME_MAX_LENGTH,
       "Custom name"
     );
     if (!targetCustomNameCheck.ok) {

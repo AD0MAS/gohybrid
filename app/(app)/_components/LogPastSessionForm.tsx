@@ -23,10 +23,10 @@ type LogPastSessionFormProps = {
    * express, so the inline error still does the real gatekeeping for that
    * case. */
   today: string;
-  /** Overrides BUTTON_TRIGGER_CLASSES below. Home's Quick Actions passes its
-   * own smaller, left-aligned treatment so this
-   * button matches its sibling "New workout" Link, without touching the
-   * workout detail page's own larger button, which stays on the default. */
+  /** Overrides BUTTON_TRIGGER_CLASSES below. Home's Quick Actions passes
+   * SECTION_BUTTON_CLASSES so this button matches its sibling section
+   * buttons, without touching the workout detail page's own larger button,
+   * which stays on the default. */
   triggerClassName?: string;
 } & (
   | { workoutId: string; workouts?: never }

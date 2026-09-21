@@ -230,11 +230,11 @@ export default function StartWorkoutClient({
 
   /**
    * Creates the workout_session with the active duration (pauses excluded),
-   * then clears the stored state and redirects to Training History. The clear has to happen client-side after the action
+   * then clears the stored state and redirects to History. The clear has to happen client-side after the action
    * resolves — rather than inside finishWorkout itself — since localStorage
    * doesn't exist on the server.
    *
-   * The `?finished=1` param (read by /history via RedirectSuccessBanner) is
+   * The `?finished=1` param (read by /history's FinishedNotice) is
    * appended here rather than reused from `?saved=1` — a distinct value
    * because the label at the destination is "Finished", not "Saved", and
    * this component unmounts on navigation so nothing here can rely on

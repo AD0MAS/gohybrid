@@ -1,14 +1,24 @@
-import { and, asc, desc, eq, gte, lt, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { events, eventTypeEnum } from "@/db/schema";
 import { diffInDays } from "./dates";
 import type { ValidatedEventInput } from "./events-validation";
+
+/**
+ * Within-a-day ordering shared by every event list: all-day events (null
+ * time) first, then by time. Postgres sorts NULLs last on ASC by default, so
+ * the NULLS FIRST is explicit. Always follows an event_date order.
+ */
+const EVENT_TIME_ORDER = sql`${events.eventTime} ASC NULLS FIRST`;
 
 export type Event = {
   id: string;
   userId: string;
   title: string;
   eventDate: string;
+  /** Local wall-clock time as Postgres returns `time` (HH:MM:SS); null is an
+   * all-day event. Use formatEventTime (lib/events-format.ts) for display. */
+  eventTime: string | null;
   eventType: (typeof eventTypeEnum.enumValues)[number];
   location: string | null;
   notes: string | null;
@@ -33,7 +43,7 @@ export async function getUpcomingEventsForUser(
     .select()
     .from(events)
     .where(and(eq(events.userId, userId), gte(events.eventDate, today)))
-    .orderBy(asc(events.eventDate));
+    .orderBy(asc(events.eventDate), EVENT_TIME_ORDER);
 }
 
 /**
@@ -49,7 +59,7 @@ export async function getPastEventsForUser(
     .select()
     .from(events)
     .where(and(eq(events.userId, userId), lt(events.eventDate, today)))
-    .orderBy(desc(events.eventDate));
+    .orderBy(desc(events.eventDate), EVENT_TIME_ORDER);
 }
 
 /**
@@ -75,7 +85,7 @@ export async function getEventsForUserInRange(
         lte(events.eventDate, to)
       )
     )
-    .orderBy(asc(events.eventDate));
+    .orderBy(asc(events.eventDate), EVENT_TIME_ORDER);
 }
 
 /**
@@ -93,7 +103,7 @@ export async function getNextEventForUser(
     .select()
     .from(events)
     .where(and(eq(events.userId, userId), gte(events.eventDate, today)))
-    .orderBy(asc(events.eventDate))
+    .orderBy(asc(events.eventDate), EVENT_TIME_ORDER)
     .limit(1);
 
   return next ?? null;
@@ -113,6 +123,7 @@ export async function createEventForUser(
       userId,
       title: input.title,
       eventDate: input.eventDate,
+      eventTime: input.eventTime,
       eventType: input.eventType,
       location: input.location,
       notes: input.notes,
@@ -140,6 +151,7 @@ export async function updateEventForUser(
     .set({
       title: input.title,
       eventDate: input.eventDate,
+      eventTime: input.eventTime,
       eventType: input.eventType,
       location: input.location,
       notes: input.notes,

@@ -43,10 +43,13 @@ const LABEL_WIDTH = 20;
 const MONTH_LABEL_HEIGHT = 16;
 const GRID_HEIGHT = 7 * STEP - GAP;
 const VIEW_HEIGHT = GRID_HEIGHT + MONTH_LABEL_HEIGHT;
-/** Today's cell strokeWidth is 1.25 — half of that plus a small margin, so
- * the stroke isn't clipped by the viewBox when today falls in the last
- * column (see getHeatmapRange: `to` is always today, so today's cell is
- * always in the last column, never the first — no left-side margin needed). */
+/** Today's cell strokeWidth is 1.25, drawn centred on the cell edge — half of
+ * it plus a small margin, so the stroke isn't clipped by the viewBox (an
+ * outer <svg> clips overflow). Today is always in the last column (see
+ * getHeatmapRange), so it needs room on the right, and on Monday — the top
+ * row — above the grid: the viewBox starts TODAY_STROKE_MARGIN above y=0.
+ * The bottom row has the month-label band under it, and no left-side margin
+ * is needed: today is never in the first column. */
 const TODAY_STROKE_MARGIN = 2;
 /**
  * Room reserved past the last column for a month label anchored there.
@@ -82,7 +85,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
 
   return (
     <svg
-      viewBox={`0 0 ${viewWidth} ${VIEW_HEIGHT}`}
+      viewBox={`0 ${-TODAY_STROKE_MARGIN} ${viewWidth} ${VIEW_HEIGHT + TODAY_STROKE_MARGIN}`}
       className="w-full"
       role="img"
       aria-label={ariaLabel}

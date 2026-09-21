@@ -89,6 +89,28 @@ export async function scheduleWorkout(
   _prevState: ScheduleFormState,
   formData: FormData
 ): Promise<ScheduleFormState> {
+  return scheduleForWorkoutId(workoutId, formData);
+}
+
+/**
+ * The same scheduling as scheduleWorkout, for the entry point that has no
+ * workout ahead of time — Home's Quick actions, where WorkoutPicker submits
+ * `workoutId` as a plain FormData field, like logPastSession. Both actions
+ * run scheduleForWorkoutId, so validation, the past rule and revalidation
+ * cannot drift; a missing or malformed id fails validateScheduleInput's UUID
+ * check like any other bad input.
+ */
+export async function scheduleWorkoutFromPicker(
+  _prevState: ScheduleFormState,
+  formData: FormData
+): Promise<ScheduleFormState> {
+  return scheduleForWorkoutId(formData.get("workoutId"), formData);
+}
+
+async function scheduleForWorkoutId(
+  workoutId: unknown,
+  formData: FormData
+): Promise<ScheduleFormState> {
   const user = await requireUser();
   const { today, now } = await getUserContext(user.id);
 
@@ -127,7 +149,7 @@ export async function scheduleWorkout(
     };
   }
 
-  revalidatePath(`/workouts/${workoutId}`);
+  revalidatePath(`/workouts/${result.data.workoutId}`);
   revalidatePath("/");
   return { status: "success" };
 }

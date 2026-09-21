@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { X } from "lucide-react";
-import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
-import { formatRelativeDay } from "@/lib/dates";
+import { formatDayMonthLong } from "@/lib/dates";
 import { getSessionsForUser } from "@/lib/sessions";
-import { toCalendarDayInTimezone, toClockTimeInTimezone } from "@/lib/timezone";
+import { toCalendarDayInTimezone } from "@/lib/timezone";
+import { formatDurationSeconds } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import BackLink from "../_components/BackLink";
 import {
@@ -12,7 +12,9 @@ import {
   type BackDestination,
 } from "../_components/back-destination";
 import ConfirmModal from "../_components/ConfirmModal";
+import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
 import { deleteAllSessions, deleteSession } from "./actions";
+import FinishedNotice from "./FinishedNotice";
 
 export const metadata: Metadata = {
   title: "History",
@@ -31,13 +33,14 @@ const BACK_SOURCES: Record<string, BackDestination> = {
 };
 
 /**
- * Training History: a chronological list of the authenticated user's
- * completed workout sessions, most recently completed first. Renders
- * workout_title and workout_primary_type from each session's own snapshot
- * columns rather than joining against `workouts`, so a session survives
- * its workout being edited or deleted.
+ * History: the authenticated user's completed workout sessions, most
+ * recently completed first. Renders workout_title and workout_primary_type
+ * from each session's own snapshot columns rather than joining against
+ * `workouts`, so a session survives its workout being edited or deleted. A
+ * row shows the title, "type · date", and the active duration when the
+ * session has one (only the Start flow measures it).
  *
- * Reachable from /workouts (its corner button), Home (the recent-activity
+ * Reachable from /workouts (its corner button), Home (the recent-sessions
  * "Full history" link) and a workout's detail page (`from=workout&workout=
  * <id>`, the only entry point whose destination carries an id — validated
  * inside resolveBackDestination), so the back link's target depends on the
@@ -45,10 +48,10 @@ const BACK_SOURCES: Record<string, BackDestination> = {
  *
  * `?finished=1` marks a landing from Start Workout Mode's Finish button
  * (StartWorkoutClient) — the only entry point that ever sets it, so
- * RedirectSuccessBanner (app/_components/FormStatus.tsx) only shows right
- * after finishing a workout, never a plain visit to /history. A distinct
- * value from `?saved=1` (used by /workouts/[id] and /profile) rather than a
- * reused one, since the label here is "Finished".
+ * FinishedNotice only shows right after finishing a workout, never on a
+ * plain visit to /history. It names the newest session, which is the one
+ * Finish just wrote. A distinct value from `?saved=1` (used by
+ * /workouts/[id] and /profile) since the label here is "Finished".
  */
 export default async function HistoryPage(props: PageProps<"/history">) {
   const user = await requireUser();
@@ -63,65 +66,100 @@ export default async function HistoryPage(props: PageProps<"/history">) {
     (Array.isArray(searchParams.finished)
       ? searchParams.finished[0]
       : searchParams.finished) === "1";
-  const { today, timezone } = await getUserContext(user.id);
+  const { timezone } = await getUserContext(user.id);
   const sessions = await getSessionsForUser(user.id);
+  const newest = sessions[0];
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <RedirectSuccessBanner show={finished} label="Finished" paramName="finished" />
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2">
           <BackLink href={back.href} label={back.label} />
-          <h1 className="text-xl font-semibold text-ink">Training History</h1>
+          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+            History
+          </h1>
         </div>
 
         {sessions.length > 0 && (
-          <ConfirmModal
-            trigger="Clear history"
-            triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-danger hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            title="Clear history"
-            description="Deleting every session removes all training history and empties your stats and the activity heatmap. Workouts completed without being planned disappear from the calendar; planned workouts revert to Planned."
-            confirmLabel="Delete"
-            action={deleteAllSessions}
-          />
+          <div className="shrink-0">
+            <ConfirmModal
+              trigger="Clear history"
+              triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-danger hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              title="Clear all history?"
+              description={`${
+                sessions.length === 1
+                  ? "Your only session"
+                  : `All ${sessions.length} sessions`
+              } will be deleted and Stats will be empty. Your workouts stay in the library. This cannot be undone.`}
+              cancelLabel="Keep my history"
+              confirmLabel="Clear history"
+              action={deleteAllSessions}
+            />
+          </div>
         )}
       </div>
 
+      {newest && (
+        <FinishedNotice
+          show={finished}
+          title={newest.workoutTitle}
+          nonce={newest.id}
+        />
+      )}
+
       {sessions.length === 0 ? (
         <p className="text-sm text-ink-subtle">
-          No completed workouts yet. Finish a workout to see it here.
+          Finishing a workout writes a session here.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {sessions.map((session) => (
-            <li
-              key={session.id}
-              className="flex items-center justify-between gap-2 rounded-card border border-hairline bg-surface-1 p-5"
-            >
-              <div>
-                <p className="font-medium text-ink">{session.workoutTitle}</p>
-                <p className="text-sm text-ink-subtle">
-                  {session.workoutPrimaryType} ·{" "}
-                  {formatRelativeDay(
-                    toCalendarDayInTimezone(session.completedAt, timezone),
-                    today
-                  )}{" "}
-                  · {toClockTimeInTimezone(session.completedAt, timezone)}
-                </p>
-              </div>
+        <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
+          <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+            Sessions
+          </h2>
 
-              <ConfirmModal
-                trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                triggerClassName="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                triggerAriaLabel="Delete"
-                title="Delete session"
-                description="Deleting this session removes it from training history and from all stats. If it completed a scheduled workout, that workout goes back to Planned."
-                confirmLabel="Delete"
-                action={deleteSession.bind(null, session.id)}
-              />
-            </li>
-          ))}
-        </ul>
+          <ul className="flex flex-col">
+            {sessions.map((session) => {
+              const date = formatDayMonthLong(
+                toCalendarDayInTimezone(session.completedAt, timezone)
+              );
+
+              return (
+                <li
+                  key={session.id}
+                  className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
+                >
+                  <div className="min-w-0">
+                    <p className="break-words text-sm font-medium text-ink">
+                      {session.workoutTitle}
+                    </p>
+                    <p className="text-xs text-ink-tertiary">
+                      {PRIMARY_TYPE_LABELS[session.workoutPrimaryType].label} ·{" "}
+                      {date}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-3">
+                    {session.durationSeconds != null && (
+                      <span className="text-[13px] font-medium text-ink-muted">
+                        {formatDurationSeconds(session.durationSeconds)}
+                      </span>
+                    )}
+                    <ConfirmModal
+                      trigger={<X className="h-4 w-4" aria-hidden="true" />}
+                      triggerClassName="flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-2 hover:text-danger active:bg-surface-2 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                      triggerAriaLabel="Delete session"
+                      title="Delete this session?"
+                      description={`${session.workoutTitle}, ${date}. Stats will be recalculated without it.`}
+                      cancelLabel="Keep it"
+                      confirmLabel="Delete session"
+                      action={deleteSession.bind(null, session.id)}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </main>
   );

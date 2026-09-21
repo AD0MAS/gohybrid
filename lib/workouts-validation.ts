@@ -2,8 +2,8 @@ import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
 import { checkDigitLimit, DURATION_MINUTES_DIGIT_LIMIT } from "./numeric-limits";
 import {
   checkTextLength,
-  WORKOUT_DESCRIPTION_MAX_LENGTH,
-  WORKOUT_TITLE_MAX_LENGTH,
+  LONG_TEXT_MAX_LENGTH,
+  NAME_MAX_LENGTH,
 } from "./text-limits";
 
 export type ValidatedWorkoutInput = {
@@ -50,7 +50,7 @@ export function validateWorkoutInput(
   if (!title) {
     return { success: false, error: "Title is required." };
   }
-  const titleCheck = checkTextLength(title, WORKOUT_TITLE_MAX_LENGTH, "Title");
+  const titleCheck = checkTextLength(title, NAME_MAX_LENGTH, "Title");
   if (!titleCheck.ok) {
     return { success: false, error: titleCheck.error };
   }
@@ -78,7 +78,7 @@ export function validateWorkoutInput(
   if (description !== null) {
     const descriptionCheck = checkTextLength(
       description,
-      WORKOUT_DESCRIPTION_MAX_LENGTH,
+      LONG_TEXT_MAX_LENGTH,
       "Description"
     );
     if (!descriptionCheck.ok) {

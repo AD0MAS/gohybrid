@@ -15,42 +15,26 @@ export type TextLengthResult =
   | { ok: true; value: string }
   | { ok: false; error: string };
 
-// One constant per field, same convention as numeric-limits.ts: a shared
-// constant is not reused across unrelated subjects even when the number
-// happens to match (see BODY_WEIGHT_DIGIT_LIMIT vs LIFTED_WEIGHT_DIGIT_LIMIT
-// there) — so e.g. WORKOUT_TITLE_MAX_LENGTH and GOAL_TITLE_MAX_LENGTH stay
-// separate constants below despite sharing the number 100.
-export const WORKOUT_TITLE_MAX_LENGTH = 100;
-export const GOAL_TITLE_MAX_LENGTH = 100;
-export const EVENT_TITLE_MAX_LENGTH = 100;
-// workout_sessions.workout_title has no constant of its own — it's a
-// snapshot copied verbatim from workouts.title at session-creation time
-// (createSessionForWorkout/finishWorkout in lib/sessions.ts), never typed by
-// a user directly, so it inherits WORKOUT_TITLE_MAX_LENGTH by virtue of what
-// it copies. Do not add a second constant for it.
-
-export const BLOCK_TITLE_MAX_LENGTH = 60;
-
-export const ITEM_CUSTOM_NAME_MAX_LENGTH = 80;
-export const RECORD_CUSTOM_NAME_MAX_LENGTH = 80;
-export const GOAL_TARGET_CUSTOM_NAME_MAX_LENGTH = 80;
-
-export const EVENT_LOCATION_MAX_LENGTH = 120;
-
-export const WORKOUT_DESCRIPTION_MAX_LENGTH = 500;
-export const ITEM_NOTES_MAX_LENGTH = 500;
-export const SCHEDULE_NOTES_MAX_LENGTH = 500;
-export const BODY_METRIC_NOTES_MAX_LENGTH = 500;
-export const RECORD_NOTES_MAX_LENGTH = 500;
-export const EVENT_NOTES_MAX_LENGTH = 500;
-
-// Not persisted — the /workouts search box (WorkoutFilters.tsx),
-// parsed by parseWorkoutListSearchParams (lib/workouts-filters.ts), which
-// has no validator of its own to hold this check inline; the cap is applied
-// there directly instead. Matches WORKOUT_TITLE_MAX_LENGTH since it searches
-// that exact column, kept as its own constant regardless (same
-// drift-independence reasoning as every other constant in this file).
-export const WORKOUT_SEARCH_MAX_LENGTH = 100;
+// Three tiers, one constant each; every user-entered text field maps to one of
+// them and none has a number of its own. Unlike numeric-limits.ts (one
+// constant per column, because a digit bound follows the column's precision),
+// a character bound is a product decision about how much a kind of text may
+// say, so fields of a kind share it — change a tier here and every field in it
+// follows, in the validators and in the inputs' maxLength alike.
+//
+// NAME — a title or a name: workouts.title, workout_blocks.title,
+// workout_items.custom_name, personal_records.custom_name, goals.title,
+// goals.target_custom_name, events.title. workout_sessions.workout_title is a
+// snapshot copied from workouts.title (createSessionForWorkout/finishWorkout
+// in lib/sessions.ts), never typed by a user, so it has no check of its own.
+export const NAME_MAX_LENGTH = 60;
+// SHORT — other single-line free text: events.location and the /workouts
+// search box (WorkoutFilters.tsx, applied by parseWorkoutListSearchParams in
+// lib/workouts-filters.ts, which has no validator of its own; not persisted).
+export const SHORT_TEXT_MAX_LENGTH = 60;
+// LONG — multi-line free text: workouts.description, workout_items.notes and
+// the notes on scheduled_workouts, body_metrics, personal_records, events.
+export const LONG_TEXT_MAX_LENGTH = 300;
 
 /**
  * Rejects `trimmed` if it is longer than `maxLength`. Takes the

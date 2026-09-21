@@ -21,9 +21,14 @@ const UNIT_SYSTEM_LABELS: Record<
   (typeof unitSystemEnum.enumValues)[number],
   string
 > = {
-  metric: "Metric (kg, km)",
-  imperial: "Imperial (lb, mi)",
+  metric: "Metric",
+  imperial: "Imperial",
 };
+
+/** The units each system actually shows, as convertible in lib/units.ts:
+ * weights (kg / lb), distances (m, km / ft, mi) and running pace (per km /
+ * per mi). HYROX stations stay in metres under both. */
+const UNIT_SYSTEM_HINT = "Metric: m, km, kg, min/km. Imperial: ft, mi, lb, min/mi.";
 
 /**
  * The settings form as a client component, needed for useActionState: a
@@ -34,7 +39,7 @@ const UNIT_SYSTEM_LABELS: Record<
  * options are cheap to render once on the server, and the client component
  * doesn't need the Intl call at all.
  *
- * Both selects are uncontrolled (defaultValue), each keyed on its own
+ * Both controls are uncontrolled (defaultValue / defaultChecked), each keyed on its own
  * current* prop, rather than controlled with state synced during render.
  * The controlled version broke after a save: React resets a `<form>`
  * bound to a useActionState action once the action completes — a native
@@ -47,7 +52,7 @@ const UNIT_SYSTEM_LABELS: Record<
  * database) still hold the correct saved zone — exactly the "saves
  * correctly, only the display is wrong" symptom, and why the first option
  * in the (alphabetical) IANA list, "Africa/Abidjan," is what appeared.
- * Keying each select on its current* prop sidesteps this rather than
+ * Keying each control on its current* prop sidesteps this rather than
  * fighting it: a save's revalidatePath changes the prop, which changes the
  * key, which makes React discard the old DOM node and mount a fresh one —
  * so `defaultValue` applies again from the new prop regardless of what the
@@ -62,38 +67,66 @@ export default function SettingsFields({
   const [state, formAction] = useActionState(saveSettings, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
-        Timezone
-        <select
-          key={currentTimezone}
-          name="timezone"
-          defaultValue={currentTimezone}
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          {timezones.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
-      </label>
+    <form action={formAction} className="flex flex-col gap-6">
+      <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+          Preferences
+        </h2>
 
-      <label className="flex flex-col gap-1 text-sm">
-        Units
-        <select
-          key={currentUnitSystem}
-          name="unitSystem"
-          defaultValue={currentUnitSystem}
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          {unitSystemEnum.enumValues.map((value) => (
-            <option key={value} value={value}>
-              {UNIT_SYSTEM_LABELS[value]}
-            </option>
-          ))}
-        </select>
-      </label>
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <label
+              htmlFor="settings-timezone"
+              className="text-xs font-medium text-ink-subtle"
+            >
+              Timezone
+            </label>
+            <select
+              id="settings-timezone"
+              key={currentTimezone}
+              name="timezone"
+              defaultValue={currentTimezone}
+              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            >
+              {timezones.map((zone) => (
+                <option key={zone} value={zone}>
+                  {zone}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-ink-tertiary">
+              Dates and scheduling use this zone.
+            </p>
+          </div>
+
+          <fieldset
+            key={currentUnitSystem}
+            className="flex min-w-0 flex-col gap-1.5"
+          >
+            <legend className="mb-1.5 text-xs font-medium text-ink-subtle">
+              Unit system
+            </legend>
+            <div className="grid h-11 grid-cols-2 gap-1 rounded-control border border-hairline bg-surface-2 p-1">
+              {unitSystemEnum.enumValues.map((value) => (
+                <label
+                  key={value}
+                  className="flex cursor-pointer items-center justify-center rounded-small border border-transparent text-sm font-medium text-ink-subtle hover:text-ink active:text-ink has-[:checked]:border-hairline-strong has-[:checked]:bg-surface-3 has-[:checked]:text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent-focus"
+                >
+                  <input
+                    type="radio"
+                    name="unitSystem"
+                    value={value}
+                    defaultChecked={value === currentUnitSystem}
+                    className="sr-only"
+                  />
+                  {UNIT_SYSTEM_LABELS[value]}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-ink-tertiary">{UNIT_SYSTEM_HINT}</p>
+          </fieldset>
+        </div>
+      </section>
 
       <FormErrorMessage error={state.error} />
 
@@ -105,9 +138,11 @@ export default function SettingsFields({
           `?saved=1` the redirect appends (see app/_components/FormStatus.tsx
           and profile/page.tsx). The pending banner here still matters: it
           covers the gap between clicking Save and that redirect landing. */}
-      <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
-        Save
-      </SubmitButton>
+      <div className="flex sm:justify-end">
+        <SubmitButton className="flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto">
+          Save
+        </SubmitButton>
+      </div>
       <FormPendingBanner label="Saving…" />
     </form>
   );

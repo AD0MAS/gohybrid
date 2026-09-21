@@ -515,8 +515,9 @@ export const goalsRelations = relations(goals, ({ one }) => ({
 // An upcoming or past race/competition/test a user wants a countdown or
 // record for. event_date is `date`, not timestamptz — an event is a
 // calendar day, same reasoning as scheduled_workouts.scheduled_date
-// and personal_records.achieved_at. No is_completed/is_past column: an
-// event is past once event_date < today, same reasoning as
+// and personal_records.achieved_at. event_time is an optional local
+// wall-clock time, like scheduled_time; null is an all-day event. No
+// is_completed/is_past column: an event is past once event_date < today, same reasoning as
 // workout_sessions having no status field and goals having no
 // is_completed column. No FK to goals or scheduled_workouts — linking them
 // would add a column that changes nothing about how either behaves
@@ -530,6 +531,7 @@ export const events = pgTable(
       .references(() => authUsers.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     eventDate: date("event_date").notNull(),
+    eventTime: time("event_time"),
     eventType: eventTypeEnum("event_type").notNull(),
     location: text("location"),
     notes: text("notes"),
