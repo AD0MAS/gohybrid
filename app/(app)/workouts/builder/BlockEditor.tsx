@@ -48,7 +48,7 @@ const ICON_BUTTON_CLASSES =
 const DANGER_ICON_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center rounded-small text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 const ADD_ITEM_CLASSES =
-  `flex h-10 items-center justify-center rounded-control border border-hairline bg-surface-3 ${ADD_BUTTON_TEXT_CLASSES} hover:border-hairline-strong active:border-hairline-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus`;
+  `flex h-10 items-center justify-center rounded-control border border-hairline bg-surface-3 ${ADD_BUTTON_TEXT_CLASSES} hover:border-hairline-tertiary active:border-hairline-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus`;
 
 type BlockEditorProps = {
   block: BuilderBlock;

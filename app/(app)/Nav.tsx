@@ -52,7 +52,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
                 href={href}
                 className={`flex items-center gap-3 rounded-small px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                   isActive(pathname, href)
-                    ? "bg-surface-2 text-ink"
+                    ? "bg-surface-2 text-ink hover:bg-surface-3 active:bg-surface-3"
                     : "text-ink-subtle hover:bg-surface-1 hover:text-ink active:bg-surface-1 active:text-ink"
                 }`}
               >
@@ -88,7 +88,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
             href={href}
             className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
               isActive(pathname, href)
-                ? "text-ink"
+                ? "text-ink active:bg-surface-1"
                 : "text-ink-subtle active:bg-surface-1 active:text-ink"
             }`}
           >

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SITE_URL } from "@/lib/site";
+import TouchActivation from "./TouchActivation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +46,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <TouchActivation />
+        {children}
+      </body>
     </html>
   );
 }

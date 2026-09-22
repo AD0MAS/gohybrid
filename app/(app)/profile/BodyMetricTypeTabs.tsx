@@ -38,7 +38,7 @@ export default function BodyMetricTypeTabs({ tabs }: BodyMetricTypeTabsProps) {
             aria-pressed={active === tab.key}
             className={`min-w-0 flex-1 truncate rounded-control border px-2 py-1.5 text-center text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
               active === tab.key
-                ? "border-hairline-strong bg-surface-3 text-ink"
+                ? "border-hairline-strong bg-surface-3 text-ink hover:border-hairline-tertiary active:border-hairline-tertiary"
                 : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
             }`}
           >

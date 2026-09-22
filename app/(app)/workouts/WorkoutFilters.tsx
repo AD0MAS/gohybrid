@@ -190,7 +190,7 @@ export default function WorkoutFilters({
           aria-pressed={favoritesOnly}
           className={`h-11 w-full rounded-control border px-4 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto sm:shrink-0 ${
             favoritesOnly
-              ? "border-hairline-strong bg-surface-3 text-ink"
+              ? "border-hairline-strong bg-surface-3 text-ink hover:border-hairline-tertiary active:border-hairline-tertiary"
               : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
           }`}
         >
@@ -241,7 +241,7 @@ export default function WorkoutFilters({
                 aria-pressed={active}
                 className={`rounded-small border px-3 py-0.5 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus ${
                   active
-                    ? "border-hairline-strong bg-surface-3 text-ink"
+                    ? "border-hairline-strong bg-surface-3 text-ink hover:border-hairline-tertiary active:border-hairline-tertiary"
                     : "border-hairline bg-surface-2 text-ink-subtle hover:text-ink active:text-ink"
                 }`}
               >
