@@ -1,20 +1,20 @@
 import { isValidUuid } from "./uuid";
 import { checkTextLength, LONG_TEXT_MAX_LENGTH } from "./text-limits";
 
-export type ValidatedScheduleInput = {
+type ValidatedScheduleInput = {
   workoutId: string;
   scheduledDate: string;
   scheduledTime: string | null;
   notes: string | null;
 };
 
-export type ScheduleValidationResult =
+type ScheduleValidationResult =
   | { success: true; data: ValidatedScheduleInput }
   | { success: false; error: string };
 
 /** Raw, untyped scheduling input as received from either a JSON request
  * body or a FormData submission. */
-export type RawScheduleInput = {
+type RawScheduleInput = {
   workoutId?: unknown;
   scheduledDate?: unknown;
   scheduledTime?: unknown;
@@ -142,19 +142,19 @@ export function validateScheduleInput(
   };
 }
 
-export type ValidatedLogPastSessionInput = {
+type ValidatedLogPastSessionInput = {
   workoutId: string;
   date: string;
   time: string | null;
 };
 
-export type LogPastSessionValidationResult =
+type LogPastSessionValidationResult =
   | { success: true; data: ValidatedLogPastSessionInput }
   | { success: false; error: string };
 
 /** Raw, untyped log-past-session input as received from a FormData
  * submission. */
-export type RawLogPastSessionInput = {
+type RawLogPastSessionInput = {
   workoutId?: unknown;
   date?: unknown;
   time?: unknown;

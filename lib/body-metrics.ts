@@ -1,13 +1,14 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { bodyMetrics, bodyMetricTypeEnum } from "@/db/schema";
+import { BODY_METRIC_TYPES } from "@/db/enums";
+import { bodyMetrics } from "@/db/schema";
 import type { ValidatedBodyMetricInput } from "./body-metrics-validation";
 import { diffInDays } from "./dates";
 
 export type BodyMetric = {
   id: string;
   userId: string;
-  metricType: (typeof bodyMetricTypeEnum.enumValues)[number];
+  metricType: (typeof BODY_METRIC_TYPES)[number];
   value: number;
   measuredAt: string;
   notes: string | null;
@@ -34,7 +35,7 @@ function toBodyMetric(row: typeof bodyMetrics.$inferSelect): BodyMetric {
  */
 export async function getBodyMetricsForUser(
   userId: string,
-  metricType?: (typeof bodyMetricTypeEnum.enumValues)[number]
+  metricType?: (typeof BODY_METRIC_TYPES)[number]
 ): Promise<BodyMetric[]> {
   const rows = await db
     .select()
@@ -119,7 +120,7 @@ export async function deleteBodyMetricForUser(
   return deleted.length > 0;
 }
 
-export type BodyMetricTrend = {
+type BodyMetricTrend = {
   /** latest.value - previous.value, in the metric's own stored SI unit
    * (kg/%/bpm) — never pre-converted. Display formatting (unit conversion,
    * sign) happens at the boundary, same as every other stored value in this

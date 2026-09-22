@@ -4,6 +4,7 @@ import { RedirectSuccessBanner } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { getTotalGoalCountForUser } from "@/lib/goals";
 import { parseSavedParam } from "@/lib/search-params";
+import { PAGE_MAIN_CLASSES, SECONDARY_BUTTON_CLASSES_SURFACE_1 } from "../_components/shared-classes";
 import BodyMetricsList from "./BodyMetricsList";
 import EventsList from "./EventsList";
 import GoalForm from "./GoalForm";
@@ -28,15 +29,10 @@ export const metadata: Metadata = {
  * rather than folded into GoalsList itself. Account details and sign-out
  * live on /settings instead, reached via the Settings corner button.
  *
- * GoalForm is rendered twice — once beside Settings (hidden below `sm`),
- * once as its own full-width row underneath (hidden from `sm` up) — because
- * CSS alone can't move one element from "beside Settings" to "its own row"
- * across a breakpoint; two mounts picked by `hidden`/`sm:hidden` is the
- * same "different DOM per breakpoint" tradeoff GoalsList/EventsList/
- * BodyMetricsList/PersonalRecordsList already make by each re-fetching
- * getExerciseCatalog independently rather than sharing one call, so the
- * duplicate fetch this adds is nothing new for this page. Both are hidden
- * only when no goal has ever existed: GoalsList's own hero empty state
+ * GoalForm is rendered once. The header is a CSS grid: below `sm` the title
+ * and Settings share the first row and the Add goal button gets its own
+ * full-width row underneath; from `sm` up all three sit on one row. It is
+ * shown only when a goal has ever existed: GoalsList's own hero empty state
  * already offers the identical action ("Set your first goal") for exactly
  * that case, and showing the header's "Add goal" button too would put two
  * controls that do the same thing on screen at once. Once a goal exists —
@@ -44,7 +40,9 @@ export const metadata: Metadata = {
  * GoalsList's all-archived state used to carry its own in-section copy of
  * this same button, which put it beside every other state's own quiet
  * explanatory text instead of matching them (see GoalsList's own doc
- * comment). `hasAnyGoal` (one `count(*)`, getTotalGoalCountForUser in
+ * comment). The catalog and custom-name queries behind GoalForm, GoalsList
+ * and PersonalRecordsList are `cache()`d, so the sections share one of each
+ * per render. `hasAnyGoal` (one `count(*)`, getTotalGoalCountForUser in
  * lib/goals.ts, counting archived goals too — unlike the total this page
  * used before) is the one query this page adds beyond what each section
  * already fetches for itself — unlike the header summary line ("6 goals · 2
@@ -128,7 +126,7 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
   const hasAnyGoal = totalGoalCount > 0;
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className={PAGE_MAIN_CLASSES}>
       <RedirectSuccessBanner
         show={saved}
         label="Saved"
@@ -136,27 +134,18 @@ export default async function ProfilePage(props: PageProps<"/profile">) {
         nonce={savedParam?.nonce}
       />
 
-      <div className="flex flex-col gap-5 sm:gap-3">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
-            Profile
-          </h1>
-          <div className="flex shrink-0 items-center gap-2">
-            <Link
-              href="/settings"
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            >
-              Settings
-            </Link>
-            {hasAnyGoal && (
-              <div className="hidden sm:block">
-                <GoalForm userId={user.id} />
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-5 sm:grid-cols-[1fr_auto_auto] sm:gap-y-0">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-page-title">
+          Profile
+        </h1>
+        <Link
+          href="/settings"
+          className={SECONDARY_BUTTON_CLASSES_SURFACE_1}
+        >
+          Settings
+        </Link>
         {hasAnyGoal && (
-          <div className="sm:hidden">
+          <div className="col-span-2 sm:col-span-1">
             <GoalForm userId={user.id} />
           </div>
         )}

@@ -1,4 +1,4 @@
-import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
+import { WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { isValidUuid } from "./uuid";
 import { isOneOf } from "./workouts-validation";
 import { SHORT_TEXT_MAX_LENGTH } from "./text-limits";
@@ -17,8 +17,8 @@ const DEFAULT_WORKOUT_SORT: WorkoutSort = "newest";
 
 export type WorkoutListFilters = {
   q?: string;
-  primaryType?: (typeof workoutPrimaryTypeEnum.enumValues)[number];
-  difficulty?: (typeof workoutDifficultyEnum.enumValues)[number];
+  primaryType?: (typeof WORKOUT_PRIMARY_TYPES)[number];
+  difficulty?: (typeof WORKOUT_DIFFICULTIES)[number];
   tagIds?: string[];
   favoritesOnly?: boolean;
   sort: WorkoutSort;
@@ -65,12 +65,12 @@ export function parseWorkoutListSearchParams(
   }
 
   const primaryType = firstValue(searchParams.primaryType);
-  if (isOneOf(primaryType, workoutPrimaryTypeEnum.enumValues)) {
+  if (isOneOf(primaryType, WORKOUT_PRIMARY_TYPES)) {
     filters.primaryType = primaryType;
   }
 
   const difficulty = firstValue(searchParams.difficulty);
-  if (isOneOf(difficulty, workoutDifficultyEnum.enumValues)) {
+  if (isOneOf(difficulty, WORKOUT_DIFFICULTIES)) {
     filters.difficulty = difficulty;
   }
 

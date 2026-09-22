@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState, type ReactNode } from "react";
 import { Pencil } from "lucide-react";
-import { eventTypeEnum } from "@/db/schema";
+import { EVENT_TYPES } from "@/db/enums";
 import {
   FormErrorMessage,
   FormPendingBanner,
@@ -16,15 +16,23 @@ import {
   NAME_MAX_LENGTH,
 } from "@/lib/text-limits";
 import Modal from "../_components/Modal";
+import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { addEvent, updateEvent, type EventFormState } from "./events-actions";
+import { FIELD_CLASSES_SURFACE_2, ICON_BUTTON_CLASSES_32, SECONDARY_BUTTON_CLASSES_SURFACE_2, SUBMIT_BUTTON_CLASSES } from "../_components/shared-classes";
 
 const initialState: EventFormState = { status: "idle" };
 
-// NextEventCard's empty-state button ("Add an event"): full width below sm,
-// sized to its own text from sm up. The section-footer "Add event" on
-// /profile is SECTION_BUTTON_CLASSES instead.
+// NextEventCard's empty-state button ("Add an event") — not
+// SECTION_BUTTON_CLASSES (the section-footer "Add event" on /profile uses
+// that instead): the two differ in more than which file they live in.
+// SECTION_BUTTON_CLASSES is full width and text-centred at every
+// breakpoint, closing a section the same way regardless of screen size;
+// this button is full width only below `sm` and sized to its own text
+// (`sm:w-auto`, no `text-center`) from `sm` up, matching every other
+// empty-state CTA in /profile (BodyMetricFields, GoalFields,
+// PersonalRecordFields).
 const CTA_CLASSES =
   "flex h-10 w-full items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
@@ -45,24 +53,27 @@ type EventFormProps = {
    * caller-supplied trigger reseeds the form from `entry` fresh on every
    * open exactly like the built-in Pencil button does. */
   renderTrigger?: (open: () => void) => ReactNode;
+  /** Only meaningful when `entry` is present: "menu-item" renders "Edit" as
+   * a plain full-width text button (CardMenu's MENU_ITEM_CLASSES) instead
+   * of the default bordered Pencil icon button — EventsList's mobile
+   * CardMenu passes this, same pattern as GoalFields' own triggerVariant. */
+  triggerVariant?: "icon" | "menu-item";
   /** Only meaningful when `entry` is absent and `renderTrigger` isn't
-   * supplied: renders the default Add-event trigger as a full CTA button
-   * with this label instead of the full-width section-footer button —
-   * NextEventCard's empty state passes "Add an event". A plain string, not a
-   * second renderTrigger-shaped callback: NextEventCard, which needs this
-   * variant, is a Server Component, and only serializable props (never
-   * functions) can cross into a Client Component like this one — the same
-   * reason `renderTrigger` itself is documented above as client-caller-only. */
-  ctaLabel?: string;
-  /** Only meaningful when `ctaLabel` is also set: hides the CTA button
-   * itself via `hidden` (display: none) without unmounting this component
-   * — NextEventCard passes this once an event exists, instead of
-   * conditionally rendering (and thereby destroying) the instance itself:
-   * this component's `successCount`/FormSuccessBanner state must survive the
-   * exact render that flips the card from empty to non-empty, since that's
-   * the one save whose own success would otherwise be discarded by
-   * unmounting the very instance that just recorded it. */
-  hidden?: boolean;
+   * supplied — which trigger the Add form gets: "section" (the default) is
+   * the full-width section-footer "Add event" button; "cta" is the
+   * "Add an event" button of NextEventCard's empty state; "none" renders no
+   * trigger at all while the instance stays mounted — NextEventCard passes it
+   * once an event exists, instead of conditionally rendering (and thereby
+   * destroying) the instance itself: this component's
+   * `successCount`/FormSuccessBanner state must survive the exact render that
+   * flips the card from empty to non-empty, since that's the one save whose
+   * own success would otherwise be discarded by unmounting the very instance
+   * that just recorded it. A plain string, not a renderTrigger-shaped
+   * callback: NextEventCard is a Server Component, and only serializable
+   * props (never functions) can cross into a Client Component like this one —
+   * the same reason `renderTrigger` itself is documented above as
+   * client-caller-only. */
+  trigger?: "section" | "cta" | "none";
   /** Where to come back to when this edit moves the event out of the list
    * the form is rendered in — a same-site path (with hash) supplied by the
    * server component that renders the form. Only meaningful with `entry`.
@@ -107,9 +118,12 @@ type EventFormProps = {
  *
  * When `entry` is present, this same component renders as EventsList's
  * per-row edit trigger instead of the section's Add button: a Pencil
- * icon-button in place of the Plus button, "Edit event"/"Save" copy, every
- * field's defaultValue seeded from `entry`, and `updateEvent.bind(null,
- * entry.id)` as the form action in place of addEvent — the bound function
+ * icon-button by default, or a plain "Edit" menu-item button when
+ * `triggerVariant="menu-item"` (the row's mobile CardMenu passes this,
+ * EventsList's own doc comment on the row markup). "Edit event"/"Save"
+ * copy either way, every field's defaultValue seeded from `entry`, and
+ * `updateEvent.bind(null, entry.id)` as the form action in place of
+ * addEvent — the bound function
  * still matches useActionState's (prevState, formData) signature. No unit
  * conversion is needed here (unlike Goal/BodyMetric/PersonalRecord
  * editing) since an event carries no numeric, unit-bearing field.
@@ -144,8 +158,8 @@ type EventFormProps = {
 export default function EventForm({
   entry,
   renderTrigger,
-  ctaLabel,
-  hidden = false,
+  triggerVariant = "icon",
+  trigger = "section",
   returnTo,
   today,
 }: EventFormProps) {
@@ -196,29 +210,28 @@ export default function EventForm({
       {renderTrigger ? (
         renderTrigger(openFresh)
       ) : entry ? (
+        triggerVariant === "menu-item" ? (
+          <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={openFresh}
+            aria-label="Edit"
+            className={ICON_BUTTON_CLASSES_32}
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )
+      ) : trigger === "none" ? null : (
         <button
           type="button"
           onClick={openFresh}
-          aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={trigger === "cta" ? CTA_CLASSES : SECTION_BUTTON_CLASSES}
         >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-        </button>
-      ) : ctaLabel ? (
-        // Swaps the whole className rather than adding a `hidden` attribute
-        // alongside CTA_CLASSES' own `flex` — see GoalFields' matching
-        // button for why: `flex` is author-origin and would beat the
-        // user-agent-origin `[hidden]` rule regardless of order.
-        <button
-          type="button"
-          onClick={openFresh}
-          className={hidden ? "hidden" : CTA_CLASSES}
-        >
-          {ctaLabel}
-        </button>
-      ) : (
-        <button type="button" onClick={openFresh} className={SECTION_BUTTON_CLASSES}>
-          Add event
+          {trigger === "cta" ? "Add an event" : "Add event"}
         </button>
       )}
 
@@ -236,7 +249,7 @@ export default function EventForm({
               defaultValue={fieldDefault("title", entry?.title)}
               required
               maxLength={NAME_MAX_LENGTH}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             />
           </div>
 
@@ -248,9 +261,9 @@ export default function EventForm({
               id={`${uid}-eventType`}
               name="eventType"
               defaultValue={fieldDefault("eventType", entry?.eventType ?? "race")}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             >
-              {eventTypeEnum.enumValues.map((type) => (
+              {EVENT_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {EVENT_TYPE_LABELS[type].label}
                 </option>
@@ -268,7 +281,7 @@ export default function EventForm({
               name="eventDate"
               defaultValue={fieldDefault("eventDate", entry?.eventDate)}
               required
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             />
           </div>
 
@@ -281,7 +294,7 @@ export default function EventForm({
               id={`${uid}-eventTime`}
               name="eventTime"
               defaultValue={fieldDefault("eventTime", entry?.eventTime?.slice(0, 5))}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             />
           </div>
 
@@ -296,7 +309,7 @@ export default function EventForm({
               placeholder="Location (optional)"
               defaultValue={fieldDefault("location", entry?.location ?? "")}
               maxLength={SHORT_TEXT_MAX_LENGTH}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             />
           </div>
 
@@ -311,7 +324,7 @@ export default function EventForm({
               placeholder="Notes (optional)"
               defaultValue={fieldDefault("notes", entry?.notes ?? "")}
               maxLength={LONG_TEXT_MAX_LENGTH}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             />
           </div>
 
@@ -323,11 +336,11 @@ export default function EventForm({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={SECONDARY_BUTTON_CLASSES_SURFACE_2}
             >
               Cancel
             </button>
-            <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+            <SubmitButton className={SUBMIT_BUTTON_CLASSES}>
               {entry ? "Save" : "Add event"}
             </SubmitButton>
           </div>

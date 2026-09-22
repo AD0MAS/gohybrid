@@ -1,12 +1,8 @@
-import type {
-  bodyMetricTypeEnum,
-  personalRecordTypeEnum,
-  unitSystemEnum,
-} from "@/db/schema";
+import type { BODY_METRIC_TYPES, PERSONAL_RECORD_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
-type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
-type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
+type BodyMetricType = (typeof BODY_METRIC_TYPES)[number];
+type PersonalRecordType = (typeof PERSONAL_RECORD_TYPES)[number];
 
 // International definitions — exact, not approximations, so repeated
 // round-trips (kg -> lb -> kg) don't drift.
@@ -39,7 +35,7 @@ export function kgToLb(kg: number): number {
   return kg / KG_PER_LB;
 }
 
-export function lbToKg(lb: number): number {
+function lbToKg(lb: number): number {
   return lb * KG_PER_LB;
 }
 
@@ -47,7 +43,7 @@ export function metresToFeet(m: number): number {
   return m / METRES_PER_FOOT;
 }
 
-export function feetToMetres(ft: number): number {
+function feetToMetres(ft: number): number {
   return ft * METRES_PER_FOOT;
 }
 
@@ -55,7 +51,7 @@ export function metresToMiles(m: number): number {
   return m / METRES_PER_MILE;
 }
 
-export function milesToMetres(mi: number): number {
+function milesToMetres(mi: number): number {
   return mi * METRES_PER_MILE;
 }
 
@@ -63,7 +59,7 @@ export function metresToKm(m: number): number {
   return m / METRES_PER_KM;
 }
 
-export function kmToMetres(km: number): number {
+function kmToMetres(km: number): number {
   return km * METRES_PER_KM;
 }
 
@@ -93,7 +89,7 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-export type DisplayValue = {
+type DisplayValue = {
   value: number;
   unit: string;
 };

@@ -1,7 +1,8 @@
 import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
-import { unitSystemEnum, userSettings } from "@/db/schema";
+import { UNIT_SYSTEMS } from "@/db/enums";
+import { userSettings } from "@/db/schema";
 import {
   APP_TIMEZONE,
   getCurrentDateString,
@@ -9,9 +10,9 @@ import {
 } from "./timezone";
 import type { ValidatedUserSettingsInput } from "./user-settings-validation";
 
-export type UserSettings = {
+type UserSettings = {
   timezone: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
 };
 
 /**
@@ -50,7 +51,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
   return row ?? DEFAULT_USER_SETTINGS;
 }
 
-export type UserContext = UserSettings & {
+type UserContext = UserSettings & {
   /** YYYY-MM-DD, "today" in the user's own timezone — see
    * getCurrentDateString in lib/timezone.ts. Never Postgres's bare
    * `current_date` (UTC) and never a JavaScript Date on the application

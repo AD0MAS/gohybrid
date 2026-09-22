@@ -1,7 +1,7 @@
 // No runtime imports of db/index.ts (or anything that reaches it) on
 // purpose — PersonalRecordFields, GoalFields and ExercisePicker are client
 // components, and importing a value from lib/exercises.ts (which imports
-// `db`, and through it the `postgres` driver — Node-only, needs `fs`) would
+// `db`, and through it the `pg` driver — Node-only, needs `fs`) would
 // pull Drizzle into the browser bundle. The `import type` from db/schema.ts
 // below is erased at compile time, so it doesn't count — same reasoning as
 // lib/numeric-limits.ts's own zero-imports rule, just scoped to "no runtime

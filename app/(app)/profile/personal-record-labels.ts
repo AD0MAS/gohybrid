@@ -1,6 +1,6 @@
-import type { personalRecordTypeEnum } from "@/db/schema";
+import type { PERSONAL_RECORD_TYPES } from "@/db/enums";
 
-type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
+type PersonalRecordType = (typeof PERSONAL_RECORD_TYPES)[number];
 
 /**
  * Display label per personal_record_type enum value — the record type

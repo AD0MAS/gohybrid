@@ -4,6 +4,7 @@ import { getRecentSessionsForUser } from "@/lib/sessions";
 import { toCalendarDayInTimezone } from "@/lib/timezone";
 import { getUserContext } from "@/lib/user-settings";
 import { SECTION_BUTTON_CLASSES } from "./_components/section-button";
+import { PANEL_CLASSES_COMPACT } from "./_components/shared-classes";
 
 const RECENT_ACTIVITY_LIMIT = 3;
 
@@ -28,8 +29,8 @@ export default async function RecentActivity({ userId }: RecentActivityProps) {
   );
 
   return (
-    <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
-      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+    <section className={PANEL_CLASSES_COMPACT}>
+      <h2 className="text-section font-semibold text-ink">
         Recent sessions
       </h2>
 

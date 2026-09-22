@@ -1,28 +1,20 @@
-import type {
-  blockTypeEnum,
-  exercises,
-  tags,
-  targetPresetEnum,
-  targetTypeEnum,
-  volumeTypeEnum,
-  workoutDifficultyEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import type { BLOCK_TYPES, TARGET_PRESETS, TARGET_TYPES, VOLUME_TYPES, WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
+import type { exercises, tags } from "@/db/schema";
 
 // Type-only imports — erased at compile time, so this file never bundles
 // drizzle-orm into the client. The actual enum values (and the exercise
 // catalog) are passed in as props from the (Server Component) page
 // instead.
-export type BlockType = (typeof blockTypeEnum.enumValues)[number];
-export type PrimaryType = (typeof workoutPrimaryTypeEnum.enumValues)[number];
-export type Difficulty = (typeof workoutDifficultyEnum.enumValues)[number];
-export type VolumeType = (typeof volumeTypeEnum.enumValues)[number];
-export type TargetType = (typeof targetTypeEnum.enumValues)[number];
-export type TargetPreset = (typeof targetPresetEnum.enumValues)[number];
+export type BlockType = (typeof BLOCK_TYPES)[number];
+export type PrimaryType = (typeof WORKOUT_PRIMARY_TYPES)[number];
+export type Difficulty = (typeof WORKOUT_DIFFICULTIES)[number];
+export type VolumeType = (typeof VOLUME_TYPES)[number];
+export type TargetType = (typeof TARGET_TYPES)[number];
+export type TargetPreset = (typeof TARGET_PRESETS)[number];
 export type CatalogExercise = typeof exercises.$inferSelect;
 export type CatalogTag = typeof tags.$inferSelect;
 
-export type WorkoutMeta = {
+type WorkoutMeta = {
   title: string;
   description: string;
   // "" is the explicit unselected state — the builder starts empty, so
@@ -95,7 +87,7 @@ export type BuilderState = {
  * Drizzle `numeric` columns, which come back as strings (or null) rather
  * than numbers.
  */
-export type LoadableWorkoutItem = {
+type LoadableWorkoutItem = {
   exerciseId: string | null;
   customName: string | null;
   notes: string | null;
@@ -110,7 +102,7 @@ export type LoadableWorkoutItem = {
 };
 
 /** Shape of one block as returned by getWorkoutForUser, with its items. */
-export type LoadableWorkoutBlock = {
+type LoadableWorkoutBlock = {
   title: string | null;
   blockType: BlockType;
   durationSeconds: number | null;
@@ -124,7 +116,7 @@ export type LoadableWorkoutBlock = {
 /** Shape of one workout_tags join row as returned by getWorkoutForUser —
  * only the field LOAD_WORKOUT reads; the nested `tag` object it also
  * carries is ignored here. */
-export type LoadableWorkoutTagLink = {
+type LoadableWorkoutTagLink = {
   tagId: string;
 };
 
@@ -371,7 +363,7 @@ export type BuilderAction =
   | ToggleTagAction;
 
 /** Empty builder state for a brand-new workout. */
-export function createInitialBuilderState(): BuilderState {
+function createInitialBuilderState(): BuilderState {
   return {
     meta: {
       title: "",
@@ -411,8 +403,8 @@ function omitKeys<T extends object, K extends keyof T>(
 }
 
 /** A block/item without its client-only `pending` flag. */
-export type CommittedItem = Omit<BuilderItem, "pending">;
-export type CommittedBlock = Omit<BuilderBlock, "pending" | "items"> & {
+type CommittedItem = Omit<BuilderItem, "pending">;
+type CommittedBlock = Omit<BuilderBlock, "pending" | "items"> & {
   items: CommittedItem[];
 };
 

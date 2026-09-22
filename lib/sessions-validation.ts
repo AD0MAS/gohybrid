@@ -2,7 +2,7 @@
 export const SESSION_DURATION_MIN_SECONDS = 1;
 export const SESSION_DURATION_MAX_SECONDS = 24 * 60 * 60;
 
-export type SessionDurationResult =
+type SessionDurationResult =
   | { success: true; data: number | null }
   | { success: false; error: string };
 

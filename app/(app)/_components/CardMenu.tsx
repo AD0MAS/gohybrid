@@ -2,11 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { MoreVertical } from "lucide-react";
+import { ICON_BUTTON_CLASSES_32 } from "./shared-classes";
 
-// Same rest/hover/active colour behaviour as every other icon button in
-// the app (ICON_BUTTON_CLASSES/DELETE_ICON_BUTTON_CLASSES in GoalsList and
-// its siblings): text-ink-subtle at rest, text-ink on hover/active for a
-// plain action, text-danger on hover/active only for the destructive one —
+// Same rest/hover/active colour behaviour as every other icon button in the
+// app (ICON_BUTTON_CLASSES_32/DANGER_ICON_BUTTON_CLASSES_32 in
+// shared-classes.ts): text-ink-subtle at rest, text-ink on hover/active for
+// a plain action, text-danger on hover/active only for the destructive one —
 // never red at rest, since resting red would read as a warning already in
 // effect rather than an action waiting to be taken.
 export const MENU_ITEM_CLASSES =
@@ -56,11 +57,12 @@ type CardMenuProps = {
  * Closes on Escape and on a click outside via a document-level listener,
  * attached only while `open` (removed on close/unmount) — the standard
  * "open a popover, listen while it's open" pattern, not a permanent
- * document listener. The trigger carries `aria-haspopup`/`aria-expanded`
- * and the panel `role="menu"`; every item is a real, unstyled-role
- * `<button>` (SubmitButton and ConfirmModal's own trigger both render one),
- * so Tab order alone makes the whole menu keyboard-reachable without any
- * roving-tabindex logic.
+ * document listener. The trigger carries `aria-expanded`/`aria-controls`
+ * and the panel has no ARIA menu roles: this is a disclosure, not a menu —
+ * every item is a real `<button>` or link (SubmitButton and ConfirmModal's
+ * own trigger both render a button), so Tab order alone makes it
+ * keyboard-reachable, and `role="menu"` would promise arrow-key navigation
+ * it does not have.
  *
  * The panel is always mounted — never `{open && <div>{children}</div>}` —
  * and toggles `invisible pointer-events-none` instead. `children` are
@@ -116,20 +118,18 @@ export default function CardMenu({ children }: CardMenuProps) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="More actions"
-        aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className={ICON_BUTTON_CLASSES_32}
       >
         <MoreVertical className="h-4 w-4" aria-hidden="true" />
       </button>
 
       <div
         id={menuId}
-        role="menu"
         aria-hidden={!open}
         onClick={() => setOpen(false)}
-        className={`absolute right-0 top-full z-20 mt-1 flex w-40 flex-col overflow-hidden rounded-card border border-hairline bg-surface-2 py-1 shadow-lg ${open ? "" : "invisible pointer-events-none"}`}
+        className={`absolute right-0 top-full z-20 mt-1 flex w-40 flex-col overflow-hidden rounded-card border border-hairline-strong bg-surface-2 py-1 ${open ? "" : "invisible pointer-events-none"}`}
       >
         {children}
       </div>

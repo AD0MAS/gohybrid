@@ -1,17 +1,17 @@
-import { unitSystemEnum } from "@/db/schema";
+import { UNIT_SYSTEMS } from "@/db/enums";
 import { isOneOf } from "./workouts-validation";
 
 export type ValidatedUserSettingsInput = {
   timezone: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
 };
 
-export type UserSettingsValidationResult =
+type UserSettingsValidationResult =
   | { success: true; data: ValidatedUserSettingsInput }
   | { success: false; error: string };
 
 /** Raw, untyped settings input as received from a FormData submission. */
-export type RawUserSettingsInput = {
+type RawUserSettingsInput = {
   timezone?: unknown;
   unitSystem?: unknown;
 };
@@ -35,7 +35,7 @@ export function validateUserSettingsInput(
   }
 
   const unitSystem = input.unitSystem;
-  if (!isOneOf(unitSystem, unitSystemEnum.enumValues)) {
+  if (!isOneOf(unitSystem, UNIT_SYSTEMS)) {
     return {
       success: false,
       error: "Choose valid units.",

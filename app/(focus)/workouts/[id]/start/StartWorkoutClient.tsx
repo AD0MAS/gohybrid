@@ -8,7 +8,7 @@ import { BLOCK_TYPE_LABELS } from "@/app/(app)/workouts/builder/block-type-label
 import { TARGET_PRESET_LABELS } from "@/app/(app)/workouts/builder/target-preset-labels";
 import { TARGET_TYPE_LABELS } from "@/app/(app)/workouts/builder/target-type-labels";
 import { FormErrorMessage, PendingBanner } from "@/app/_components/FormStatus";
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
 import {
   IDLE_CLOCK,
   clockStatus,
@@ -31,7 +31,7 @@ import { finishWorkout } from "./actions";
 import StartLeaveButton from "./StartLeaveButton";
 
 type Workout = NonNullable<Awaited<ReturnType<typeof getWorkoutForUser>>>;
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
 
 type StartWorkoutClientProps = {
   workout: Workout;
@@ -336,7 +336,7 @@ export default function StartWorkoutClient({
         <div className="flex w-full max-w-[820px] flex-col gap-4 sm:gap-6">
           <section className={`${PANEL} p-4 sm:px-6 sm:py-5`}>
             <div className="mb-3 flex items-baseline justify-between gap-3 sm:mb-3.5">
-              <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+              <h2 className="text-section font-semibold text-ink">
                 Progress
               </h2>
               <span className="text-xs text-ink-tertiary">
@@ -387,7 +387,7 @@ export default function StartWorkoutClient({
                   <li key={block.id} className={`${PANEL} p-4 sm:px-6 sm:pb-[22px] sm:pt-5`}>
                     <div className="mb-3 flex flex-col gap-1.5 sm:mb-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                       <div className="flex min-w-0 items-center gap-2.5">
-                        <h3 className="min-w-0 break-words text-[15px] font-semibold leading-[1.2] text-ink">
+                        <h3 className="min-w-0 break-words text-section font-semibold text-ink">
                           {block.title || `Block ${blockIndex + 1}`}
                         </h3>
                         <span

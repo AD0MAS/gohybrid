@@ -118,6 +118,36 @@ export function FormErrorMessage({
 }
 
 /**
+ * Same inline validation-error message as FormErrorMessage, but for one
+ * field inside the workout builder's client-side draft validation
+ * (BlockEditor, ItemEditor, ExercisePicker) rather than a server action's
+ * `{ error }` result — those components keep a `Record<field, string>` of
+ * their own (see e.g. BlockEditor's `errors` state) instead of a single
+ * action-state error, so each field needs its own instance with its own id.
+ * Takes `id` rather than generating one, since the field the error belongs
+ * to must reference the same id via `aria-describedby` — pass both from a
+ * shared `useId()`-derived value, e.g. `${uid}-sets-error`. Renders outside
+ * the `<label>` (a label's own text is that field's accessible name; an
+ * error nested inside it would be read as part of that name on some screen
+ * readers instead of announced as its own alert).
+ */
+export function FieldError({
+  id,
+  error,
+}: {
+  id: string;
+  error: string | undefined;
+}) {
+  if (!error) return null;
+
+  return (
+    <p id={id} role="alert" className="text-sm text-danger">
+      {error}
+    </p>
+  );
+}
+
+/**
  * Prop-driven counterpart to FormPendingBanner, for a <form> that isn't a
  * React 19 Action (i.e. uses onSubmit instead of action) — useFormStatus
  * only reports pending state for a <form action={...}>, so a form driven by

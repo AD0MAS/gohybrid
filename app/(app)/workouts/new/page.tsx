@@ -1,12 +1,5 @@
 import type { Metadata } from "next";
-import {
-  blockTypeEnum,
-  targetPresetEnum,
-  targetTypeEnum,
-  volumeTypeEnum,
-  workoutDifficultyEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BLOCK_TYPES, TARGET_PRESETS, TARGET_TYPES, VOLUME_TYPES, WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { getTagCatalog } from "@/lib/tags";
@@ -15,6 +8,7 @@ import {
   resolveBackDestination,
   type BackDestination,
 } from "../../_components/back-destination";
+import { PAGE_MAIN_CLASSES } from "../../_components/shared-classes";
 import WorkoutBuilder from "../builder/WorkoutBuilder";
 
 export const metadata: Metadata = {
@@ -60,18 +54,18 @@ export default async function NewWorkoutPage(
   ]);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className={PAGE_MAIN_CLASSES}>
       <WorkoutBuilder
         heading="New workout"
         backHref={back.href}
         backLabel={back.label}
         discardHref={back.href}
-        primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
-        difficultyOptions={workoutDifficultyEnum.enumValues}
-        blockTypeOptions={blockTypeEnum.enumValues}
-        volumeTypeOptions={volumeTypeEnum.enumValues}
-        targetTypeOptions={targetTypeEnum.enumValues}
-        targetPresetOptions={targetPresetEnum.enumValues}
+        primaryTypeOptions={WORKOUT_PRIMARY_TYPES}
+        difficultyOptions={WORKOUT_DIFFICULTIES}
+        blockTypeOptions={BLOCK_TYPES}
+        volumeTypeOptions={VOLUME_TYPES}
+        targetTypeOptions={TARGET_TYPES}
+        targetPresetOptions={TARGET_PRESETS}
         exerciseCatalog={exerciseCatalog}
         tagCatalog={tagCatalog}
         unitSystem={unitSystem}

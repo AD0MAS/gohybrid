@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { ArrowLeft, Check } from "lucide-react";
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
 import { PendingBanner, PendingSubmitButton } from "@/app/_components/FormStatus";
 import { DURATION_MINUTES_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { LONG_TEXT_MAX_LENGTH, NAME_MAX_LENGTH } from "@/lib/text-limits";
@@ -67,7 +67,7 @@ const FOCUS_RING =
 const PANEL_CLASSES =
   "flex min-w-0 flex-col rounded-panel border border-hairline bg-surface-1 p-5 sm:p-6";
 const PANEL_HEADING_CLASSES =
-  "text-[15px] font-semibold leading-[1.2] text-ink";
+  "text-section font-semibold text-ink";
 const FIELD_LABEL_CLASSES = "text-xs font-medium text-ink-subtle";
 const FIELD_HINT_CLASSES = "font-normal text-ink-tertiary";
 const INPUT_CLASSES = `h-11 w-full min-w-0 rounded-control border border-hairline bg-surface-2 px-3 text-base text-ink ${FOCUS_RING}`;
@@ -148,7 +148,7 @@ type WorkoutBuilderProps = {
   /** Threaded down to every item's DistanceInput (via BlockEditor/
    * ItemEditor) for its unit <select> — the read-only page fetches this
    * once via getUserContext, same as PersonalRecordFields/GoalFields. */
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   /** When present, the builder starts pre-loaded from this workout (via
    * the LOAD_WORKOUT reducer action) and Save edits it in place instead
    * of creating a new one. */
@@ -387,7 +387,7 @@ export default function WorkoutBuilder({
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
           </LeaveButton>
-          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-page-title-compact">
             {heading}
           </h1>
         </div>

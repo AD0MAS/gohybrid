@@ -2,15 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { Pencil } from "lucide-react";
-import {
-  bodyMetricTypeEnum,
-  goalDirectionEnum,
-  goalPeriodEnum,
-  goalTypeEnum,
-  personalRecordTypeEnum,
-  unitSystemEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BODY_METRIC_TYPES, GOAL_DIRECTIONS, GOAL_PERIODS, GOAL_TYPES, PERSONAL_RECORD_TYPES, UNIT_SYSTEMS, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import {
   FormErrorMessage,
   FormPendingBanner,
@@ -48,6 +40,13 @@ import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
+import {
+  FIELD_CLASSES_SURFACE_2,
+  ICON_BUTTON_CLASSES_32,
+  SECONDARY_BUTTON_CLASSES_SURFACE_2,
+  SUBMIT_BUTTON_CLASSES,
+  SUBMIT_BUTTON_CLASSES_FULL,
+} from "../_components/shared-classes";
 
 type CatalogExercise = GroupableExercise;
 
@@ -58,7 +57,7 @@ type GoalFieldsProps = {
    * personal_record target-exercise <select> below — mirrors
    * PersonalRecordFields' own use of the same data. */
   customNames: string[];
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   /** Absent renders the Add-goal button + form; present renders a Pencil
    * edit trigger + the same form pre-filled from this goal, submitting to
    * updateGoal instead of addGoal. See the file-level doc comment below for
@@ -102,7 +101,7 @@ const EXISTING_CUSTOM_PREFIX = "existing:";
 // rejects "decrease" for either — fewer sessions or a shorter streak is
 // never the target). Only these two goal_types get a direction choice.
 const DIRECTION_CHOICE_TYPES = new Set<
-  (typeof goalTypeEnum.enumValues)[number]
+  (typeof GOAL_TYPES)[number]
 >(["body_metric", "personal_record"]);
 
 /**
@@ -212,7 +211,7 @@ export default function GoalFields({
             type="button"
             onClick={openFresh}
             aria-label="Edit"
-            className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={ICON_BUTTON_CLASSES_32}
           >
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -228,11 +227,7 @@ export default function GoalFields({
         <button
           type="button"
           onClick={openFresh}
-          className={
-            hidden
-              ? "hidden"
-              : "flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
-          }
+          className={hidden ? "hidden" : SUBMIT_BUTTON_CLASSES_FULL}
         >
           {addLabel}
         </button>
@@ -295,7 +290,7 @@ function deriveSubjectSelection(
 type GoalFormFieldsProps = {
   catalog: CatalogExercise[];
   customNames: string[];
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   entry?: Goal;
   state: GoalFormState;
   formAction: (formData: FormData) => void;
@@ -410,14 +405,14 @@ function GoalFormFields({
     return isOneOf(unit, DISTANCE_INPUT_UNITS) ? unit : undefined;
   }
   const [goalType, setGoalType] =
-    useState<(typeof goalTypeEnum.enumValues)[number]>(() =>
-      isOneOf(submitted?.goalType, goalTypeEnum.enumValues)
+    useState<(typeof GOAL_TYPES)[number]>(() =>
+      isOneOf(submitted?.goalType, GOAL_TYPES)
         ? submitted.goalType
         : entry?.goalType ?? "session_count"
     );
   const [direction, setDirection] =
-    useState<(typeof goalDirectionEnum.enumValues)[number]>(() =>
-      isOneOf(submitted?.direction, goalDirectionEnum.enumValues)
+    useState<(typeof GOAL_DIRECTIONS)[number]>(() =>
+      isOneOf(submitted?.direction, GOAL_DIRECTIONS)
         ? submitted.direction
         : entry?.direction ?? "increase"
     );
@@ -435,16 +430,16 @@ function GoalFormFields({
     : null;
   const isNewCustomName = exerciseId === null && existingCustomName === null;
   const [targetMetricType, setTargetMetricType] =
-    useState<(typeof bodyMetricTypeEnum.enumValues)[number]>(() =>
-      isOneOf(submitted?.targetMetricType, bodyMetricTypeEnum.enumValues)
+    useState<(typeof BODY_METRIC_TYPES)[number]>(() =>
+      isOneOf(submitted?.targetMetricType, BODY_METRIC_TYPES)
         ? submitted.targetMetricType
-        : entry?.targetMetricType ?? bodyMetricTypeEnum.enumValues[0]
+        : entry?.targetMetricType ?? BODY_METRIC_TYPES[0]
     );
   const [targetRecordType, setTargetRecordType] =
-    useState<(typeof personalRecordTypeEnum.enumValues)[number]>(() =>
-      isOneOf(submitted?.targetRecordType, personalRecordTypeEnum.enumValues)
+    useState<(typeof PERSONAL_RECORD_TYPES)[number]>(() =>
+      isOneOf(submitted?.targetRecordType, PERSONAL_RECORD_TYPES)
         ? submitted.targetRecordType
-        : entry?.targetRecordType ?? personalRecordTypeEnum.enumValues[0]
+        : entry?.targetRecordType ?? PERSONAL_RECORD_TYPES[0]
     );
 
   const isHyroxStation =
@@ -490,7 +485,7 @@ function GoalFormFields({
         : goalType;
 
   function handleGoalTypeChange(
-    value: (typeof goalTypeEnum.enumValues)[number]
+    value: (typeof GOAL_TYPES)[number]
   ) {
     setGoalType(value);
     if (!DIRECTION_CHOICE_TYPES.has(value)) {
@@ -595,7 +590,7 @@ function GoalFormFields({
           defaultValue={fieldDefault("title", entry?.title)}
           required
           maxLength={NAME_MAX_LENGTH}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -609,12 +604,12 @@ function GoalFormFields({
           value={goalType}
           onChange={(e) =>
             handleGoalTypeChange(
-              e.target.value as (typeof goalTypeEnum.enumValues)[number]
+              e.target.value as (typeof GOAL_TYPES)[number]
             )
           }
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         >
-          {goalTypeEnum.enumValues.map((type) => (
+          {GOAL_TYPES.map((type) => (
             <option key={type} value={type}>
               {GOAL_TYPE_LABELS[type].label}
             </option>
@@ -634,10 +629,10 @@ function GoalFormFields({
               "targetPrimaryType",
               entry?.targetPrimaryType ?? ""
             )}
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           >
             <option value="">Any type</option>
-            {workoutPrimaryTypeEnum.enumValues.map((type) => (
+            {WORKOUT_PRIMARY_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
               </option>
@@ -657,12 +652,12 @@ function GoalFormFields({
             value={targetMetricType}
             onChange={(e) =>
               setTargetMetricType(
-                e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+                e.target.value as (typeof BODY_METRIC_TYPES)[number]
               )
             }
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           >
-            {bodyMetricTypeEnum.enumValues.map((type) => (
+            {BODY_METRIC_TYPES.map((type) => (
               <option key={type} value={type}>
                 {BODY_METRIC_LABELS[type].label}
               </option>
@@ -685,7 +680,7 @@ function GoalFormFields({
               id={`${uid}-subject`}
               value={subjectSelection}
               onChange={(e) => setSubjectSelection(e.target.value)}
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             >
               <option value="">Custom (new)…</option>
               {customNames.length > 0 && (
@@ -733,7 +728,7 @@ function GoalFormFields({
                   entry?.targetCustomName ?? ""
                 )}
                 maxLength={NAME_MAX_LENGTH}
-                className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className={FIELD_CLASSES_SURFACE_2}
               />
             </div>
           )}
@@ -755,12 +750,12 @@ function GoalFormFields({
               value={targetRecordType}
               onChange={(e) =>
                 setTargetRecordType(
-                  e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+                  e.target.value as (typeof PERSONAL_RECORD_TYPES)[number]
                 )
               }
-              className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_2}
             >
-              {personalRecordTypeEnum.enumValues.map((type) => (
+              {PERSONAL_RECORD_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {PERSONAL_RECORD_LABELS[type].label}
                 </option>
@@ -781,12 +776,12 @@ function GoalFormFields({
             value={direction}
             onChange={(e) =>
               setDirection(
-                e.target.value as (typeof goalDirectionEnum.enumValues)[number]
+                e.target.value as (typeof GOAL_DIRECTIONS)[number]
               )
             }
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           >
-            {goalDirectionEnum.enumValues.map((value) => (
+            {GOAL_DIRECTIONS.map((value) => (
               <option key={value} value={value}>
                 {value === "increase" ? "Increase" : "Decrease"}
               </option>
@@ -805,9 +800,9 @@ function GoalFormFields({
           id={`${uid}-period`}
           name="period"
           defaultValue={fieldDefault("period", entry?.period ?? "week")}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         >
-          {goalPeriodEnum.enumValues.map((period) => (
+          {GOAL_PERIODS.map((period) => (
             <option key={period} value={period}>
               {GOAL_PERIOD_LABELS[period].label}
             </option>
@@ -865,7 +860,7 @@ function GoalFormFields({
                 : undefined
             )}
             placeholder={`Target value (${valueUnit})`}
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           />
         )}
       </div>
@@ -878,11 +873,11 @@ function GoalFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={SECONDARY_BUTTON_CLASSES_SURFACE_2}
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className={SUBMIT_BUTTON_CLASSES}>
           {entry ? "Save" : "Add goal"}
         </SubmitButton>
       </div>

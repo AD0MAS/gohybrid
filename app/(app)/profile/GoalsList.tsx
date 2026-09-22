@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, X } from "lucide-react";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { computeGoalProgress, getGoalsForUser, resolveGoalCurrentValues } from "@/lib/goals";
 import { getDistinctCustomNamesForUser } from "@/lib/personal-records";
@@ -9,23 +9,12 @@ import CardMenu, { MENU_ITEM_CLASSES, MENU_ITEM_DANGER_CLASSES } from "../_compo
 import GoalFields from "./GoalFields";
 import { formatGoalValueText, getGoalSubjectLabel, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { deleteGoal, setGoalArchived } from "./goals-actions";
-
-const ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-// Same low-emphasis bordered-button look as the other /profile section
-// buttons (SECTION_BUTTON_CLASSES) —
-// shared by both of this file's disclosures ("Show N more goals" and
-// "Archived goals") so every disclosure summary in /profile reads as the
-// same kind of control, not a bare native <summary> marker. list-none plus
-// the webkit-marker override suppress the native disclosure triangle,
-// which would otherwise sit oddly next to a bordered button background.
-// flex w-full spans the full panel width below sm — matching every
-// empty-state CTA in /profile — and sm:inline-flex sm:w-auto returns it to
-// sizing on its own text from sm up, same as before.
-const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+import {
+  DANGER_ICON_BUTTON_CLASSES_32,
+  DISCLOSURE_SUMMARY_CLASSES,
+  ICON_BUTTON_CLASSES_32,
+  PANEL_CLASSES,
+} from "../_components/shared-classes";
 
 type GoalsListProps = {
   userId: string;
@@ -66,9 +55,10 @@ type GoalsListProps = {
  * GoalForm's own fetch — and, for the hero empty state's own CTA (see
  * below), so it has it too. Every delete (that CTA aside) is confirmed via
  * ConfirmModal, same component the workout builder's own deletes use.
- * Archived rows keep their original two-icon-button layout (Unarchive,
- * Delete) rather than the same menu — two buttons on a full-width row never
- * had the crowding problem the active cards did.
+ * Archived rows keep their two-icon-button layout (Unarchive, Delete) from
+ * `sm` up — a full-width row never had the crowding problem the active
+ * cards did — and collapse the same two actions into one CardMenu below
+ * `sm`, matching every other /profile row.
  *
  * page.tsx's header shows its own Add-goal button for every state that has
  * ever had a goal — active, all archived, or a mix — and hides it only when
@@ -200,6 +190,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
                 <Archive className="h-4 w-4" aria-hidden="true" />
                 Archive
               </SubmitButton>
+              <FormPendingBanner label="Archiving…" />
             </form>
             <ConfirmModal
               trigger={
@@ -260,11 +251,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
 
   return (
     <section
-      className={
-        isEmpty
-          ? "flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7"
-          : "flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
-      }
+      className={isEmpty ? "flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7" : PANEL_CLASSES}
     >
       {isEmpty ? (
         <>
@@ -284,7 +271,7 @@ export default async function GoalsList({ userId }: GoalsListProps) {
         </>
       ) : (
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Goals</h2>
+          <h2 className="text-section font-semibold text-ink">Goals</h2>
           <span className="text-xs text-ink-tertiary">
             {activeGoals.length} active
           </span>
@@ -418,21 +405,46 @@ export default async function GoalsList({ userId }: GoalsListProps) {
                       {subject ? ` · ${subject}` : ""} · Target {targetText}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
                     <form action={setGoalArchived.bind(null, goal.id, false)}>
-                      <SubmitButton ariaLabel="Unarchive" className={ICON_BUTTON_CLASSES}>
+                      <SubmitButton ariaLabel="Unarchive" className={ICON_BUTTON_CLASSES_32}>
                         <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
                       </SubmitButton>
+                      <FormPendingBanner label="Unarchiving…" />
                     </form>
                     <ConfirmModal
                       trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                      triggerClassName={DELETE_ICON_BUTTON_CLASSES}
+                      triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
                       triggerAriaLabel="Delete"
                       title="Delete goal"
                       description="This removes the goal and its progress. This can't be undone."
                       confirmLabel="Delete"
                       action={deleteGoal.bind(null, goal.id)}
                     />
+                  </div>
+                  <div className="shrink-0 sm:hidden">
+                    <CardMenu>
+                      <form action={setGoalArchived.bind(null, goal.id, false)}>
+                        <SubmitButton className={MENU_ITEM_CLASSES}>
+                          <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
+                          Unarchive
+                        </SubmitButton>
+                        <FormPendingBanner label="Unarchiving…" />
+                      </form>
+                      <ConfirmModal
+                        trigger={
+                          <>
+                            <X className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </>
+                        }
+                        triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                        title="Delete goal"
+                        description="This removes the goal and its progress. This can't be undone."
+                        confirmLabel="Delete"
+                        action={deleteGoal.bind(null, goal.id)}
+                      />
+                    </CardMenu>
                   </div>
                 </div>
               );

@@ -14,6 +14,23 @@ import {
   index,
   primaryKey,
 } from "drizzle-orm/pg-core";
+import {
+  EXERCISE_CATEGORIES,
+  WORKOUT_PRIMARY_TYPES,
+  WORKOUT_DIFFICULTIES,
+  BLOCK_TYPES,
+  VOLUME_TYPES,
+  TARGET_TYPES,
+  TARGET_PRESETS,
+  TAG_COLORS,
+  BODY_METRIC_TYPES,
+  PERSONAL_RECORD_TYPES,
+  GOAL_TYPES,
+  GOAL_DIRECTIONS,
+  GOAL_PERIODS,
+  EVENT_TYPES,
+  UNIT_SYSTEMS,
+} from "./enums";
 
 // Not managed by drizzle-kit (schemaFilter is ["public"]) — declared only
 // as an FK target for Supabase's auth.users table.
@@ -23,106 +40,35 @@ export const authUsers = authSchema.table("users", {
   id: uuid("id").primaryKey(),
 });
 
-export const exerciseCategoryEnum = pgEnum("exercise_category", [
-  "exercise",
-  "run",
-  "rest",
-]);
+export const exerciseCategoryEnum = pgEnum("exercise_category", EXERCISE_CATEGORIES);
 
-export const workoutPrimaryTypeEnum = pgEnum("workout_primary_type", [
-  "running",
-  "strength",
-  "hyrox",
-  "conditioning",
-  "other",
-]);
+export const workoutPrimaryTypeEnum = pgEnum("workout_primary_type", WORKOUT_PRIMARY_TYPES);
 
-export const workoutDifficultyEnum = pgEnum("workout_difficulty", [
-  "low",
-  "medium",
-  "high",
-]);
+export const workoutDifficultyEnum = pgEnum("workout_difficulty", WORKOUT_DIFFICULTIES);
 
-export const blockTypeEnum = pgEnum("block_type", [
-  "for_time",
-  "on_off",
-  "amrap",
-  "emom",
-  "general",
-]);
+export const blockTypeEnum = pgEnum("block_type", BLOCK_TYPES);
 
-export const volumeTypeEnum = pgEnum("volume_type", [
-  "duration",
-  "distance",
-  "reps",
-  "calories",
-]);
+export const volumeTypeEnum = pgEnum("volume_type", VOLUME_TYPES);
 
-export const targetTypeEnum = pgEnum("target_type", [
-  "pace_500m",
-  "pace_km",
-  "cal_per_hour",
-  "watts",
-  "rpe",
-]);
+export const targetTypeEnum = pgEnum("target_type", TARGET_TYPES);
 
-export const targetPresetEnum = pgEnum("target_preset", [
-  "threshold",
-  "race_pace",
-  "zone2",
-  "tempo",
-  "recovery",
-]);
+export const targetPresetEnum = pgEnum("target_preset", TARGET_PRESETS);
 
-export const tagColorEnum = pgEnum("tag_color", [
-  "red",
-  "orange",
-  "green",
-  "blue",
-  "purple",
-  "gray",
-]);
+export const tagColorEnum = pgEnum("tag_color", TAG_COLORS);
 
-export const bodyMetricTypeEnum = pgEnum("body_metric_type", [
-  "weight",
-  "body_fat",
-  "resting_hr",
-]);
+export const bodyMetricTypeEnum = pgEnum("body_metric_type", BODY_METRIC_TYPES);
 
-export const personalRecordTypeEnum = pgEnum("personal_record_type", [
-  "weight",
-  "time",
-  "reps",
-  "distance",
-  "calories",
-]);
+export const personalRecordTypeEnum = pgEnum("personal_record_type", PERSONAL_RECORD_TYPES);
 
-export const goalTypeEnum = pgEnum("goal_type", [
-  "session_count",
-  "streak",
-  "body_metric",
-  "personal_record",
-]);
+export const goalTypeEnum = pgEnum("goal_type", GOAL_TYPES);
 
-export const goalDirectionEnum = pgEnum("goal_direction", [
-  "increase",
-  "decrease",
-]);
+export const goalDirectionEnum = pgEnum("goal_direction", GOAL_DIRECTIONS);
 
-export const goalPeriodEnum = pgEnum("goal_period", [
-  "week",
-  "month",
-  "all_time",
-]);
+export const goalPeriodEnum = pgEnum("goal_period", GOAL_PERIODS);
 
-export const eventTypeEnum = pgEnum("event_type", [
-  "race",
-  "competition",
-  "test",
-  "other",
-]);
+export const eventTypeEnum = pgEnum("event_type", EVENT_TYPES);
 
-export const unitSystemEnum = pgEnum("unit_system", ["metric", "imperial"]);
+export const unitSystemEnum = pgEnum("unit_system", UNIT_SYSTEMS);
 
 export const exercises = pgTable("exercises", {
   id: uuid("id").primaryKey().defaultRandom(),

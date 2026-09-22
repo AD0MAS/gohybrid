@@ -59,6 +59,12 @@ type DurationInputBaseProps = {
    * the /profile forms (PersonalRecordFields, GoalFields) pass "surface-2"
    * to match the surface-2 fields around them inside a surface-1 modal. */
   surface?: "surface-1" | "surface-2";
+  /** The id of this field's FieldError/FormErrorMessage, when one is
+   * showing — applied as `aria-describedby` to every box (the error is
+   * about the composed value, not one particular box) and flips
+   * `aria-invalid` on all three. Undefined when there's nothing to
+   * describe, same as leaving the attributes off entirely. */
+  describedBy?: string;
 };
 
 type UncontrolledDurationInputProps = DurationInputBaseProps & {
@@ -75,7 +81,7 @@ type ControlledDurationInputProps = DurationInputBaseProps & {
   onChange: (seconds: number | null) => void;
 };
 
-export type DurationInputProps =
+type DurationInputProps =
   | UncontrolledDurationInputProps
   | ControlledDurationInputProps;
 
@@ -128,7 +134,7 @@ const BOX_CLASS_NAMES: Record<"surface-1" | "surface-2", string> = {
  * elsewhere in these same forms.
  */
 export default function DurationInput(props: DurationInputProps) {
-  const { maxUnit, className, surface = "surface-1" } = props;
+  const { maxUnit, className, surface = "surface-1", describedBy } = props;
   const isControlled = "onChange" in props;
   const boxClassName = BOX_CLASS_NAMES[surface];
 
@@ -161,6 +167,8 @@ export default function DurationInput(props: DurationInputProps) {
             onChange={(e) => updateBox("h", e.target.value, MAX_HOURS)}
             {...numberInputGuardProps()}
             aria-label="Hours"
+            aria-invalid={describedBy ? true : undefined}
+            aria-describedby={describedBy}
             className={boxClassName}
           />
           <span className="text-ink-subtle">:</span>
@@ -176,6 +184,8 @@ export default function DurationInput(props: DurationInputProps) {
         onChange={(e) => updateBox("m", e.target.value, MAX_MINUTES_OR_SECONDS)}
         {...numberInputGuardProps()}
         aria-label="Minutes"
+        aria-invalid={describedBy ? true : undefined}
+        aria-describedby={describedBy}
         className={boxClassName}
       />
       <span className="text-ink-subtle">:</span>
@@ -189,6 +199,8 @@ export default function DurationInput(props: DurationInputProps) {
         onChange={(e) => updateBox("s", e.target.value, MAX_MINUTES_OR_SECONDS)}
         {...numberInputGuardProps()}
         aria-label="Seconds"
+        aria-invalid={describedBy ? true : undefined}
+        aria-describedby={describedBy}
         className={boxClassName}
       />
       {!isControlled && (

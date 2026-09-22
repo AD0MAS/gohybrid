@@ -1,26 +1,15 @@
 import { X } from "lucide-react";
-import { bodyMetricTypeEnum } from "@/db/schema";
+import { BODY_METRIC_TYPES } from "@/db/enums";
 import { computeBodyMetricTrend, getBodyMetricsForUser } from "@/lib/body-metrics";
 import { formatBodyMetricValue } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
+import CardMenu, { MENU_ITEM_DANGER_CLASSES } from "../_components/CardMenu";
 import BodyMetricFields from "./BodyMetricFields";
 import BodyMetricTypeTabs from "./BodyMetricTypeTabs";
 import { deleteBodyMetric } from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
-
-const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-// Same low-emphasis bordered-button look as the section's own "Add
-// measurement" button (SECTION_BUTTON_CLASSES) — "All readings" reads as the same kind
-// of control as every other quiet button in the app, not a bare native
-// <summary> marker, matching GoalsList's "Show N more goals" and
-// EventsList's "Past events". list-none plus the webkit-marker override
-// suppress the native disclosure triangle. flex w-full spans the full
-// panel width below sm — matching every empty-state CTA in /profile — and
-// sm:inline-flex sm:w-auto returns it to sizing on its own text from sm up.
-const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+import { DANGER_ICON_BUTTON_CLASSES_32, DISCLOSURE_SUMMARY_CLASSES, PANEL_CLASSES } from "../_components/shared-classes";
 
 type BodyMetricsListProps = {
   userId: string;
@@ -64,7 +53,10 @@ function formatDayGap(days: number): string {
  * embeds a BodyMetricFields instance directly (entry={entry}) — same
  * one-modal-per-row wiring as GoalsList/EventsList, since BodyMetricFields
  * already owns its own open/close state and useActionState call. Every
- * delete is confirmed via ConfirmModal.
+ * delete is confirmed via ConfirmModal. Edit and Delete collapse into one
+ * CardMenu below `sm` (BodyMetricFields' `triggerVariant="menu-item"`, same
+ * pattern as GoalsList's card menu) and stay separate icon buttons from
+ * `sm` up, exactly as before.
  *
  * The one "Add measurement" BodyMetricFields is rendered *unconditionally*,
  * in the same spot after the readings, whether or not `isEmpty` — never
@@ -88,16 +80,16 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
 
   const isEmpty = metrics.length === 0;
 
-  const groups = bodyMetricTypeEnum.enumValues
+  const groups = BODY_METRIC_TYPES
     .map((type) => ({ type, entries: metrics.filter((m) => m.metricType === type) }))
     .filter((group) => group.entries.length > 0);
 
   return (
     <section
       id="metrics"
-      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+      className={PANEL_CLASSES}
     >
-      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Body metrics</h2>
+      <h2 className="text-section font-semibold text-ink">Body metrics</h2>
 
       {isEmpty && (
         <p className="text-sm text-ink-subtle">
@@ -184,7 +176,7 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
                             </p>
                           )}
                         </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
+                        <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
                           <BodyMetricFields
                             today={today}
                             unitSystem={unitSystem}
@@ -193,13 +185,37 @@ export default async function BodyMetricsList({ userId }: BodyMetricsListProps) 
                           />
                           <ConfirmModal
                             trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                            triggerClassName={DELETE_ICON_BUTTON_CLASSES}
+                            triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
                             triggerAriaLabel="Delete"
                             title="Delete measurement"
                             description="This removes this measurement. This can't be undone."
                             confirmLabel="Delete"
                             action={deleteBodyMetric.bind(null, entry.id)}
                           />
+                        </div>
+                        <div className="shrink-0 sm:hidden">
+                          <CardMenu>
+                            <BodyMetricFields
+                              today={today}
+                              unitSystem={unitSystem}
+                              entry={entry}
+                              returnTo="/profile#metrics"
+                              triggerVariant="menu-item"
+                            />
+                            <ConfirmModal
+                              trigger={
+                                <>
+                                  <X className="h-4 w-4" aria-hidden="true" />
+                                  Delete
+                                </>
+                              }
+                              triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                              title="Delete measurement"
+                              description="This removes this measurement. This can't be undone."
+                              confirmLabel="Delete"
+                              action={deleteBodyMetric.bind(null, entry.id)}
+                            />
+                          </CardMenu>
                         </div>
                       </li>
                     );

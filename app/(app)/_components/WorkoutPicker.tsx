@@ -1,3 +1,5 @@
+import { FIELD_CLASSES_SURFACE_1 } from "./shared-classes";
+
 type WorkoutPickerProps = {
   workouts: readonly { id: string; title: string }[];
   defaultValue?: string;
@@ -29,7 +31,7 @@ export default function WorkoutPicker({
         name="workoutId"
         defaultValue={defaultValue ?? ""}
         required
-        className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className={FIELD_CLASSES_SURFACE_1}
       >
         <option value="" disabled>
           Select workout…

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
-import { workoutPrimaryTypeEnum, workoutSessions } from "@/db/schema";
+import { WORKOUT_PRIMARY_TYPES } from "@/db/enums";
+import { workoutSessions } from "@/db/schema";
 import { diffInDays } from "./dates";
 
 export type DailySessionCount = {
@@ -92,7 +93,7 @@ export async function getSessionCountForUserInRange(
   return row.count;
 }
 
-export type WeeklySessionCount = {
+type WeeklySessionCount = {
   /** Monday of the week, YYYY-MM-DD, in the query's timezone. */
   weekStart: string;
   count: number;
@@ -130,7 +131,7 @@ export async function getWeeklySessionCountsForUser(
   return rows.map((row) => ({ weekStart: row.week_start, count: row.count }));
 }
 
-export type MonthlySessionCount = {
+type MonthlySessionCount = {
   /** YYYY-MM, in the query's timezone. */
   month: string;
   count: number;
@@ -165,7 +166,7 @@ export async function getMonthlySessionCountsForUser(
 }
 
 export type PrimaryTypeSessionCount = {
-  primaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number];
+  primaryType: (typeof WORKOUT_PRIMARY_TYPES)[number];
   count: number;
 };
 
@@ -206,7 +207,7 @@ export async function getSessionCountsByPrimaryTypeForUser(
   }));
 }
 
-export type StreakSummary = {
+type StreakSummary = {
   /** Consecutive days with a session, ending today or yesterday; 0 if the streak is already broken. */
   current: number;
   /** Longest run of consecutive days with a session, all time. */

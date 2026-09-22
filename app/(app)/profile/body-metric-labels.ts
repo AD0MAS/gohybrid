@@ -1,6 +1,6 @@
-import type { bodyMetricTypeEnum } from "@/db/schema";
+import type { BODY_METRIC_TYPES } from "@/db/enums";
 
-type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
+type BodyMetricType = (typeof BODY_METRIC_TYPES)[number];
 
 /**
  * Display label per body_metric_type enum value — the metric type select

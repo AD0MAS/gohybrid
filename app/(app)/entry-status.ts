@@ -1,6 +1,6 @@
 /**
  * The one place a calendar entry's status becomes a label and a colour.
- * Every surface that shows a status — the week strip's pills, the dots in
+ * Every surface that shows a status — the week strip's badges, the dots in
  * the strip's and the month calendar's day cells, the calendar's legend —
  * reads this table, so a status cannot look different in two places.
  * Dependency-free on purpose: no `db`, no React, so any Server or Client
@@ -42,9 +42,9 @@ export const STATUS_DOT_CLASSES: Record<EntryStatus, string> = {
   event: "bg-accent",
 };
 
-/** Status colour as a tinted pill (the week strip's day cards); each status
+/** Status colour as a tinted badge (the week strip's day cards); each status
  * tints its own colour into the background at low opacity. */
-export const STATUS_PILL_CLASSES: Record<
+export const STATUS_BADGE_CLASSES: Record<
   Exclude<EntryStatus, "event">,
   string
 > = {

@@ -1,4 +1,4 @@
-import { useRef, useState, type Dispatch } from "react";
+import { useId, useRef, useState, type Dispatch } from "react";
 import {
   SortableContext,
   useSortable,
@@ -6,7 +6,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, Pencil, X } from "lucide-react";
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
+import { FieldError } from "@/app/_components/FormStatus";
+import { FIELD_CLASSES_SURFACE_1, SUBMIT_BUTTON_CLASSES } from "../../_components/shared-classes";
 import { ROUNDS_DIGIT_LIMIT } from "@/lib/numeric-limits";
 import { NAME_MAX_LENGTH } from "@/lib/text-limits";
 import {
@@ -62,7 +64,7 @@ type BlockEditorProps = {
   volumeTypeOptions: readonly VolumeType[];
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   dispatch: Dispatch<BuilderAction>;
 };
 
@@ -376,6 +378,14 @@ function BlockEditorModalFields({
 }: BlockEditorModalFieldsProps) {
   const [draft, setDraft] = useState<BlockDraft>(() => draftFromBlock(block));
   const [errors, setErrors] = useState<BuilderBlockDraftErrors>({});
+  const uid = useId();
+  /** This field's FieldError id, always the same string whether or not it
+   * currently has an error — FieldError itself renders nothing (and the id
+   * doesn't exist in the DOM) when there's no error to show, so
+   * `describedByFor` below only passes the id along when it does. */
+  const errorId = (field: keyof BuilderBlockDraftErrors) => `${uid}-${field}-error`;
+  const describedByFor = (field: keyof BuilderBlockDraftErrors) =>
+    errors[field] ? errorId(field) : undefined;
 
   function updateTitle(value: string) {
     setDraft((d) => ({ ...d, title: value }));
@@ -446,127 +456,135 @@ function BlockEditorModalFields({
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm">
-        Block type
-        <select
-          value={draft.blockType}
-          onChange={(e) => updateBlockType(e.target.value as BlockType)}
-          className="rounded-control border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          {blockTypeOptions.map((value) => (
-            <option key={value} value={value}>
-              {BLOCK_TYPE_LABELS[value].label}
-            </option>
-          ))}
-        </select>
-        {errors.blockType && (
-          <p className="text-sm text-danger">{errors.blockType}</p>
-        )}
-      </label>
+      <div className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1">
+          Block type
+          <select
+            value={draft.blockType}
+            onChange={(e) => updateBlockType(e.target.value as BlockType)}
+            aria-invalid={errors.blockType ? true : undefined}
+            aria-describedby={describedByFor("blockType")}
+            className="rounded-control border border-hairline bg-surface-1 p-2 text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          >
+            {blockTypeOptions.map((value) => (
+              <option key={value} value={value}>
+                {BLOCK_TYPE_LABELS[value].label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <FieldError id={errorId("blockType")} error={errors.blockType} />
+      </div>
 
       {(draft.blockType === "for_time" || draft.blockType === "amrap") && (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="flex items-center gap-1">
-            Duration
-            {draft.blockType === "for_time" && (
-              <span className="text-xs text-ink-subtle">(optional)</span>
-            )}
-          </span>
-          <DurationInput
-            key={draft.blockType}
-            maxUnit="hours"
-            valueSeconds={draft.durationSeconds}
-            onChange={(value) => updateTimingField("durationSeconds", value)}
-          />
-          {errors.durationSeconds && (
-            <p className="text-sm text-danger">{errors.durationSeconds}</p>
-          )}
-        </label>
+        <div className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1">
+            <span className="flex items-center gap-1">
+              Duration
+              {draft.blockType === "for_time" && (
+                <span className="text-xs text-ink-subtle">(optional)</span>
+              )}
+            </span>
+            <DurationInput
+              key={draft.blockType}
+              maxUnit="hours"
+              valueSeconds={draft.durationSeconds}
+              onChange={(value) => updateTimingField("durationSeconds", value)}
+              describedBy={describedByFor("durationSeconds")}
+            />
+          </label>
+          <FieldError id={errorId("durationSeconds")} error={errors.durationSeconds} />
+        </div>
       )}
 
       {(draft.blockType === "for_time" ||
         draft.blockType === "on_off" ||
         draft.blockType === "emom") && (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="flex items-center gap-1">
-            Rounds
-            {draft.blockType === "for_time" && (
-              <span className="text-xs text-ink-subtle">(optional)</span>
-            )}
-          </span>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            required={draft.blockType === "on_off" || draft.blockType === "emom"}
-            value={draft.rounds ?? ""}
-            onChange={(e) =>
-              updateTimingField(
-                "rounds",
-                sanitizeNumberInputChange(e, {
-                  min: 1,
-                  digitLimit: ROUNDS_DIGIT_LIMIT,
-                })
-              )
-            }
-            {...numberInputGuardProps()}
-            className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-          />
-          {errors.rounds && (
-            <p className="text-sm text-danger">{errors.rounds}</p>
-          )}
-        </label>
+        <div className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1">
+            <span className="flex items-center gap-1">
+              Rounds
+              {draft.blockType === "for_time" && (
+                <span className="text-xs text-ink-subtle">(optional)</span>
+              )}
+            </span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              required={draft.blockType === "on_off" || draft.blockType === "emom"}
+              value={draft.rounds ?? ""}
+              onChange={(e) =>
+                updateTimingField(
+                  "rounds",
+                  sanitizeNumberInputChange(e, {
+                    min: 1,
+                    digitLimit: ROUNDS_DIGIT_LIMIT,
+                  })
+                )
+              }
+              {...numberInputGuardProps()}
+              aria-invalid={errors.rounds ? true : undefined}
+              aria-describedby={describedByFor("rounds")}
+              className={FIELD_CLASSES_SURFACE_1}
+            />
+          </label>
+          <FieldError id={errorId("rounds")} error={errors.rounds} />
+        </div>
       )}
 
       {draft.blockType === "on_off" && (
         <>
-          <label className="flex flex-col gap-1 text-sm">
-            Work
-            <DurationInput
-              key={draft.blockType}
-              maxUnit="minutes"
-              valueSeconds={draft.workSeconds}
-              onChange={(value) => updateTimingField("workSeconds", value)}
-            />
-            {errors.workSeconds && (
-              <p className="text-sm text-danger">{errors.workSeconds}</p>
-            )}
-          </label>
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              Work
+              <DurationInput
+                key={draft.blockType}
+                maxUnit="minutes"
+                valueSeconds={draft.workSeconds}
+                onChange={(value) => updateTimingField("workSeconds", value)}
+                describedBy={describedByFor("workSeconds")}
+              />
+            </label>
+            <FieldError id={errorId("workSeconds")} error={errors.workSeconds} />
+          </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            Rest
-            <DurationInput
-              key={draft.blockType}
-              maxUnit="minutes"
-              valueSeconds={draft.restSeconds}
-              onChange={(value) => updateTimingField("restSeconds", value)}
-            />
-            {errors.restSeconds && (
-              <p className="text-sm text-danger">{errors.restSeconds}</p>
-            )}
-          </label>
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              Rest
+              <DurationInput
+                key={draft.blockType}
+                maxUnit="minutes"
+                valueSeconds={draft.restSeconds}
+                onChange={(value) => updateTimingField("restSeconds", value)}
+                describedBy={describedByFor("restSeconds")}
+              />
+            </label>
+            <FieldError id={errorId("restSeconds")} error={errors.restSeconds} />
+          </div>
         </>
       )}
 
       {draft.blockType === "emom" && (
-        <label className="flex flex-col gap-1 text-sm">
-          Interval
-          <DurationInput
-            key={draft.blockType}
-            maxUnit="minutes"
-            valueSeconds={draft.intervalSeconds}
-            onChange={(value) => updateTimingField("intervalSeconds", value)}
-          />
-          {errors.intervalSeconds && (
-            <p className="text-sm text-danger">{errors.intervalSeconds}</p>
-          )}
-        </label>
+        <div className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1">
+            Interval
+            <DurationInput
+              key={draft.blockType}
+              maxUnit="minutes"
+              valueSeconds={draft.intervalSeconds}
+              onChange={(value) => updateTimingField("intervalSeconds", value)}
+              describedBy={describedByFor("intervalSeconds")}
+            />
+          </label>
+          <FieldError id={errorId("intervalSeconds")} error={errors.intervalSeconds} />
+        </div>
       )}
 
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className={SUBMIT_BUTTON_CLASSES}
       >
         Save
       </button>

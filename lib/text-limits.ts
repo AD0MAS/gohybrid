@@ -11,7 +11,7 @@
 // precision, which is what that file's DigitLimit/checkDigitLimit are
 // specifically about.
 
-export type TextLengthResult =
+type TextLengthResult =
   | { ok: true; value: string }
   | { ok: false; error: string };
 

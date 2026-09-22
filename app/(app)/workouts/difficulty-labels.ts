@@ -1,6 +1,6 @@
-import type { workoutDifficultyEnum } from "@/db/schema";
+import type { WORKOUT_DIFFICULTIES } from "@/db/enums";
 
-type Difficulty = (typeof workoutDifficultyEnum.enumValues)[number];
+type Difficulty = (typeof WORKOUT_DIFFICULTIES)[number];
 
 /**
  * Display label per difficulty enum value. Same placement reasoning as

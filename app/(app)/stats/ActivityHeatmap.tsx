@@ -6,6 +6,7 @@ import {
   type HeatmapColumn,
 } from "@/lib/heatmap";
 import { getUserContext } from "@/lib/user-settings";
+import { PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 type ActivityHeatmapProps = {
   userId: string;
@@ -122,7 +123,7 @@ function HeatmapGrid({ columns, today, ariaLabel }: HeatmapGridProps) {
               y={y}
               width={CELL}
               height={CELL}
-              rx={2}
+              rx={2} // SVG cell geometry, not a Tailwind radius token
               fill={fillForCount(cell.count)}
               stroke={isToday ? "var(--color-accent)" : "none"}
               strokeWidth={isToday ? 1.25 : 0}
@@ -183,9 +184,9 @@ export default async function ActivityHeatmap({
   const mobileTotal = sumSessions(mobileColumns);
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
+    <section className={PANEL_CLASSES_COMPACT}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Activity</h2>
+        <h2 className="text-section font-semibold text-ink">Activity</h2>
         <p className="text-xs text-ink-tertiary">
           <span className="hidden md:inline">
             {yearTotal} session{yearTotal === 1 ? "" : "s"} · last year

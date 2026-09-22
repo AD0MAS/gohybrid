@@ -1,4 +1,5 @@
 import { and, eq, isNotNull, ne, sql } from "drizzle-orm";
+import { cache } from "react";
 import { db } from "@/db";
 import { personalRecords } from "@/db/schema";
 import type { ValidatedPersonalRecordInput } from "./personal-records-validation";
@@ -176,26 +177,29 @@ export async function resolveCanonicalCustomName(
  * `DISTINCT ON (lower(custom_name))`, ordered by that same lowercased key
  * and then `created_at`, keeps the earliest-recorded spelling per group —
  * the same "first spelling wins" rule resolveCanonicalCustomName applies to
- * new writes, applied here as a read-side backstop for old ones.
+ * new writes, applied here as a read-side backstop for old ones. Wrapped in
+ * React's `cache()` (deduped by `userId`, like getUserContext) so /profile's
+ * sections share one query per render; callers must treat the array as
+ * read-only.
  */
-export async function getDistinctCustomNamesForUser(
-  userId: string
-): Promise<string[]> {
-  const rows = await db
-    .selectDistinctOn([sql`lower(${personalRecords.customName})`], {
-      customName: personalRecords.customName,
-    })
-    .from(personalRecords)
-    .where(
-      and(eq(personalRecords.userId, userId), isNotNull(personalRecords.customName))
-    )
-    .orderBy(sql`lower(${personalRecords.customName})`, personalRecords.createdAt);
+export const getDistinctCustomNamesForUser = cache(
+  async (userId: string): Promise<string[]> => {
+    const rows = await db
+      .selectDistinctOn([sql`lower(${personalRecords.customName})`], {
+        customName: personalRecords.customName,
+      })
+      .from(personalRecords)
+      .where(
+        and(eq(personalRecords.userId, userId), isNotNull(personalRecords.customName))
+      )
+      .orderBy(sql`lower(${personalRecords.customName})`, personalRecords.createdAt);
 
-  return rows
-    .map((row) => row.customName)
-    .filter((name): name is string => name !== null)
-    .sort((a, b) => a.localeCompare(b));
-}
+    return rows
+      .map((row) => row.customName)
+      .filter((name): name is string => name !== null)
+      .sort((a, b) => a.localeCompare(b));
+  }
+);
 
 /**
  * Deletes a personal record owned by `userId`, returning true if a row was

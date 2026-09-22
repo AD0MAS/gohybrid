@@ -1,8 +1,9 @@
-import { useRef, useState, type Dispatch } from "react";
+import { useId, useRef, useState, type Dispatch } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Copy, Pencil, StickyNote, X } from "lucide-react";
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
+import { FieldError } from "@/app/_components/FormStatus";
 import {
   ITEM_CALORIES_DIGIT_LIMIT,
   ITEM_DISTANCE_DIGIT_LIMIT,
@@ -46,6 +47,7 @@ import {
 import { TARGET_PRESET_LABELS } from "./target-preset-labels";
 import { TARGET_TYPE_LABELS } from "./target-type-labels";
 import { VOLUME_TYPE_LABELS } from "./volume-type-labels";
+import { FIELD_CLASSES_SURFACE_1, SUBMIT_BUTTON_CLASSES } from "../../_components/shared-classes";
 
 const ITEM_SUMMARY_LABELS = {
   targetPreset: TARGET_PRESET_LABELS,
@@ -71,7 +73,7 @@ type ItemEditorProps = {
   volumeTypeOptions: readonly VolumeType[];
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   dispatch: Dispatch<BuilderAction>;
 };
 
@@ -115,7 +117,7 @@ type PaceDisplayUnit = "500m" | "km" | "mi";
  * option list, paceDisplayUnit's initializer, and updateExerciseId's
  * becomingRest reset, so the three can't drift. */
 function defaultPaceUnitFor(
-  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+  unitSystem: (typeof UNIT_SYSTEMS)[number]
 ): "km" | "mi" {
   return unitSystem === "imperial" ? "mi" : "km";
 }
@@ -541,7 +543,7 @@ type ItemEditorModalFieldsProps = {
   volumeTypeOptions: readonly VolumeType[];
   targetTypeOptions: readonly TargetType[];
   targetPresetOptions: readonly TargetPreset[];
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   onSave: (draft: ItemDraft) => void;
 };
 
@@ -583,6 +585,12 @@ function ItemEditorModalFields({
 }: ItemEditorModalFieldsProps) {
   const [draft, setDraft] = useState<ItemDraft>(() => draftFromItem(item));
   const [errors, setErrors] = useState<BuilderItemDraftErrors>({});
+  const uid = useId();
+  /** Same always-present-id idiom as BlockEditorModalFields — see its
+   * comment. */
+  const errorId = (field: keyof BuilderItemDraftErrors) => `${uid}-${field}-error`;
+  const describedByFor = (field: keyof BuilderItemDraftErrors) =>
+    errors[field] ? errorId(field) : undefined;
   const [targetMode, setTargetMode] = useState<TargetMode>(() =>
     deriveTargetMode(item)
   );
@@ -807,6 +815,7 @@ function ItemEditorModalFields({
         onChangeExerciseId={updateExerciseId}
         onChangeCustomName={updateCustomName}
         error={errors.exercise}
+        errorId={errorId("exercise")}
       />
 
       {isRestItem ? (
@@ -814,338 +823,360 @@ function ItemEditorModalFields({
         // apply to a rest period, so only the exercise picker above and
         // this one optional rest_seconds time field remain — a rest item
         // saves with no time at all.
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="flex items-center gap-1">
-            Time<span className="text-xs text-ink-subtle">(optional)</span>
-          </span>
-          <DurationInput
-            maxUnit="minutes"
-            valueSeconds={draft.restSeconds}
-            onChange={updateRestSeconds}
-          />
-          {errors.restSeconds && (
-            <p className="text-sm text-danger">{errors.restSeconds}</p>
-          )}
-        </label>
-      ) : (
-        <>
-          <label className="flex flex-col gap-1 text-sm">
-            Sets
-            <input
-              type="number"
-              min={1}
-              step={1}
-              required
-              value={draft.sets ?? ""}
-              onChange={(e) =>
-                updateSets(
-                  sanitizeNumberInputChange(e, {
-                    min: 1,
-                    digitLimit: SETS_DIGIT_LIMIT,
-                  })
-                )
-              }
-              {...numberInputGuardProps()}
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            />
-            {errors.sets && <p className="text-sm text-danger">{errors.sets}</p>}
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            Volume type
-            <select
-              value={draft.volumeType}
-              onChange={(e) => updateVolumeType(e.target.value as VolumeType | "")}
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            >
-              <option value="" disabled>
-                Select a volume type
-              </option>
-              {volumeTypeOptions.map((value) => (
-                <option key={value} value={value}>
-                  {VOLUME_TYPE_LABELS[value].label}
-                </option>
-              ))}
-            </select>
-            {errors.volumeType && (
-              <p className="text-sm text-danger">{errors.volumeType}</p>
-            )}
-          </label>
-
-          {draft.volumeType !== "" && (
-            <label className="flex flex-col gap-1 text-sm">
-              Volume value
-              {draft.volumeType === "duration" ? (
-                <DurationInput
-                  maxUnit="hours"
-                  valueSeconds={draft.volumeValue}
-                  onChange={updateVolumeValue}
-                />
-              ) : draft.volumeType === "distance" ? (
-                <DistanceInput
-                  key={isHyroxStation ? "hyrox" : "standard"}
-                  unitSystem={unitSystem}
-                  isHyroxStation={isHyroxStation}
-                  digitLimit={ITEM_DISTANCE_DIGIT_LIMIT}
-                  valueMetres={draft.volumeValue}
-                  onChange={updateVolumeValue}
-                />
-              ) : (
-                <input
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={draft.volumeValue ?? ""}
-                  onChange={(e) =>
-                    updateVolumeValue(
-                      // min: 1 — a volume of 0 reps/calories is meaningless
-                      // (fix 2: enforced here, at the input, rather than as
-                      // a "> 0" check in validateBuilderItemDraft). Same two
-                      // digit limits validateBuilderPayload's own
-                      // volume_type switch uses for this pair (distance goes
-                      // through DistanceInput above instead).
-                      sanitizeNumberInputChange(e, {
-                        min: 1,
-                        digitLimit:
-                          draft.volumeType === "calories"
-                            ? ITEM_CALORIES_DIGIT_LIMIT
-                            : REPS_DIGIT_LIMIT,
-                      })
-                    )
-                  }
-                  {...numberInputGuardProps()}
-                  className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                />
-              )}
-              {errors.volumeValue && (
-                <p className="text-sm text-danger">{errors.volumeValue}</p>
-              )}
-            </label>
-          )}
-
-          <label className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1">
             <span className="flex items-center gap-1">
-              Target<span className="text-xs text-ink-subtle">(optional)</span>
-            </span>
-            <select
-              value={targetMode}
-              onChange={(e) =>
-                handleTargetModeChange(e.target.value as TargetMode)
-              }
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            >
-              <option value="none">None</option>
-              <option value="intensity_zone">Intensity zone</option>
-              <option value="rpe">{TARGET_TYPE_LABELS.rpe.label}</option>
-              <option value="pace">Pace</option>
-              <option value="cal_per_hour">
-                {TARGET_TYPE_LABELS.cal_per_hour.label}
-              </option>
-              <option value="watts">{TARGET_TYPE_LABELS.watts.label}</option>
-            </select>
-            {errors.targetType && (
-              <p className="text-sm text-danger">{errors.targetType}</p>
-            )}
-          </label>
-
-          {targetMode === "intensity_zone" && (
-            <label className="flex flex-col gap-1 text-sm">
-              Intensity zone
-              <select
-                value={draft.targetPreset}
-                onChange={(e) =>
-                  updateTargetPreset(e.target.value as TargetPreset | "")
-                }
-                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-              >
-                <option value="" disabled>
-                  Select a zone
-                </option>
-                {targetPresetOptions.map((value) => (
-                  <option key={value} value={value}>
-                    {TARGET_PRESET_LABELS[value].label}
-                  </option>
-                ))}
-              </select>
-              {errors.targetPreset && (
-                <p className="text-sm text-danger">{errors.targetPreset}</p>
-              )}
-            </label>
-          )}
-
-          {targetMode === "rpe" && (
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="flex items-center gap-1">
-                {TARGET_TYPE_LABELS.rpe.label}
-                <span className="text-xs text-ink-subtle">(optional)</span>
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                step={1}
-                value={draft.targetValue ?? ""}
-                onChange={(e) =>
-                  updateTargetValue(
-                    // Clamped on every keystroke, not just guarded by the
-                    // min/max attributes above — those only affect the
-                    // native spinner/blur validation, which noValidate on
-                    // the builder's <form> turns off, and typing "11" or
-                    // "-5" directly bypasses them regardless. No matching
-                    // DigitLimit constant exists (or is needed): the 1-10
-                    // range is already tighter than any digit-count cap, so
-                    // `integer: true` alone gets the whole-number rule
-                    // sanitizeLiveNumber's digitLimit branch would
-                    // otherwise provide.
-                    sanitizeNumberInputChange(e, {
-                      min: 1,
-                      max: 10,
-                      integer: true,
-                    })
-                  )
-                }
-                {...numberInputGuardProps()}
-                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-              />
-              {errors.targetValue && (
-                <p className="text-sm text-danger">{errors.targetValue}</p>
-              )}
-            </label>
-          )}
-
-          {targetMode === "pace" && (
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="flex items-center gap-1">
-                Pace<span className="text-xs text-ink-subtle">(optional)</span>
-              </span>
-              <div className="flex items-center gap-2">
-                <DurationInput
-                  key={paceDisplayUnit}
-                  maxUnit="minutes"
-                  valueSeconds={paceValueForDisplay(
-                    draft.targetValue,
-                    paceDisplayUnit
-                  )}
-                  onChange={handlePaceValueChange}
-                />
-                <select
-                  value={paceDisplayUnit}
-                  onChange={(e) =>
-                    handlePaceUnitChange(e.target.value as PaceDisplayUnit)
-                  }
-                  aria-label="Pace unit"
-                  className="h-11 rounded-control border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-                >
-                  <option value="500m">/500m</option>
-                  <option value={defaultPaceUnitFor(unitSystem)}>
-                    /{defaultPaceUnitFor(unitSystem)}
-                  </option>
-                </select>
-              </div>
-              {errors.targetValue && (
-                <p className="text-sm text-danger">{errors.targetValue}</p>
-              )}
-            </label>
-          )}
-
-          {(targetMode === "cal_per_hour" || targetMode === "watts") && (
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="flex items-center gap-1">
-                {TARGET_TYPE_LABELS[targetMode].label}
-                <span className="text-xs text-ink-subtle">(optional)</span>
-              </span>
-              <input
-                type="number"
-                min={1}
-                step={1}
-                value={draft.targetValue ?? ""}
-                onChange={(e) =>
-                  updateTargetValue(
-                    // min: 1 — a cal/h or watts target of 0 means "put in
-                    // no effort," not a real intensity to aim for (fix 2:
-                    // enforced here rather than in
-                    // validateBuilderItemDraft). Cal/h and watts share
-                    // ITEM_TARGET_RATE_DIGIT_LIMIT here too — same constant
-                    // validateBuilderPayload checks target_value against
-                    // for both.
-                    sanitizeNumberInputChange(e, {
-                      min: 1,
-                      digitLimit: ITEM_TARGET_RATE_DIGIT_LIMIT,
-                    })
-                  )
-                }
-                {...numberInputGuardProps()}
-                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-              />
-              {errors.targetValue && (
-                <p className="text-sm text-danger">{errors.targetValue}</p>
-              )}
-            </label>
-          )}
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="flex items-center gap-1">
-              Weight in kg
-              <span className="text-xs text-ink-subtle">(optional)</span>
-            </span>
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={draft.weightKg ?? ""}
-              onChange={(e) =>
-                updateWeightKg(
-                  // min: 0, not a positive floor — weight has no minimum.
-                  // A typed 0 is a legitimate value here (0.5 kg's own
-                  // neighbour), unlike sets/reps/etc where 0 is meaningless
-                  // — a raised min would clamp it away and, since the
-                  // spinner counts up from whatever min is, make the arrows
-                  // produce 1.1/2.1/3.1 instead of whole numbers. "0 kg"
-                  // reading oddly (same meaning as leaving the field blank)
-                  // is instead handled where the value is actually saved:
-                  // ItemEditor's handleSave normalizes an exact 0 to null
-                  // right before dispatching the draft (so the summary row
-                  // never shows it either), and parseBuilderItem
-                  // (lib/workout-builder-validation.ts) does the same for a
-                  // direct POST /api/workouts/full or PATCH
-                  // /api/workouts/[id]/full call, which never reaches this
-                  // component at all. The field itself stays optional/
-                  // empty-able — min only bounds what a *typed* value
-                  // becomes, never forces one. step="any" disables native
-                  // step validation —
-                  // LIFTED_WEIGHT_DIGIT_LIMIT allows any 0.1 (12.5 kg
-                  // included), and the old step 2.5 rejected a typed 82.5's
-                  // own neighbours; the spinner arrows default to
-                  // incrementing by 1, per the HTML spec.
-                  sanitizeNumberInputChange(e, {
-                    min: 0,
-                    digitLimit: LIFTED_WEIGHT_DIGIT_LIMIT,
-                    allowDecimal: true,
-                  })
-                )
-              }
-              {...numberInputGuardProps({ allowDecimal: true })}
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-            />
-            {errors.weightKg && (
-              <p className="text-sm text-danger">{errors.weightKg}</p>
-            )}
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="flex items-center gap-1">
-              Rest between sets
-              <span className="text-xs text-ink-subtle">(optional)</span>
+              Time<span className="text-xs text-ink-subtle">(optional)</span>
             </span>
             <DurationInput
               maxUnit="minutes"
               valueSeconds={draft.restSeconds}
               onChange={updateRestSeconds}
+              describedBy={describedByFor("restSeconds")}
             />
-            {errors.restSeconds && (
-              <p className="text-sm text-danger">{errors.restSeconds}</p>
-            )}
           </label>
+          <FieldError id={errorId("restSeconds")} error={errors.restSeconds} />
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              Sets
+              <input
+                type="number"
+                min={1}
+                step={1}
+                required
+                value={draft.sets ?? ""}
+                onChange={(e) =>
+                  updateSets(
+                    sanitizeNumberInputChange(e, {
+                      min: 1,
+                      digitLimit: SETS_DIGIT_LIMIT,
+                    })
+                  )
+                }
+                {...numberInputGuardProps()}
+                aria-invalid={errors.sets ? true : undefined}
+                aria-describedby={describedByFor("sets")}
+                className={FIELD_CLASSES_SURFACE_1}
+              />
+            </label>
+            <FieldError id={errorId("sets")} error={errors.sets} />
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              Volume type
+              <select
+                value={draft.volumeType}
+                onChange={(e) => updateVolumeType(e.target.value as VolumeType | "")}
+                aria-invalid={errors.volumeType ? true : undefined}
+                aria-describedby={describedByFor("volumeType")}
+                className={FIELD_CLASSES_SURFACE_1}
+              >
+                <option value="" disabled>
+                  Select a volume type
+                </option>
+                {volumeTypeOptions.map((value) => (
+                  <option key={value} value={value}>
+                    {VOLUME_TYPE_LABELS[value].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FieldError id={errorId("volumeType")} error={errors.volumeType} />
+          </div>
+
+          {draft.volumeType !== "" && (
+            <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1">
+                Volume value
+                {draft.volumeType === "duration" ? (
+                  <DurationInput
+                    maxUnit="hours"
+                    valueSeconds={draft.volumeValue}
+                    onChange={updateVolumeValue}
+                    describedBy={describedByFor("volumeValue")}
+                  />
+                ) : draft.volumeType === "distance" ? (
+                  <DistanceInput
+                    key={isHyroxStation ? "hyrox" : "standard"}
+                    unitSystem={unitSystem}
+                    isHyroxStation={isHyroxStation}
+                    digitLimit={ITEM_DISTANCE_DIGIT_LIMIT}
+                    valueMetres={draft.volumeValue}
+                    onChange={updateVolumeValue}
+                  />
+                ) : (
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={draft.volumeValue ?? ""}
+                    onChange={(e) =>
+                      updateVolumeValue(
+                        // min: 1 — a volume of 0 reps/calories is meaningless
+                        // (fix 2: enforced here, at the input, rather than as
+                        // a "> 0" check in validateBuilderItemDraft). Same two
+                        // digit limits validateBuilderPayload's own
+                        // volume_type switch uses for this pair (distance goes
+                        // through DistanceInput above instead).
+                        sanitizeNumberInputChange(e, {
+                          min: 1,
+                          digitLimit:
+                            draft.volumeType === "calories"
+                              ? ITEM_CALORIES_DIGIT_LIMIT
+                              : REPS_DIGIT_LIMIT,
+                        })
+                      )
+                    }
+                    {...numberInputGuardProps()}
+                    aria-invalid={errors.volumeValue ? true : undefined}
+                    aria-describedby={describedByFor("volumeValue")}
+                    className={FIELD_CLASSES_SURFACE_1}
+                  />
+                )}
+              </label>
+              <FieldError id={errorId("volumeValue")} error={errors.volumeValue} />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              <span className="flex items-center gap-1">
+                Target<span className="text-xs text-ink-subtle">(optional)</span>
+              </span>
+              <select
+                value={targetMode}
+                onChange={(e) =>
+                  handleTargetModeChange(e.target.value as TargetMode)
+                }
+                aria-invalid={errors.targetType ? true : undefined}
+                aria-describedby={describedByFor("targetType")}
+                className={FIELD_CLASSES_SURFACE_1}
+              >
+                <option value="none">None</option>
+                <option value="intensity_zone">Intensity zone</option>
+                <option value="rpe">{TARGET_TYPE_LABELS.rpe.label}</option>
+                <option value="pace">Pace</option>
+                <option value="cal_per_hour">
+                  {TARGET_TYPE_LABELS.cal_per_hour.label}
+                </option>
+                <option value="watts">{TARGET_TYPE_LABELS.watts.label}</option>
+              </select>
+            </label>
+            <FieldError id={errorId("targetType")} error={errors.targetType} />
+          </div>
+
+          {targetMode === "intensity_zone" && (
+            <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1">
+                Intensity zone
+                <select
+                  value={draft.targetPreset}
+                  onChange={(e) =>
+                    updateTargetPreset(e.target.value as TargetPreset | "")
+                  }
+                  aria-invalid={errors.targetPreset ? true : undefined}
+                  aria-describedby={describedByFor("targetPreset")}
+                  className={FIELD_CLASSES_SURFACE_1}
+                >
+                  <option value="" disabled>
+                    Select a zone
+                  </option>
+                  {targetPresetOptions.map((value) => (
+                    <option key={value} value={value}>
+                      {TARGET_PRESET_LABELS[value].label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <FieldError id={errorId("targetPreset")} error={errors.targetPreset} />
+            </div>
+          )}
+
+          {targetMode === "rpe" && (
+            <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1">
+                <span className="flex items-center gap-1">
+                  {TARGET_TYPE_LABELS.rpe.label}
+                  <span className="text-xs text-ink-subtle">(optional)</span>
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={draft.targetValue ?? ""}
+                  onChange={(e) =>
+                    updateTargetValue(
+                      // Clamped on every keystroke, not just guarded by the
+                      // min/max attributes above — those only affect the
+                      // native spinner/blur validation, which noValidate on
+                      // the builder's <form> turns off, and typing "11" or
+                      // "-5" directly bypasses them regardless. No matching
+                      // DigitLimit constant exists (or is needed): the 1-10
+                      // range is already tighter than any digit-count cap, so
+                      // `integer: true` alone gets the whole-number rule
+                      // sanitizeLiveNumber's digitLimit branch would
+                      // otherwise provide.
+                      sanitizeNumberInputChange(e, {
+                        min: 1,
+                        max: 10,
+                        integer: true,
+                      })
+                    )
+                  }
+                  {...numberInputGuardProps()}
+                  aria-invalid={errors.targetValue ? true : undefined}
+                  aria-describedby={describedByFor("targetValue")}
+                  className={FIELD_CLASSES_SURFACE_1}
+                />
+              </label>
+              <FieldError id={errorId("targetValue")} error={errors.targetValue} />
+            </div>
+          )}
+
+          {targetMode === "pace" && (
+            <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1">
+                <span className="flex items-center gap-1">
+                  Pace<span className="text-xs text-ink-subtle">(optional)</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <DurationInput
+                    key={paceDisplayUnit}
+                    maxUnit="minutes"
+                    valueSeconds={paceValueForDisplay(
+                      draft.targetValue,
+                      paceDisplayUnit
+                    )}
+                    onChange={handlePaceValueChange}
+                    describedBy={describedByFor("targetValue")}
+                  />
+                  <select
+                    value={paceDisplayUnit}
+                    onChange={(e) =>
+                      handlePaceUnitChange(e.target.value as PaceDisplayUnit)
+                    }
+                    aria-label="Pace unit"
+                    className="h-11 rounded-control border border-hairline bg-surface-1 px-2 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                  >
+                    <option value="500m">/500m</option>
+                    <option value={defaultPaceUnitFor(unitSystem)}>
+                      /{defaultPaceUnitFor(unitSystem)}
+                    </option>
+                  </select>
+                </div>
+              </label>
+              <FieldError id={errorId("targetValue")} error={errors.targetValue} />
+            </div>
+          )}
+
+          {(targetMode === "cal_per_hour" || targetMode === "watts") && (
+            <div className="flex flex-col gap-1 text-sm">
+              <label className="flex flex-col gap-1">
+                <span className="flex items-center gap-1">
+                  {TARGET_TYPE_LABELS[targetMode].label}
+                  <span className="text-xs text-ink-subtle">(optional)</span>
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={draft.targetValue ?? ""}
+                  onChange={(e) =>
+                    updateTargetValue(
+                      // min: 1 — a cal/h or watts target of 0 means "put in
+                      // no effort," not a real intensity to aim for (fix 2:
+                      // enforced here rather than in
+                      // validateBuilderItemDraft). Cal/h and watts share
+                      // ITEM_TARGET_RATE_DIGIT_LIMIT here too — same constant
+                      // validateBuilderPayload checks target_value against
+                      // for both.
+                      sanitizeNumberInputChange(e, {
+                        min: 1,
+                        digitLimit: ITEM_TARGET_RATE_DIGIT_LIMIT,
+                      })
+                    )
+                  }
+                  {...numberInputGuardProps()}
+                  aria-invalid={errors.targetValue ? true : undefined}
+                  aria-describedby={describedByFor("targetValue")}
+                  className={FIELD_CLASSES_SURFACE_1}
+                />
+              </label>
+              <FieldError id={errorId("targetValue")} error={errors.targetValue} />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              <span className="flex items-center gap-1">
+                Weight in kg
+                <span className="text-xs text-ink-subtle">(optional)</span>
+              </span>
+              <input
+                type="number"
+                min={0}
+                step="any"
+                value={draft.weightKg ?? ""}
+                onChange={(e) =>
+                  updateWeightKg(
+                    // min: 0, not a positive floor — weight has no minimum.
+                    // A typed 0 is a legitimate value here (0.5 kg's own
+                    // neighbour), unlike sets/reps/etc where 0 is meaningless
+                    // — a raised min would clamp it away and, since the
+                    // spinner counts up from whatever min is, make the arrows
+                    // produce 1.1/2.1/3.1 instead of whole numbers. "0 kg"
+                    // reading oddly (same meaning as leaving the field blank)
+                    // is instead handled where the value is actually saved:
+                    // ItemEditor's handleSave normalizes an exact 0 to null
+                    // right before dispatching the draft (so the summary row
+                    // never shows it either), and parseBuilderItem
+                    // (lib/workout-builder-validation.ts) does the same for a
+                    // direct POST /api/workouts/full or PATCH
+                    // /api/workouts/[id]/full call, which never reaches this
+                    // component at all. The field itself stays optional/
+                    // empty-able — min only bounds what a *typed* value
+                    // becomes, never forces one. step="any" disables native
+                    // step validation —
+                    // LIFTED_WEIGHT_DIGIT_LIMIT allows any 0.1 (12.5 kg
+                    // included), and the old step 2.5 rejected a typed 82.5's
+                    // own neighbours; the spinner arrows default to
+                    // incrementing by 1, per the HTML spec.
+                    sanitizeNumberInputChange(e, {
+                      min: 0,
+                      digitLimit: LIFTED_WEIGHT_DIGIT_LIMIT,
+                      allowDecimal: true,
+                    })
+                  )
+                }
+                {...numberInputGuardProps({ allowDecimal: true })}
+                aria-invalid={errors.weightKg ? true : undefined}
+                aria-describedby={describedByFor("weightKg")}
+                className={FIELD_CLASSES_SURFACE_1}
+              />
+            </label>
+            <FieldError id={errorId("weightKg")} error={errors.weightKg} />
+          </div>
+
+          <div className="flex flex-col gap-1 text-sm">
+            <label className="flex flex-col gap-1">
+              <span className="flex items-center gap-1">
+                Rest between sets
+                <span className="text-xs text-ink-subtle">(optional)</span>
+              </span>
+              <DurationInput
+                maxUnit="minutes"
+                valueSeconds={draft.restSeconds}
+                onChange={updateRestSeconds}
+                describedBy={describedByFor("restSeconds")}
+              />
+            </label>
+            <FieldError id={errorId("restSeconds")} error={errors.restSeconds} />
+          </div>
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="flex items-center gap-1">
@@ -1164,7 +1195,7 @@ function ItemEditorModalFields({
       <button
         type="button"
         onClick={handleSaveClick}
-        className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+        className={SUBMIT_BUTTON_CLASSES}
       >
         Save
       </button>

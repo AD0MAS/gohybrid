@@ -1,6 +1,6 @@
-import type { volumeTypeEnum } from "@/db/schema";
+import type { VOLUME_TYPES } from "@/db/enums";
 
-type VolumeType = (typeof volumeTypeEnum.enumValues)[number];
+type VolumeType = (typeof VOLUME_TYPES)[number];
 
 /**
  * Display label per volume_type enum value — the volume type select and the

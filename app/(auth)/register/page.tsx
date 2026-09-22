@@ -3,6 +3,7 @@ import Link from "next/link";
 import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signUp } from "../actions";
 import PasswordField from "../PasswordField";
+import { FIELD_CLASSES_SURFACE_1, SUBMIT_BUTTON_CLASSES } from "@/app/(app)/_components/shared-classes";
 
 export const metadata: Metadata = {
   title: "Register",
@@ -39,7 +40,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
                 type="email"
                 name="email"
                 required
-                className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+                className={FIELD_CLASSES_SURFACE_1}
               />
             </label>
 
@@ -53,7 +54,7 @@ export default async function RegisterPage(props: PageProps<"/register">) {
               />
             </label>
 
-            <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+            <SubmitButton className={SUBMIT_BUTTON_CLASSES}>
               Create account
             </SubmitButton>
             <FormPendingBanner label="Creating your account…" />

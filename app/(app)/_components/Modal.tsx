@@ -134,10 +134,10 @@ export default function Modal({
       className="visible fixed inset-0 m-auto max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-panel border border-hairline bg-surface-1 p-0 pointer-events-auto text-ink backdrop:bg-black/50"
     >
       <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-hairline bg-surface-1 p-4">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">{title}</h2>
+        <div className="min-w-0">
+          <h2 className="break-words text-lg font-semibold text-ink">{title}</h2>
           {description && (
-            <p id={descriptionId} className="mt-1 text-sm text-ink-subtle">
+            <p id={descriptionId} className="mt-1 break-words text-sm text-ink-subtle">
               {description}
             </p>
           )}

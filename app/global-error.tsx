@@ -24,6 +24,9 @@ export default function GlobalError({
   }, [error]);
 
   return (
+    // Inline hex and pixel values on purpose: this component replaces the root
+    // layout when it renders, so globals.css (and every Tailwind token) is not
+    // loaded here. The values mirror canvas, ink, ink-subtle and accent.
     <html lang="en">
       <body style={{ background: "#010102", margin: 0 }}>
         <main

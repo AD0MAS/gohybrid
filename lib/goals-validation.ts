@@ -1,12 +1,4 @@
-import {
-  bodyMetricTypeEnum,
-  goalDirectionEnum,
-  goalPeriodEnum,
-  goalTypeEnum,
-  personalRecordTypeEnum,
-  unitSystemEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BODY_METRIC_TYPES, GOAL_DIRECTIONS, GOAL_PERIODS, GOAL_TYPES, PERSONAL_RECORD_TYPES, UNIT_SYSTEMS, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { formatWeightKg } from "./units";
 import {
   BODY_FAT_DIGIT_LIMIT,
@@ -22,34 +14,34 @@ import { isValidUuid } from "./uuid";
 import { isOneOf } from "./workouts-validation";
 import { checkTextLength, NAME_MAX_LENGTH } from "./text-limits";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
 
 export type ValidatedGoalInput = {
   title: string;
-  goalType: (typeof goalTypeEnum.enumValues)[number];
-  direction: (typeof goalDirectionEnum.enumValues)[number];
-  period: (typeof goalPeriodEnum.enumValues)[number];
+  goalType: (typeof GOAL_TYPES)[number];
+  direction: (typeof GOAL_DIRECTIONS)[number];
+  period: (typeof GOAL_PERIODS)[number];
   targetValue: number;
   /** Always null here — a decrease goal's starting value is never typed by
    * the user, it's resolved server-side from the goal's own data source at
    * creation/re-target time. See addGoal/updateGoal in goals-actions.ts,
    * which overwrite this field after validation succeeds. */
   startValue: number | null;
-  targetPrimaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number] | null;
-  targetMetricType: (typeof bodyMetricTypeEnum.enumValues)[number] | null;
+  targetPrimaryType: (typeof WORKOUT_PRIMARY_TYPES)[number] | null;
+  targetMetricType: (typeof BODY_METRIC_TYPES)[number] | null;
   targetExerciseId: string | null;
   targetCustomName: string | null;
-  targetRecordType: (typeof personalRecordTypeEnum.enumValues)[number] | null;
+  targetRecordType: (typeof PERSONAL_RECORD_TYPES)[number] | null;
 };
 
-export type GoalValidationResult =
+type GoalValidationResult =
   | { success: true; data: ValidatedGoalInput }
   | { success: false; error: string };
 
 /** Raw, untyped goal input as received from a FormData submission. No
  * startValue field — see ValidatedGoalInput's comment on why it's never
  * part of form input. */
-export type RawGoalInput = {
+type RawGoalInput = {
   title?: unknown;
   goalType?: unknown;
   direction?: unknown;
@@ -199,7 +191,7 @@ export function validateGoalInput(
   }
 
   const goalType = input.goalType;
-  if (!isOneOf(goalType, goalTypeEnum.enumValues)) {
+  if (!isOneOf(goalType, GOAL_TYPES)) {
     return {
       success: false,
       error: "Choose a valid goal type.",
@@ -207,7 +199,7 @@ export function validateGoalInput(
   }
 
   const direction = input.direction;
-  if (!isOneOf(direction, goalDirectionEnum.enumValues)) {
+  if (!isOneOf(direction, GOAL_DIRECTIONS)) {
     return {
       success: false,
       error: "Choose a valid direction.",
@@ -215,7 +207,7 @@ export function validateGoalInput(
   }
 
   const period = input.period;
-  if (!isOneOf(period, goalPeriodEnum.enumValues)) {
+  if (!isOneOf(period, GOAL_PERIODS)) {
     return {
       success: false,
       error: "Choose a valid period.",
@@ -262,7 +254,7 @@ export function validateGoalInput(
       : null;
   if (
     targetPrimaryType !== null &&
-    !isOneOf(targetPrimaryType, workoutPrimaryTypeEnum.enumValues)
+    !isOneOf(targetPrimaryType, WORKOUT_PRIMARY_TYPES)
   ) {
     return {
       success: false,
@@ -277,7 +269,7 @@ export function validateGoalInput(
       : null;
   if (
     targetMetricType !== null &&
-    !isOneOf(targetMetricType, bodyMetricTypeEnum.enumValues)
+    !isOneOf(targetMetricType, BODY_METRIC_TYPES)
   ) {
     return {
       success: false,
@@ -317,7 +309,7 @@ export function validateGoalInput(
       : null;
   if (
     targetRecordType !== null &&
-    !isOneOf(targetRecordType, personalRecordTypeEnum.enumValues)
+    !isOneOf(targetRecordType, PERSONAL_RECORD_TYPES)
   ) {
     return {
       success: false,

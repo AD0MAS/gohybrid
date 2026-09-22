@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, X } from "lucide-react";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import type { Event } from "@/lib/events";
 import { formatEventTime } from "@/lib/events-format";
 import { EVENT_TYPE_LABELS } from "../profile/event-labels";
@@ -18,7 +18,7 @@ type EventCardProps = {
 
 /**
  * One event rendered as a day card, the same shape as WeekStrip's own
- * scheduled-workout cards — title, a pill, a CardMenu — for WeekStrip's day
+ * scheduled-workout cards — title, a badge, a CardMenu — for WeekStrip's day
  * list. A client component (unlike WeekStrip and MonthCalendar, both Server
  * Components)
  * purely so it can hand EventForm's `renderTrigger` a function: that prop
@@ -89,6 +89,7 @@ export default function EventCard({ event, returnTo }: EventCardProps) {
             <X className="h-4 w-4" aria-hidden="true" />
             Remove
           </SubmitButton>
+          <FormPendingBanner label="Removing…" />
         </form>
       </CardMenu>
     </li>

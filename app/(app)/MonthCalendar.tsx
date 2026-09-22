@@ -15,6 +15,7 @@ import {
   SECTION_BUTTON_DISABLED_CLASSES,
 } from "./_components/section-button";
 import Link from "next/link";
+import { PANEL_CLASSES } from "./_components/shared-classes";
 
 type MonthCalendarProps = {
   userId: string;
@@ -57,7 +58,7 @@ export default async function MonthCalendar({
     );
 
   return (
-    <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
+    <section className={PANEL_CLASSES}>
       <NavHeader
         heading={formatMonthYearHeading(getFirstDayOfMonth(view.month))}
         prevHref={monthHref(-1)}
@@ -71,7 +72,6 @@ export default async function MonthCalendar({
         today={view.today}
         selectedDate={view.selectedDate}
         entriesByDate={groupEntriesByDate(scheduled, events)}
-        shape="square"
         dimOutsideMonth={view.month}
       />
 

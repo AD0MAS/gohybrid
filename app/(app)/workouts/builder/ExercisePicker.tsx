@@ -1,6 +1,8 @@
+import { FieldError } from "@/app/_components/FormStatus";
 import { groupExercisesForSelect } from "@/lib/exercise-groups";
 import { NAME_MAX_LENGTH } from "@/lib/text-limits";
 import type { CatalogExercise } from "./reducer";
+import { FIELD_CLASSES_SURFACE_1 } from "../../_components/shared-classes";
 
 const CUSTOM_VALUE = "custom";
 
@@ -21,6 +23,10 @@ type ExercisePickerProps = {
    * exercise or a custom name", "cannot have both") is about the pair, not
    * either field alone. */
   error?: string;
+  /** This field's FieldError id, supplied by ItemEditor (its own `errorId`
+   * helper) so both the select and the custom-name input can point
+   * `aria-describedby` at the same message — see ItemEditor's comment. */
+  errorId: string;
 };
 
 /**
@@ -55,9 +61,11 @@ export default function ExercisePicker({
   onChangeExerciseId,
   onChangeCustomName,
   error,
+  errorId,
 }: ExercisePickerProps) {
   const selectValue = exerciseId ?? (customName !== null ? CUSTOM_VALUE : "");
   const groups = groupExercisesForSelect(catalog);
+  const describedBy = error ? errorId : undefined;
 
   function handleSelectChange(value: string) {
     if (value === CUSTOM_VALUE) {
@@ -75,7 +83,9 @@ export default function ExercisePicker({
         <select
           value={selectValue}
           onChange={(e) => handleSelectChange(e.target.value)}
-          className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          className={FIELD_CLASSES_SURFACE_1}
         >
           <option value="">Select exercise…</option>
           <option value={CUSTOM_VALUE}>Custom (new)…</option>
@@ -98,11 +108,13 @@ export default function ExercisePicker({
           value={customName ?? ""}
           onChange={(e) => onChangeCustomName(e.target.value)}
           placeholder="Custom name"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
           className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
         />
       )}
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      <FieldError id={errorId} error={error} />
     </div>
   );
 }

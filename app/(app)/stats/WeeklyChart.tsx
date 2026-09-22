@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import { getWeeklySessionCountsForUser } from "@/lib/activity";
 import { formatDayMonthShort, getWeekStartsEndingAt } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
+import { PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 type WeeklyChartProps = {
   userId: string;
@@ -50,9 +51,9 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
   const axisMax = Math.max(6, Math.ceil(maxCount / 6) * 6);
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
+    <section className={PANEL_CLASSES_COMPACT}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Weekly volume</h2>
+        <h2 className="text-section font-semibold text-ink">Weekly volume</h2>
 
         {totalInRange > 0 && (
           <p className="text-xs text-ink-tertiary">
@@ -111,7 +112,7 @@ export default async function WeeklyChart({ userId }: WeeklyChartProps) {
                     className="flex h-full flex-col items-center justify-end"
                   >
                     <div
-                      className={`relative w-full max-w-[72px] rounded-t-[7px] rounded-b-[3px] sm:rounded-t-lg ${
+                      className={`relative w-full max-w-[72px] rounded-t-small ${
                         isZero ? "bg-surface-4" : "bg-accent"
                       }`}
                       style={barStyle}

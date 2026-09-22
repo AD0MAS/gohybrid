@@ -13,6 +13,7 @@ import {
 import { formatDayMonthShort } from "@/lib/dates";
 import type { ProgressSeries } from "@/lib/progress";
 import { formatDurationSeconds } from "@/lib/units";
+import { FIELD_CLASSES_SURFACE_1, PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 /**
  * A ProgressSeries with its display label attached — lib/progress.ts
@@ -35,11 +36,10 @@ const DURATION_STEPS = [15, 30, 60, 120, 300, 600, 900, 1800, 3600];
 
 /**
  * A "nice" round step for an axis spanning `range`, aiming for ~4 gridlines
- * (Heckbert's nice-numbers algorithm applied to the step, same approach as
- * lib/charts.ts's buildAxisScale) — snapping the step to 1/2/5/10× a power of
- * ten is what keeps the Y axis free of floating-point noise, since every tick
- * is then an exact multiple of a round number instead of an arbitrary
- * fraction of the data's own min/max.
+ * (Heckbert's nice-numbers algorithm applied to the step) — snapping the
+ * step to 1/2/5/10× a power of ten is what keeps the Y axis free of
+ * floating-point noise, since every tick is then an exact multiple of a
+ * round number instead of an arbitrary fraction of the data's own min/max.
  */
 function niceStep(range: number): number {
   const rough = range / 4;
@@ -79,8 +79,8 @@ export default function ProgressChart({ series }: ProgressChartProps) {
 
   if (series.length === 0) {
     return (
-      <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Progress</h2>
+      <section className={PANEL_CLASSES_COMPACT}>
+        <h2 className="text-section font-semibold text-ink">Progress</h2>
         <p className="text-sm text-ink-subtle">
           No personal records or body metrics logged yet.
         </p>
@@ -109,13 +109,13 @@ export default function ProgressChart({ series }: ProgressChartProps) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
+    <section className={PANEL_CLASSES_COMPACT}>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Progress</h2>
+        <h2 className="text-section font-semibold text-ink">Progress</h2>
         <select
           value={selected.key}
           onChange={(e) => setSelectedKey(e.target.value)}
-          className="h-11 rounded-md border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_1}
         >
           {series.map((s) => (
             <option key={s.key} value={s.key}>
@@ -181,7 +181,7 @@ export default function ProgressChart({ series }: ProgressChartProps) {
                 contentStyle={{
                   backgroundColor: "var(--color-surface-3)",
                   border: "1px solid var(--color-hairline)",
-                  borderRadius: 8,
+                  borderRadius: "var(--radius-card)",
                   color: "var(--color-ink)",
                 }}
                 labelStyle={{ color: "var(--color-ink-subtle)" }}

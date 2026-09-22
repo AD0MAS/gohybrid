@@ -8,23 +8,11 @@ import {
 import { formatEventDateTime } from "@/lib/events-format";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
+import CardMenu, { MENU_ITEM_DANGER_CLASSES } from "../_components/CardMenu";
 import EventForm from "./EventForm";
 import { EVENT_TYPE_LABELS } from "./event-labels";
 import { deleteEvent } from "./events-actions";
-
-const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
-// Same low-emphasis bordered-button look as the section's own "Add event"
-// button (SECTION_BUTTON_CLASSES) — "Past events" reads as the same kind of
-// control as every other quiet button in the app, not a bare native
-// <summary> marker, matching GoalsList's "Show N more goals" and
-// BodyMetricsList's "All readings". list-none plus the webkit-marker
-// override suppress the native disclosure triangle. flex w-full spans the
-// full panel width below sm — matching every empty-state CTA in /profile —
-// and sm:inline-flex sm:w-auto returns it to sizing on its own text from sm
-// up.
-const DISCLOSURE_SUMMARY_CLASSES =
-  "flex h-10 w-full list-none items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-sm font-medium text-ink-muted hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus [&::-webkit-details-marker]:hidden sm:inline-flex sm:w-auto";
+import { DANGER_ICON_BUTTON_CLASSES_32, DISCLOSURE_SUMMARY_CLASSES, PANEL_CLASSES } from "../_components/shared-classes";
 
 type EventsListProps = {
   userId: string;
@@ -69,11 +57,8 @@ export default async function EventsList({ userId }: EventsListProps) {
   const isEmpty = upcoming.length === 0 && past.length === 0;
 
   return (
-    <section
-      id="events"
-      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
-    >
-      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Events</h2>
+    <section id="events" className={PANEL_CLASSES}>
+      <h2 className="text-section font-semibold text-ink">Events</h2>
 
       {isEmpty && (
         <p className="text-sm text-ink-subtle">
@@ -82,19 +67,118 @@ export default async function EventsList({ userId }: EventsListProps) {
         </p>
       )}
 
-      {!isEmpty && (
-        <>
-          {upcoming.length === 0 ? (
-            <p className="text-sm text-ink-subtle">No upcoming events.</p>
-          ) : (
-            <ul className="flex flex-col">
-              {upcoming.map((event) => (
+      {!isEmpty &&
+        (upcoming.length === 0 ? (
+          <p className="text-sm text-ink-subtle">No upcoming events.</p>
+        ) : (
+          <ul className="flex flex-col">
+            {upcoming.map((event) => (
+              <li
+                key={event.id}
+                className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
+              >
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-medium text-ink">
+                    {event.title}
+                  </p>
+                  <p className="break-words text-xs text-ink-tertiary">
+                    {EVENT_TYPE_LABELS[event.eventType].label}
+                    {event.location ? ` · ${event.location}` : ""} ·{" "}
+                    {formatEventDateTime(event.eventDate, event.eventTime)}
+                  </p>
+                  {event.notes && (
+                    <p className="break-words text-xs text-ink-tertiary">
+                      {event.notes}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  {(() => {
+                    const days = daysUntil(event.eventDate, today);
+                    return days > 1 ? (
+                      <div className="text-right">
+                        <p className="text-xl font-semibold leading-none text-ink">
+                          {days}
+                        </p>
+                        <p className="mt-1 text-[11px] text-ink-tertiary">
+                          days
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-ink">
+                        {formatCountdown(days)}
+                      </p>
+                    );
+                  })()}
+                  <div className="hidden items-center gap-1.5 sm:flex">
+                    <EventForm entry={event} returnTo="/profile#events" today={today} />
+                    <ConfirmModal
+                      trigger={<X className="h-4 w-4" aria-hidden="true" />}
+                      triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
+                      triggerAriaLabel="Delete"
+                      title="Delete event"
+                      description="This removes the event and its countdown. This can't be undone."
+                      confirmLabel="Delete"
+                      action={deleteEvent.bind(null, event.id)}
+                    />
+                  </div>
+                  <div className="sm:hidden">
+                    <CardMenu>
+                      <EventForm
+                        entry={event}
+                        returnTo="/profile#events"
+                        today={today}
+                        triggerVariant="menu-item"
+                      />
+                      <ConfirmModal
+                        trigger={
+                          <>
+                            <X className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </>
+                        }
+                        triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                        title="Delete event"
+                        description="This removes the event and its countdown. This can't be undone."
+                        confirmLabel="Delete"
+                        action={deleteEvent.bind(null, event.id)}
+                      />
+                    </CardMenu>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ))}
+
+      {/* Always mounted, in this one place, regardless of isEmpty — see this
+          file's own doc comment for why. The wrapper is always present too, so
+          EventForm keeps one stable position whether or not the "Past events"
+          disclosure renders before it; the two sit at gap-2, the spacing
+          between Quick actions' two buttons, and the wrapper itself follows
+          the list at the section's gap-4, as every other section's last
+          button does. */}
+      <div className="flex flex-col gap-2">
+        {past.length > 0 && (
+          <details className="group flex flex-col gap-3">
+            {/* Same summary-below-content reorder as GoalsList's "Show N
+                more goals" and BodyMetricsList's "All readings" — see
+                either's own comment for why `group`/`order-*`/
+                `group-open:` rather than `open:` or a client toggle. */}
+            <summary className={`order-2 ${DISCLOSURE_SUMMARY_CLASSES}`}>
+              <span className="group-open:hidden">Past events</span>
+              <span className="hidden group-open:inline">
+                Hide past events
+              </span>
+            </summary>
+            <ul className="order-1 flex flex-col">
+              {past.map((event) => (
                 <li
                   key={event.id}
                   className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
                 >
                   <div className="min-w-0">
-                    <p className="break-words text-sm font-medium text-ink">
+                    <p className="break-words text-sm text-ink-muted">
                       {event.title}
                     </p>
                     <p className="break-words text-xs text-ink-tertiary">
@@ -108,101 +192,46 @@ export default async function EventsList({ userId }: EventsListProps) {
                       </p>
                     )}
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    {(() => {
-                      const days = daysUntil(event.eventDate, today);
-                      return days > 1 ? (
-                        <div className="text-right">
-                          <p className="text-xl font-semibold leading-none text-ink">
-                            {days}
-                          </p>
-                          <p className="mt-1 text-[11px] text-ink-tertiary">
-                            days
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-sm font-medium text-ink">
-                          {formatCountdown(days)}
-                        </p>
-                      );
-                    })()}
-                    <div className="flex items-center gap-1.5">
-                      <EventForm entry={event} returnTo="/profile#events" today={today} />
+                  <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
+                    <EventForm entry={event} returnTo="/profile#events" today={today} />
+                    <ConfirmModal
+                      trigger={<X className="h-4 w-4" aria-hidden="true" />}
+                      triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
+                      triggerAriaLabel="Delete"
+                      title="Delete event"
+                      description="This removes the event and its countdown. This can't be undone."
+                      confirmLabel="Delete"
+                      action={deleteEvent.bind(null, event.id)}
+                    />
+                  </div>
+                  <div className="shrink-0 sm:hidden">
+                    <CardMenu>
+                      <EventForm
+                        entry={event}
+                        returnTo="/profile#events"
+                        today={today}
+                        triggerVariant="menu-item"
+                      />
                       <ConfirmModal
-                        trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                        triggerClassName={DELETE_ICON_BUTTON_CLASSES}
-                        triggerAriaLabel="Delete"
+                        trigger={
+                          <>
+                            <X className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </>
+                        }
+                        triggerClassName={MENU_ITEM_DANGER_CLASSES}
                         title="Delete event"
                         description="This removes the event and its countdown. This can't be undone."
                         confirmLabel="Delete"
                         action={deleteEvent.bind(null, event.id)}
                       />
-                    </div>
+                    </CardMenu>
                   </div>
                 </li>
               ))}
             </ul>
-          )}
-
-          {past.length > 0 && (
-            <details className="group flex flex-col gap-3">
-              {/* Same summary-below-content reorder as GoalsList's "Show N
-                  more goals" and BodyMetricsList's "All readings" — see
-                  either's own comment for why `group`/`order-*`/
-                  `group-open:` rather than `open:` or a client toggle. */}
-              <summary className={`order-2 ${DISCLOSURE_SUMMARY_CLASSES}`}>
-                <span className="group-open:hidden">Past events</span>
-                <span className="hidden group-open:inline">
-                  Hide past events
-                </span>
-              </summary>
-              <ul className="order-1 flex flex-col">
-                {past.map((event) => (
-                  <li
-                    key={event.id}
-                    className="flex items-center justify-between gap-3 border-b border-surface-3 py-3 last:border-b-0"
-                  >
-                    <div className="min-w-0">
-                      <p className="break-words text-sm text-ink-muted">
-                        {event.title}
-                      </p>
-                      <p className="break-words text-xs text-ink-tertiary">
-                        {EVENT_TYPE_LABELS[event.eventType].label}
-                        {event.location ? ` · ${event.location}` : ""} ·{" "}
-                        {formatEventDateTime(event.eventDate, event.eventTime)}
-                      </p>
-                      {event.notes && (
-                        <p className="break-words text-xs text-ink-tertiary">
-                          {event.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <EventForm entry={event} returnTo="/profile#events" today={today} />
-                      <ConfirmModal
-                        trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                        triggerClassName={DELETE_ICON_BUTTON_CLASSES}
-                        triggerAriaLabel="Delete"
-                        title="Delete event"
-                        description="This removes the event and its countdown. This can't be undone."
-                        confirmLabel="Delete"
-                        action={deleteEvent.bind(null, event.id)}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </>
-      )}
-
-      {/* Always mounted, in this one place, regardless of isEmpty — see this
-          file's own doc comment for why. With past events it follows the
-          "Past events" button at gap-2 (the section's gap-4 less 8px), the
-          spacing between Quick actions' two buttons; without, the section's
-          own gap-4 after the list, as in every other section. */}
-      <div className={past.length > 0 ? "-mt-2" : undefined}>
+          </details>
+        )}
         <EventForm />
       </div>
     </section>

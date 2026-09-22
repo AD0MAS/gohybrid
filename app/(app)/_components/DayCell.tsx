@@ -22,9 +22,6 @@ type DayCellProps = {
   /** An adjacent-month day in a month grid: shown, and still a link, but
    * quieter. Never set in the week strip — a week is not a month. */
   isDimmed: boolean;
-  /** The cell's shape: an aspect-ratio class, so the strip and the month
-   * grid share every other style. */
-  shapeClass: string;
 };
 
 /**
@@ -54,7 +51,6 @@ export default function DayCell({
   isToday,
   isSelected,
   isDimmed,
-  shapeClass,
 }: DayCellProps) {
   const dimmed = isDimmed && !isSelected;
   const visibleDots = entries.slice(0, MAX_VISIBLE_DOTS);
@@ -104,7 +100,7 @@ export default function DayCell({
       scroll={false}
       aria-label={label}
       aria-current={isToday ? "date" : undefined}
-      className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-small border p-0.5 ${shapeClass} ${border} ${background} ${ink} ${hover} focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus`}
+      className={`flex aspect-square min-w-0 flex-col items-center justify-center gap-1 rounded-small border p-0.5 ${border} ${background} ${ink} ${hover} focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus`}
     >
       <span className={`text-xs leading-none ${weight}`}>{getDayNumber(date)}</span>
 

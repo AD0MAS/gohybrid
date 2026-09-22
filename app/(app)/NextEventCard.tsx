@@ -14,9 +14,9 @@ type NextEventCardProps = {
  * functions /profile's own Events section uses, so the two can't disagree
  * about "how many days"), or an "Add an event" empty state. Renders
  * EventForm (app/(app)/profile/EventForm.tsx) directly for that empty
- * state, same as EventsList's own hero does — a Server Component can render
- * a Client Component with plain serializable props (`ctaLabel` is a string),
- * it just can't hand it a function, which this never needs to.
+ * state — a Server Component can render a Client Component with plain
+ * serializable props (`trigger` is a string), it just can't hand it a
+ * function, which this never needs to.
  */
 export default async function NextEventCard({
   userId,
@@ -31,7 +31,7 @@ export default async function NextEventCard({
         event ? "gap-4" : "gap-3"
       }`}
     >
-      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+      <h2 className="text-section font-semibold text-ink">
         Next event
       </h2>
 
@@ -71,9 +71,8 @@ export default async function NextEventCard({
           adds the first upcoming event flips this card from its empty state
           to the event, and a form that lived only in the empty state would
           unmount with it, taking its "Saved" banner along before it painted.
-          `hidden` hides only the button once an event exists — same as
-          /profile's EventsList hero. */}
-      <EventForm ctaLabel="Add an event" hidden={event !== null} />
+          trigger="none" removes only the button once an event exists. */}
+      <EventForm trigger={event ? "none" : "cta"} />
     </section>
   );
 }

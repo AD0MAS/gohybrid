@@ -1,4 +1,4 @@
-import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
+import { WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { checkDigitLimit, DURATION_MINUTES_DIGIT_LIMIT } from "./numeric-limits";
 import {
   checkTextLength,
@@ -9,18 +9,18 @@ import {
 export type ValidatedWorkoutInput = {
   title: string;
   description: string | null;
-  primaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number];
-  difficulty: (typeof workoutDifficultyEnum.enumValues)[number];
+  primaryType: (typeof WORKOUT_PRIMARY_TYPES)[number];
+  difficulty: (typeof WORKOUT_DIFFICULTIES)[number];
   estimatedDurationMinutes: number | null;
 };
 
-export type WorkoutValidationResult =
+type WorkoutValidationResult =
   | { success: true; data: ValidatedWorkoutInput }
   | { success: false; error: string };
 
 /** Raw, untyped workout-creation input as received from either a JSON
  * request body or a FormData submission. */
-export type RawWorkoutInput = {
+type RawWorkoutInput = {
   title?: unknown;
   description?: unknown;
   primaryType?: unknown;
@@ -56,7 +56,7 @@ export function validateWorkoutInput(
   }
 
   const primaryType = input.primaryType;
-  if (!isOneOf(primaryType, workoutPrimaryTypeEnum.enumValues)) {
+  if (!isOneOf(primaryType, WORKOUT_PRIMARY_TYPES)) {
     return {
       success: false,
       error: "Choose a valid primary type.",
@@ -64,7 +64,7 @@ export function validateWorkoutInput(
   }
 
   const difficulty = input.difficulty;
-  if (!isOneOf(difficulty, workoutDifficultyEnum.enumValues)) {
+  if (!isOneOf(difficulty, WORKOUT_DIFFICULTIES)) {
     return {
       success: false,
       error: "Choose a valid difficulty.",

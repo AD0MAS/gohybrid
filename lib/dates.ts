@@ -253,7 +253,7 @@ export function getDaysInMonth(month: string): number {
  * YYYY-MM string. Same Date.UTC-based approach as addDays — year rollover
  * (December → January and back) falls out of the arithmetic for free.
  */
-export function addMonths(month: string, months: number): string {
+function addMonths(month: string, months: number): string {
   const { year, month: m } = parseMonthString(month);
   const result = new Date(Date.UTC(year, m - 1 + months, 1));
   const y = result.getUTCFullYear();

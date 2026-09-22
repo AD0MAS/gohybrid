@@ -7,6 +7,7 @@ import { DIFFICULTY_LABELS } from "./difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
 import { SHORT_TEXT_MAX_LENGTH } from "@/lib/text-limits";
 import { WORKOUT_SORT_OPTIONS, type WorkoutSort } from "@/lib/workouts-filters";
+import { PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 type WorkoutFiltersProps = {
   q: string;
@@ -142,7 +143,7 @@ export default function WorkoutFilters({
     tagIds.length > 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
+    <div className={PANEL_CLASSES_COMPACT}>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-nowrap sm:items-center">
         <input
           type="text"

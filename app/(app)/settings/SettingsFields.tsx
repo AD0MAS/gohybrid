@@ -1,24 +1,25 @@
 "use client";
 
 import { useActionState } from "react";
-import { unitSystemEnum } from "@/db/schema";
+import { UNIT_SYSTEMS } from "@/db/enums";
 import {
   FormErrorMessage,
   FormPendingBanner,
   SubmitButton,
 } from "@/app/_components/FormStatus";
 import { saveSettings, type SettingsFormState } from "./actions";
+import { PANEL_CLASSES, SUBMIT_BUTTON_CLASSES_FULL } from "../_components/shared-classes";
 
 type SettingsFieldsProps = {
   timezones: string[];
   currentTimezone: string;
-  currentUnitSystem: (typeof unitSystemEnum.enumValues)[number];
+  currentUnitSystem: (typeof UNIT_SYSTEMS)[number];
 };
 
 const initialState: SettingsFormState = { error: null };
 
 const UNIT_SYSTEM_LABELS: Record<
-  (typeof unitSystemEnum.enumValues)[number],
+  (typeof UNIT_SYSTEMS)[number],
   string
 > = {
   metric: "Metric",
@@ -68,8 +69,8 @@ export default function SettingsFields({
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
-      <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+      <section className={PANEL_CLASSES}>
+        <h2 className="text-section font-semibold text-ink">
           Preferences
         </h2>
 
@@ -107,7 +108,7 @@ export default function SettingsFields({
               Unit system
             </legend>
             <div className="grid h-11 grid-cols-2 gap-1 rounded-control border border-hairline bg-surface-2 p-1">
-              {unitSystemEnum.enumValues.map((value) => (
+              {UNIT_SYSTEMS.map((value) => (
                 <label
                   key={value}
                   className="flex cursor-pointer items-center justify-center rounded-small border border-transparent text-sm font-medium text-ink-subtle hover:text-ink active:text-ink has-[:checked]:border-hairline-strong has-[:checked]:bg-surface-3 has-[:checked]:text-ink has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent-focus"
@@ -139,7 +140,7 @@ export default function SettingsFields({
           and profile/page.tsx). The pending banner here still matters: it
           covers the gap between clicking Save and that redirect landing. */}
       <div className="flex sm:justify-end">
-        <SubmitButton className="flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto">
+        <SubmitButton className={SUBMIT_BUTTON_CLASSES_FULL}>
           Save
         </SubmitButton>
       </div>

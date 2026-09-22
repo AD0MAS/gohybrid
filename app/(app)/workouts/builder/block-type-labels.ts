@@ -1,6 +1,6 @@
-import type { blockTypeEnum } from "@/db/schema";
+import type { BLOCK_TYPES } from "@/db/enums";
 
-type BlockType = (typeof blockTypeEnum.enumValues)[number];
+type BlockType = (typeof BLOCK_TYPES)[number];
 
 /**
  * Display label per block_type enum value — the block type select and the

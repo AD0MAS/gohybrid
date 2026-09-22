@@ -7,7 +7,7 @@ import {
 // figures. No db import, so the Start client component can use them.
 
 /** Stored progress older than this (since its last write) is ignored. */
-export const START_STATE_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+const START_STATE_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 /**
  * The session clock, which starts running when the Start page opens.
@@ -24,7 +24,7 @@ export type StartClock = {
   runningSince: number | null;
 };
 
-export type ClockStatus = "idle" | "running" | "paused";
+type ClockStatus = "idle" | "running" | "paused";
 
 export const IDLE_CLOCK: StartClock = {
   startedAt: null,
@@ -134,7 +134,7 @@ export function parseStoredState(
 }
 
 /** Active time beyond which leaving asks for confirmation even with nothing ticked. */
-export const LEAVE_CONFIRM_ELAPSED_MS = 60 * 1000;
+const LEAVE_CONFIRM_ELAPSED_MS = 60 * 1000;
 
 /**
  * Whether leaving (✕ or Discard) must ask first: something is ticked, or more
@@ -153,7 +153,7 @@ export type BlockState = "done" | "in_progress" | "not_started";
 
 type ProgressBlock = { id: string; items: { id: string }[] };
 
-export type StartProgress = {
+type StartProgress = {
   totalItems: number;
   checkedItems: number;
   /** Blocks that have at least one item — an empty block can't be finished. */

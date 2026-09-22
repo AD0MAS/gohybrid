@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  blockTypeEnum,
-  targetPresetEnum,
-  targetTypeEnum,
-  volumeTypeEnum,
-  workoutDifficultyEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BLOCK_TYPES, TARGET_PRESETS, TARGET_TYPES, VOLUME_TYPES, WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import { validateBuilderPayload } from "@/lib/workout-builder-validation";
@@ -14,12 +7,12 @@ import { updateFullWorkoutForUser } from "@/lib/workouts";
 import { isValidUuid } from "@/lib/uuid";
 
 const STATIC_ENUM_OPTIONS = {
-  primaryTypeOptions: workoutPrimaryTypeEnum.enumValues,
-  difficultyOptions: workoutDifficultyEnum.enumValues,
-  blockTypeOptions: blockTypeEnum.enumValues,
-  volumeTypeOptions: volumeTypeEnum.enumValues,
-  targetTypeOptions: targetTypeEnum.enumValues,
-  targetPresetOptions: targetPresetEnum.enumValues,
+  primaryTypeOptions: WORKOUT_PRIMARY_TYPES,
+  difficultyOptions: WORKOUT_DIFFICULTIES,
+  blockTypeOptions: BLOCK_TYPES,
+  volumeTypeOptions: VOLUME_TYPES,
+  targetTypeOptions: TARGET_TYPES,
+  targetPresetOptions: TARGET_PRESETS,
 };
 
 /**

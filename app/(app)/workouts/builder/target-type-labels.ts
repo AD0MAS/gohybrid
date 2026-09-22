@@ -1,6 +1,6 @@
-import type { targetTypeEnum } from "@/db/schema";
+import type { TARGET_TYPES } from "@/db/enums";
 
-type TargetType = (typeof targetTypeEnum.enumValues)[number];
+type TargetType = (typeof TARGET_TYPES)[number];
 
 /**
  * Display label per target_type enum value — the target type select and the

@@ -1,6 +1,6 @@
-import type { workoutPrimaryTypeEnum } from "@/db/schema";
+import type { WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 
-type PrimaryType = (typeof workoutPrimaryTypeEnum.enumValues)[number];
+type PrimaryType = (typeof WORKOUT_PRIMARY_TYPES)[number];
 
 /**
  * Display label per primary_type enum value. Lives here rather than in

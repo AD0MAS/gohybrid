@@ -2,14 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import {
-  blockTypeEnum,
-  targetPresetEnum,
-  targetTypeEnum,
-  volumeTypeEnum,
-  workoutDifficultyEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BLOCK_TYPES, TARGET_PRESETS, TARGET_TYPES, VOLUME_TYPES, WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { requireUser } from "@/lib/auth";
 import { getExerciseCatalog } from "@/lib/exercises";
 import {
@@ -23,12 +16,12 @@ import {
 } from "@/lib/workout-builder-validation";
 
 const STATIC_ENUM_OPTIONS = {
-  primaryTypeOptions: workoutPrimaryTypeEnum.enumValues,
-  difficultyOptions: workoutDifficultyEnum.enumValues,
-  blockTypeOptions: blockTypeEnum.enumValues,
-  volumeTypeOptions: volumeTypeEnum.enumValues,
-  targetTypeOptions: targetTypeEnum.enumValues,
-  targetPresetOptions: targetPresetEnum.enumValues,
+  primaryTypeOptions: WORKOUT_PRIMARY_TYPES,
+  difficultyOptions: WORKOUT_DIFFICULTIES,
+  blockTypeOptions: BLOCK_TYPES,
+  volumeTypeOptions: VOLUME_TYPES,
+  targetTypeOptions: TARGET_TYPES,
+  targetPresetOptions: TARGET_PRESETS,
 };
 
 /** Fetches the current exercise catalog and derives the one dynamic member

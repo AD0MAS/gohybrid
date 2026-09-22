@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { Pencil } from "lucide-react";
-import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
+import { BODY_METRIC_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import {
   FormErrorMessage,
   FormPendingBanner,
@@ -20,6 +20,7 @@ import { formatBodyMetricValue } from "@/lib/units";
 import { isOneOf } from "@/lib/workouts-validation";
 import Modal from "../_components/Modal";
 import NumberField from "../_components/NumberField";
+import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
 import {
   addBodyMetric,
@@ -27,14 +28,20 @@ import {
   type BodyMetricFormState,
 } from "./body-metrics-actions";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
+import { FIELD_CLASSES_SURFACE_2, ICON_BUTTON_CLASSES_32, SECONDARY_BUTTON_CLASSES_SURFACE_2, SUBMIT_BUTTON_CLASSES } from "../_components/shared-classes";
 
 type BodyMetricFieldsProps = {
   today: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   /** Absent renders the Add-measurement button + form; present renders a
    * Pencil edit trigger + the same form pre-filled from this entry,
    * submitting to updateBodyMetric instead of addBodyMetric. */
   entry?: BodyMetric;
+  /** Only meaningful when `entry` is present: "menu-item" renders "Edit" as
+   * a plain full-width text button (CardMenu's MENU_ITEM_CLASSES) instead
+   * of the default bordered Pencil icon button — BodyMetricsList's mobile
+   * CardMenu passes this, same pattern as GoalFields' own triggerVariant. */
+  triggerVariant?: "icon" | "menu-item";
   /** Where to come back to when this edit changes the metric type, which
    * moves the entry to another type's list and unmounts its form (and the
    * banner it would show) — see lib/redirect-back.ts. Only meaningful with
@@ -94,7 +101,9 @@ const initialState: BodyMetricFormState = { status: "idle" };
  *
  * When `entry` is present, this same component renders as BodyMetricsList's
  * per-row edit trigger instead of the section's Add button: a Pencil
- * icon-button in place of the Plus button, "Edit measurement"/"Save" copy.
+ * icon-button by default, or a plain "Edit" menu-item button when
+ * `triggerVariant="menu-item"` (the row's mobile CardMenu passes this).
+ * "Edit measurement"/"Save" copy either way.
  * `updateBodyMetric.bind(null, entry.id)` is used as the form action in
  * place of addBodyMetric — the bound function still matches
  * useActionState's (prevState, formData) signature.
@@ -103,6 +112,7 @@ export default function BodyMetricFields({
   today,
   unitSystem,
   entry,
+  triggerVariant = "icon",
   returnTo,
 }: BodyMetricFieldsProps) {
   const [open, setOpen] = useState(false);
@@ -141,14 +151,21 @@ export default function BodyMetricFields({
     <>
       <FormSuccessBanner trigger={successCount} label="Saved" />
       {entry ? (
-        <button
-          type="button"
-          onClick={openFresh}
-          aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-        </button>
+        triggerVariant === "menu-item" ? (
+          <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={openFresh}
+            aria-label="Edit"
+            className={ICON_BUTTON_CLASSES_32}
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )
       ) : (
         <button type="button" onClick={openFresh} className={SECTION_BUTTON_CLASSES}>
           Add measurement
@@ -172,7 +189,7 @@ export default function BodyMetricFields({
 
 type BodyMetricFormFieldsProps = {
   today: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   entry?: BodyMetric;
   state: BodyMetricFormState;
   formAction: (formData: FormData) => void;
@@ -225,8 +242,8 @@ function BodyMetricFormFields({
   }
 
   const [metricType, setMetricType] =
-    useState<(typeof bodyMetricTypeEnum.enumValues)[number]>(
-      isOneOf(submitted?.metricType, bodyMetricTypeEnum.enumValues)
+    useState<(typeof BODY_METRIC_TYPES)[number]>(
+      isOneOf(submitted?.metricType, BODY_METRIC_TYPES)
         ? submitted.metricType
         : entry?.metricType ?? "weight"
     );
@@ -262,12 +279,12 @@ function BodyMetricFormFields({
           value={metricType}
           onChange={(e) =>
             setMetricType(
-              e.target.value as (typeof bodyMetricTypeEnum.enumValues)[number]
+              e.target.value as (typeof BODY_METRIC_TYPES)[number]
             )
           }
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         >
-          {bodyMetricTypeEnum.enumValues.map((type) => (
+          {BODY_METRIC_TYPES.map((type) => (
             <option key={type} value={type}>
               {BODY_METRIC_LABELS[type].label}
             </option>
@@ -298,7 +315,7 @@ function BodyMetricFormFields({
             defaultValue !== undefined ? String(defaultValue) : undefined
           )}
           placeholder={`Value (${unit})`}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -313,7 +330,7 @@ function BodyMetricFormFields({
           defaultValue={fieldDefault("measuredAt", entry?.measuredAt ?? today)}
           max={today}
           required
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -328,7 +345,7 @@ function BodyMetricFormFields({
           placeholder="Notes (optional)"
           defaultValue={fieldDefault("notes", entry?.notes ?? "")}
           maxLength={LONG_TEXT_MAX_LENGTH}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -340,11 +357,11 @@ function BodyMetricFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={SECONDARY_BUTTON_CLASSES_SURFACE_2}
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className={SUBMIT_BUTTON_CLASSES}>
           {entry ? "Save" : "Add measurement"}
         </SubmitButton>
       </div>

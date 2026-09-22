@@ -26,8 +26,9 @@ type SummaryCardsProps = {
  * Below lg, the five cards lay out as two rows (3 + 2) on a 6-column
  * grid — each card spans 2 or 3 of those columns so both rows fill the
  * full width whenever all five don't fit on one row (phones through
- * iPad Air), and SummaryCard's compact variant keeps the mobile row
- * short enough that the heatmap below no longer needs a scroll to reach.
+ * iPad Air), and SummaryCard's own mobile-first sizing keeps the mobile
+ * row short enough that the heatmap below no longer needs a scroll to
+ * reach.
  * Only at lg, where all five cards fit on one row, does grid-cols-5 take
  * over, paired with an lg:col-span-1 reset on each wrapper so the
  * mobileSpan values stop applying at that same breakpoint.
@@ -56,7 +57,7 @@ export default async function SummaryCards({ userId }: SummaryCardsProps) {
     <section className="grid grid-cols-6 gap-3 sm:gap-5 lg:grid-cols-5">
       {cards.map((card) => (
         <div key={card.label} className={`${card.mobileSpan} lg:col-span-1`}>
-          <SummaryCard label={card.label} value={card.value} variant="compact" />
+          <SummaryCard label={card.label} value={card.value} />
         </div>
       ))}
     </section>

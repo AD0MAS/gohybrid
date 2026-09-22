@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { unitSystemEnum } from "@/db/schema";
+import { UNIT_SYSTEMS } from "@/db/enums";
 import { requireUser } from "@/lib/auth";
 import { getExerciseById } from "@/lib/exercises";
 import {
@@ -74,7 +74,7 @@ async function checkGoalNotAlreadyMet(
   userId: string,
   today: string,
   timezone: string,
-  unitSystem: (typeof unitSystemEnum.enumValues)[number],
+  unitSystem: (typeof UNIT_SYSTEMS)[number],
   isHyroxStation: boolean
 ): Promise<
   { ok: true; current: number | null } | { ok: false; error: string }
@@ -145,7 +145,7 @@ function convertGoalValue(
   targetMetricType: FormDataEntryValue | null,
   targetRecordType: FormDataEntryValue | null,
   targetValueUnit: FormDataEntryValue | null,
-  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+  unitSystem: (typeof UNIT_SYSTEMS)[number]
 ): unknown {
   if (typeof raw !== "string" || raw === "") return raw;
   const parsed = Number(raw);

@@ -2,7 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { Pencil } from "lucide-react";
-import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
+import { PERSONAL_RECORD_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import {
   FormErrorMessage,
   FormPendingBanner,
@@ -29,8 +29,10 @@ import DistanceInput from "../_components/DistanceInput";
 import DurationInput from "../_components/DurationInput";
 import Modal from "../_components/Modal";
 import NumberField from "../_components/NumberField";
+import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { SECTION_BUTTON_CLASSES } from "../_components/section-button";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
+import { FIELD_CLASSES_SURFACE_2, ICON_BUTTON_CLASSES_32, SECONDARY_BUTTON_CLASSES_SURFACE_2, SUBMIT_BUTTON_CLASSES } from "../_components/shared-classes";
 import {
   addPersonalRecord,
   updatePersonalRecord,
@@ -47,11 +49,17 @@ type PersonalRecordFieldsProps = {
    * retyped — see the select's own comment for the value-encoding scheme. */
   customNames: string[];
   today: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   /** Absent renders the Add-record button + form; present renders a Pencil
    * edit trigger + the same form pre-filled from this entry, submitting to
    * updatePersonalRecord instead of addPersonalRecord. */
   entry?: PersonalRecord;
+  /** Only meaningful when `entry` is present: "menu-item" renders "Edit" as
+   * a plain full-width text button (CardMenu's MENU_ITEM_CLASSES) instead
+   * of the default bordered Pencil icon button — PersonalRecordsList's
+   * mobile CardMenu passes this, same pattern as GoalFields' own
+   * triggerVariant. */
+  triggerVariant?: "icon" | "menu-item";
   /** Where to come back to after an edit. Every edit submits it: changing a
    * record's value, date, exercise or type can move it between groups or
    * between a group's best and its earlier attempts, unmounting its form
@@ -122,8 +130,10 @@ const EXISTING_CUSTOM_PREFIX = "existing:";
  *
  * When `entry` is present, this same component renders as
  * PersonalRecordsList's per-row edit trigger instead of the section's Add
- * button: a Pencil icon-button in place of the Plus button, "Edit
- * record"/"Save" copy. `updatePersonalRecord.bind(null, entry.id)` is used
+ * button: a Pencil icon-button by default, or a plain "Edit" menu-item
+ * button when `triggerVariant="menu-item"` (the row's mobile CardMenu
+ * passes this). "Edit record"/"Save" copy either way.
+ * `updatePersonalRecord.bind(null, entry.id)` is used
  * as the form action in place of addPersonalRecord — the bound function
  * still matches useActionState's (prevState, formData) signature.
  */
@@ -133,6 +143,7 @@ export default function PersonalRecordFields({
   today,
   unitSystem,
   entry,
+  triggerVariant = "icon",
   returnTo,
 }: PersonalRecordFieldsProps) {
   const [open, setOpen] = useState(false);
@@ -173,14 +184,21 @@ export default function PersonalRecordFields({
     <>
       <FormSuccessBanner trigger={successCount} label="Saved" />
       {entry ? (
-        <button
-          type="button"
-          onClick={openFresh}
-          aria-label="Edit"
-          className="flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-ink active:bg-surface-3 active:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
-        >
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-        </button>
+        triggerVariant === "menu-item" ? (
+          <button type="button" onClick={openFresh} className={MENU_ITEM_CLASSES}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            Edit
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={openFresh}
+            aria-label="Edit"
+            className={ICON_BUTTON_CLASSES_32}
+          >
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )
       ) : (
         <button type="button" onClick={openFresh} className={SECTION_BUTTON_CLASSES}>
           Add record
@@ -240,7 +258,7 @@ type PersonalRecordFormFieldsProps = {
   catalog: CatalogExercise[];
   customNames: string[];
   today: string;
-  unitSystem: (typeof unitSystemEnum.enumValues)[number];
+  unitSystem: (typeof UNIT_SYSTEMS)[number];
   entry?: PersonalRecord;
   state: PersonalRecordFormState;
   formAction: (formData: FormData) => void;
@@ -354,8 +372,8 @@ function PersonalRecordFormFields({
     : null;
   const isNewCustomName = exerciseId === null && existingCustomName === null;
   const [recordType, setRecordType] =
-    useState<(typeof personalRecordTypeEnum.enumValues)[number]>(() =>
-      isOneOf(submitted?.recordType, personalRecordTypeEnum.enumValues)
+    useState<(typeof PERSONAL_RECORD_TYPES)[number]>(() =>
+      isOneOf(submitted?.recordType, PERSONAL_RECORD_TYPES)
         ? submitted.recordType
         : entry?.recordType ?? "weight"
     );
@@ -435,7 +453,7 @@ function PersonalRecordFormFields({
           id={`${uid}-subject`}
           value={subjectSelection}
           onChange={(e) => setSubjectSelection(e.target.value)}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         >
           <option value="">Custom (new)…</option>
           {customNames.length > 0 && (
@@ -476,7 +494,7 @@ function PersonalRecordFormFields({
             placeholder="Custom name"
             defaultValue={fieldDefault("customName", entry?.customName ?? "")}
             maxLength={NAME_MAX_LENGTH}
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           />
         </div>
       )}
@@ -494,12 +512,12 @@ function PersonalRecordFormFields({
           value={recordType}
           onChange={(e) =>
             setRecordType(
-              e.target.value as (typeof personalRecordTypeEnum.enumValues)[number]
+              e.target.value as (typeof PERSONAL_RECORD_TYPES)[number]
             )
           }
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         >
-          {personalRecordTypeEnum.enumValues.map((type) => (
+          {PERSONAL_RECORD_TYPES.map((type) => (
             <option key={type} value={type}>
               {PERSONAL_RECORD_LABELS[type].label}
             </option>
@@ -552,7 +570,7 @@ function PersonalRecordFormFields({
               defaultValue !== undefined ? String(defaultValue) : undefined
             )}
             placeholder={`Value (${valueUnit})`}
-            className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+            className={FIELD_CLASSES_SURFACE_2}
           />
         )}
       </div>
@@ -568,7 +586,7 @@ function PersonalRecordFormFields({
           defaultValue={fieldDefault("achievedAt", entry?.achievedAt ?? today)}
           max={today}
           required
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -583,7 +601,7 @@ function PersonalRecordFormFields({
           placeholder="Notes (optional)"
           defaultValue={fieldDefault("notes", entry?.notes ?? "")}
           maxLength={LONG_TEXT_MAX_LENGTH}
-          className="h-11 rounded-control border border-hairline bg-surface-2 px-4 text-base text-ink placeholder:text-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={FIELD_CLASSES_SURFACE_2}
         />
       </div>
 
@@ -595,11 +613,11 @@ function PersonalRecordFormFields({
         <button
           type="button"
           onClick={onCancel}
-          className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-2 px-5 text-base text-ink hover:bg-surface-3 active:bg-surface-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+          className={SECONDARY_BUTTON_CLASSES_SURFACE_2}
         >
           Cancel
         </button>
-        <SubmitButton className="flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus">
+        <SubmitButton className={SUBMIT_BUTTON_CLASSES}>
           {entry ? "Save" : "Add record"}
         </SubmitButton>
       </div>

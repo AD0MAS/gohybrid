@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { workoutDifficultyEnum, workoutPrimaryTypeEnum } from "@/db/schema";
+import { WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { requireUser } from "@/lib/auth";
 import { getTagCatalog } from "@/lib/tags";
 import { getWorkoutsForUser } from "@/lib/workouts";
@@ -12,6 +12,11 @@ import FavoriteToggle from "./FavoriteToggle";
 import { PRIMARY_TYPE_LABELS } from "./primary-type-labels";
 import { TAG_COLOR_CLASSES } from "./tag-colors";
 import WorkoutFilters from "./WorkoutFilters";
+import {
+  SECONDARY_BUTTON_CLASSES_SURFACE_1,
+  SUBMIT_BUTTON_CLASSES_FULL,
+  SUBMIT_BUTTON_CLASSES_FULL_SELF_START,
+} from "../_components/shared-classes";
 
 export const metadata: Metadata = {
   title: "My Workouts",
@@ -81,11 +86,13 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="flex flex-col gap-5 sm:gap-3">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="truncate text-xl font-semibold text-ink">My Workouts</h1>
+          <h1 className="truncate text-2xl font-semibold tracking-tight text-ink sm:text-page-title">
+            My Workouts
+          </h1>
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/history"
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={SECONDARY_BUTTON_CLASSES_SURFACE_1}
             >
               History
             </Link>
@@ -93,7 +100,7 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
               <div className="hidden sm:block">
                 <Link
                   href="/workouts/new"
-                  className="flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+                  className={SUBMIT_BUTTON_CLASSES_FULL}
                 >
                   New workout
                 </Link>
@@ -105,7 +112,7 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
           <div className="sm:hidden">
             <Link
               href="/workouts/new"
-              className="flex h-11 w-full items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+              className={SUBMIT_BUTTON_CLASSES_FULL}
             >
               New workout
             </Link>
@@ -121,8 +128,8 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
           favoritesOnly={filters.favoritesOnly ?? false}
           tagIds={filters.tagIds ?? []}
           sort={filters.sort}
-          primaryTypeOptions={workoutPrimaryTypeEnum.enumValues}
-          difficultyOptions={workoutDifficultyEnum.enumValues}
+          primaryTypeOptions={WORKOUT_PRIMARY_TYPES}
+          difficultyOptions={WORKOUT_DIFFICULTIES}
           tagCatalog={tagCatalog}
         />
       )}
@@ -158,7 +165,7 @@ export default async function WorkoutsPage(props: PageProps<"/workouts">) {
 
             <Link
               href="/workouts/new"
-              className="flex h-11 w-full items-center justify-center self-start rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto"
+              className={SUBMIT_BUTTON_CLASSES_FULL_SELF_START}
             >
               Create your first workout
             </Link>

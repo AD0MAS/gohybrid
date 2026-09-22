@@ -1,4 +1,4 @@
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
 import {
   formatDistanceMetres,
   formatDurationSeconds,
@@ -6,17 +6,17 @@ import {
   formatWeightKg,
 } from "./units";
 
-// String-literal union rather than `typeof blockTypeEnum.enumValues[number]`
+// String-literal union rather than `typeof BLOCK_TYPES[number]`
 // — this module takes no dependency on db/schema at all, not even a
 // type-only one, since it has nothing to do with how the value got here.
-export type BlockTimingType =
+type BlockTimingType =
   | "for_time"
   | "on_off"
   | "amrap"
   | "emom"
   | "general";
 
-export type BlockTimingFields = {
+type BlockTimingFields = {
   blockType: BlockTimingType;
   durationSeconds: number | null;
   rounds: number | null;
@@ -81,12 +81,12 @@ export function formatBlockTimingLine(block: BlockTimingFields): string | null {
 // and never imports them. Any Record<enum, { label }> from app/ fits.
 type LabelMap = Readonly<Record<string, { label: string }>>;
 
-export type ItemSummaryLabels = {
+type ItemSummaryLabels = {
   targetPreset: LabelMap;
   targetType: LabelMap;
 };
 
-export type BlockSummaryLabels = {
+type BlockSummaryLabels = {
   blockType: LabelMap;
 };
 
@@ -96,7 +96,7 @@ export type BlockSummaryLabels = {
  * `numeric` strings (rows); enum columns may be null (rows) or "" (builder
  * draft, its explicit unselected state). Both are treated as "not set".
  */
-export type ItemSummaryInput = {
+type ItemSummaryInput = {
   isRestItem: boolean;
   isHyroxStation: boolean;
   sets: number | null;
@@ -109,7 +109,7 @@ export type ItemSummaryInput = {
   restSeconds: number | null;
 };
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
 
 function toNumberOrNull(value: number | string | null): number | null {
   if (value === null || value === "") return null;

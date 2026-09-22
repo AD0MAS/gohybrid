@@ -1,8 +1,9 @@
-import { workoutPrimaryTypeEnum } from "@/db/schema";
+import { WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import { getSessionCountsByPrimaryTypeForUser } from "@/lib/activity";
 import { getWeekStartsEndingAt } from "@/lib/dates";
 import { getUserContext } from "@/lib/user-settings";
 import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
+import { PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 type DistributionChartProps = {
   userId: string;
@@ -57,7 +58,7 @@ function computeShares(counts: number[]): number[] {
  * every row, the untrained ones at 0.
  *
  * The query only returns types with at least one session, so the missing
- * ones are zero-filled here against workoutPrimaryTypeEnum — the same
+ * ones are zero-filled here against WORKOUT_PRIMARY_TYPES — the same
  * reasoning WeeklyChart zero-fills missing weeks against
  * getWeekStartsEndingAt. That removes the old empty-state message: with
  * every row always present, "no sessions" is a chart of five zeroed rows
@@ -87,7 +88,7 @@ export default async function DistributionChart({
   const countByType = new Map(
     sessionCounts.map((row) => [row.primaryType, row.count])
   );
-  const rows = workoutPrimaryTypeEnum.enumValues
+  const rows = WORKOUT_PRIMARY_TYPES
     .map((primaryType) => ({
       primaryType,
       count: countByType.get(primaryType) ?? 0,
@@ -99,9 +100,9 @@ export default async function DistributionChart({
   const shares = computeShares(rows.map((row) => row.count));
 
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-hairline bg-surface-1 p-4 sm:p-5">
+    <section className={PANEL_CLASSES_COMPACT}>
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Training mix</h2>
+        <h2 className="text-section font-semibold text-ink">Training mix</h2>
 
         {total > 0 && (
           <p className="text-xs text-ink-tertiary">
@@ -146,9 +147,9 @@ export default async function DistributionChart({
                 {label}
               </span>
 
-              <div className="h-[26px] w-full rounded-[9px] bg-surface-3 sm:h-full sm:rounded-[10px]">
+              <div className="h-[26px] w-full rounded-bar bg-surface-3 sm:h-full">
                 <div
-                  className="h-full rounded-[9px] bg-accent sm:rounded-[10px]"
+                  className="h-full rounded-bar bg-accent"
                   style={{ width: `${barWidthPct}%` }}
                 />
               </div>

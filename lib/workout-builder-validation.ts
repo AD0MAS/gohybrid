@@ -7,14 +7,7 @@
 // into the client bundle the moment the builder imports anything from that
 // module at all. lib/numeric-limits.ts is imported at runtime below, which
 // is safe: it has zero imports of its own (see its own file comment).
-import type {
-  blockTypeEnum,
-  targetPresetEnum,
-  targetTypeEnum,
-  volumeTypeEnum,
-  workoutDifficultyEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import type { BLOCK_TYPES, TARGET_PRESETS, TARGET_TYPES, VOLUME_TYPES, WORKOUT_DIFFICULTIES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
 import {
   checkDigitLimit,
   DURATION_MINUTES_DIGIT_LIMIT,
@@ -34,23 +27,23 @@ import {
 } from "./text-limits";
 import { isValidUuid } from "./uuid";
 
-export type ValidatedBuilderItem = {
+type ValidatedBuilderItem = {
   exerciseId: string | null;
   customName: string | null;
   sets: number;
-  volumeType: (typeof volumeTypeEnum.enumValues)[number] | null;
+  volumeType: (typeof VOLUME_TYPES)[number] | null;
   volumeValue: number | null;
-  targetType: (typeof targetTypeEnum.enumValues)[number] | null;
+  targetType: (typeof TARGET_TYPES)[number] | null;
   targetValue: number | null;
-  targetPreset: (typeof targetPresetEnum.enumValues)[number] | null;
+  targetPreset: (typeof TARGET_PRESETS)[number] | null;
   weightKg: number | null;
   restSeconds: number | null;
   notes: string | null;
 };
 
-export type ValidatedBuilderBlock = {
+type ValidatedBuilderBlock = {
   title: string | null;
-  blockType: (typeof blockTypeEnum.enumValues)[number];
+  blockType: (typeof BLOCK_TYPES)[number];
   durationSeconds: number | null;
   rounds: number | null;
   workSeconds: number | null;
@@ -62,14 +55,14 @@ export type ValidatedBuilderBlock = {
 export type ValidatedBuilderPayload = {
   title: string;
   description: string | null;
-  primaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number];
-  difficulty: (typeof workoutDifficultyEnum.enumValues)[number];
+  primaryType: (typeof WORKOUT_PRIMARY_TYPES)[number];
+  difficulty: (typeof WORKOUT_DIFFICULTIES)[number];
   estimatedDurationMinutes: number | null;
   blocks: ValidatedBuilderBlock[];
   tagIds: string[];
 };
 
-export type BuilderValidationResult =
+type BuilderValidationResult =
   | { success: true; data: ValidatedBuilderPayload }
   | { success: false; error: string };
 
@@ -151,8 +144,8 @@ const INVALID = Symbol("invalid");
  * NAME_MAX_LENGTH cap (lib/text-limits.ts), enforced by the input's
  * own maxLength and by parseBuilderBlock at the real gate, not by this
  * per-field draft validator. */
-export type BuilderBlockDraft = {
-  blockType: (typeof blockTypeEnum.enumValues)[number];
+type BuilderBlockDraft = {
+  blockType: (typeof BLOCK_TYPES)[number];
   durationSeconds: number | null;
   rounds: number | null;
   workSeconds: number | null;
@@ -252,15 +245,15 @@ export function validateBuilderBlockDraft(
  * LONG_TEXT_MAX_LENGTH cap (lib/text-limits.ts), enforced by the
  * textarea's own maxLength and by parseBuilderItem at the real gate, not by
  * this per-field draft validator. */
-export type BuilderItemDraft = {
+type BuilderItemDraft = {
   exerciseId: string | null;
   customName: string | null;
   sets: number | null;
-  volumeType: (typeof volumeTypeEnum.enumValues)[number] | "";
+  volumeType: (typeof VOLUME_TYPES)[number] | "";
   volumeValue: number | null;
-  targetType: (typeof targetTypeEnum.enumValues)[number] | "";
+  targetType: (typeof TARGET_TYPES)[number] | "";
   targetValue: number | null;
-  targetPreset: (typeof targetPresetEnum.enumValues)[number] | "";
+  targetPreset: (typeof TARGET_PRESETS)[number] | "";
   weightKg: number | null;
   restSeconds: number | null;
 };
@@ -1129,12 +1122,12 @@ export type BuilderRequirementKey =
   | "blocks"
   | "items";
 
-export type BuilderRequirementResult = {
+type BuilderRequirementResult = {
   key: BuilderRequirementKey;
   met: boolean;
 };
 
-export type BuilderRequirements = {
+type BuilderRequirements = {
   requirements: BuilderRequirementResult[];
   /** Exactly validateBuilderPayload(...).success: the Save button's state. */
   valid: boolean;

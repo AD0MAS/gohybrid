@@ -1,4 +1,4 @@
-import { eventTypeEnum } from "@/db/schema";
+import { EVENT_TYPES } from "@/db/enums";
 import { isOneOf } from "./workouts-validation";
 import {
   isValidDateString,
@@ -15,17 +15,17 @@ export type ValidatedEventInput = {
   title: string;
   eventDate: string;
   eventTime: string | null;
-  eventType: (typeof eventTypeEnum.enumValues)[number];
+  eventType: (typeof EVENT_TYPES)[number];
   location: string | null;
   notes: string | null;
 };
 
-export type EventValidationResult =
+type EventValidationResult =
   | { success: true; data: ValidatedEventInput }
   | { success: false; error: string };
 
 /** Raw, untyped event input as received from a FormData submission. */
-export type RawEventInput = {
+type RawEventInput = {
   title?: unknown;
   eventDate?: unknown;
   eventTime?: unknown;
@@ -61,7 +61,7 @@ export function validateEventInput(input: RawEventInput): EventValidationResult 
   }
 
   const eventType = input.eventType;
-  if (!isOneOf(eventType, eventTypeEnum.enumValues)) {
+  if (!isOneOf(eventType, EVENT_TYPES)) {
     return {
       success: false,
       error: "Choose a valid event type.",

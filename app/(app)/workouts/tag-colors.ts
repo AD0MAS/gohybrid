@@ -1,8 +1,8 @@
-import type { tagColorEnum } from "@/db/schema";
+import type { TAG_COLORS } from "@/db/enums";
 
 // Type-only import — erased at compile time, so this stays safe to import
 // from the client-side builder as well as server-rendered pages.
-export type TagColor = (typeof tagColorEnum.enumValues)[number];
+type TagColor = (typeof TAG_COLORS)[number];
 
 /**
  * Tailwind classes per tag_color enum value. Centralized here so the

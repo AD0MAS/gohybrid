@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Dumbbell, Home, LogOut, User } from "lucide-react";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
@@ -72,6 +72,7 @@ export default function Nav({ userEmail, signOutAction }: NavProps) {
               <LogOut className="h-4 w-4" />
               Sign out
             </SubmitButton>
+            <FormPendingBanner label="Signing out…" />
           </form>
         </div>
       </nav>

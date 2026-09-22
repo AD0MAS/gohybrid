@@ -1,14 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  bodyMetricTypeEnum,
-  goalDirectionEnum,
-  goalPeriodEnum,
-  goalTypeEnum,
-  goals,
-  personalRecordTypeEnum,
-  workoutPrimaryTypeEnum,
-} from "@/db/schema";
+import { BODY_METRIC_TYPES, GOAL_DIRECTIONS, GOAL_PERIODS, GOAL_TYPES, PERSONAL_RECORD_TYPES, WORKOUT_PRIMARY_TYPES } from "@/db/enums";
+import { goals } from "@/db/schema";
 import {
   getSessionCountForUserInRange,
   getSessionCountsByPrimaryTypeForUser,
@@ -29,16 +22,16 @@ export type Goal = {
   id: string;
   userId: string;
   title: string;
-  goalType: (typeof goalTypeEnum.enumValues)[number];
-  direction: (typeof goalDirectionEnum.enumValues)[number];
-  period: (typeof goalPeriodEnum.enumValues)[number];
+  goalType: (typeof GOAL_TYPES)[number];
+  direction: (typeof GOAL_DIRECTIONS)[number];
+  period: (typeof GOAL_PERIODS)[number];
   targetValue: number;
   startValue: number | null;
-  targetPrimaryType: (typeof workoutPrimaryTypeEnum.enumValues)[number] | null;
-  targetMetricType: (typeof bodyMetricTypeEnum.enumValues)[number] | null;
+  targetPrimaryType: (typeof WORKOUT_PRIMARY_TYPES)[number] | null;
+  targetMetricType: (typeof BODY_METRIC_TYPES)[number] | null;
   targetExerciseId: string | null;
   targetCustomName: string | null;
-  targetRecordType: (typeof personalRecordTypeEnum.enumValues)[number] | null;
+  targetRecordType: (typeof PERSONAL_RECORD_TYPES)[number] | null;
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -258,7 +251,7 @@ export async function setGoalArchivedForUser(
   return updated.length > 0;
 }
 
-export type GoalProgress = {
+type GoalProgress = {
   current: number;
   target: number;
   percent: number;
@@ -362,7 +355,7 @@ const ALL_TIME_START = "0001-01-01";
  * body_metric/personal_record read the latest value regardless of period).
  */
 function resolveGoalPeriodRange(
-  period: (typeof goalPeriodEnum.enumValues)[number],
+  period: (typeof GOAL_PERIODS)[number],
   today: string
 ): { from: string; to: string } {
   switch (period) {
@@ -493,7 +486,7 @@ type GoalCurrentValueSources = {
   personalRecordGroups: PersonalRecordGroup[] | null;
   /** Latest-first body metrics, keyed by metric_type — one entry per DISTINCT targetMetricType actually referenced by a goal_type "body_metric" goal, not one per goal. */
   bodyMetricsByType: Map<
-    (typeof bodyMetricTypeEnum.enumValues)[number],
+    (typeof BODY_METRIC_TYPES)[number],
     BodyMetric[]
   >;
   /**
@@ -507,7 +500,7 @@ type GoalCurrentValueSources = {
    * separate getSessionCountForUserInRange query per period.
    */
   sessionCountsByPeriod: Map<
-    (typeof goalPeriodEnum.enumValues)[number],
+    (typeof GOAL_PERIODS)[number],
     PrimaryTypeSessionCount[]
   >;
 };

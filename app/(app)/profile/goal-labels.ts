@@ -1,4 +1,4 @@
-import type { goalPeriodEnum, goalTypeEnum, unitSystemEnum } from "@/db/schema";
+import type { GOAL_PERIODS, GOAL_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import {
   formatBodyMetricValue,
   formatPersonalRecordValue,
@@ -8,8 +8,8 @@ import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
 import type { Goal } from "@/lib/goals";
 
-type GoalType = (typeof goalTypeEnum.enumValues)[number];
-type GoalPeriod = (typeof goalPeriodEnum.enumValues)[number];
+type GoalType = (typeof GOAL_TYPES)[number];
+type GoalPeriod = (typeof GOAL_PERIODS)[number];
 
 /**
  * The subset of a Goal formatGoalValue/formatGoalValueText actually read —
@@ -18,7 +18,7 @@ type GoalPeriod = (typeof goalPeriodEnum.enumValues)[number];
  * doesn't exist as a row yet (creation-time validation), without fabricating
  * every other Goal field.
  */
-export type GoalValueContext = Pick<
+type GoalValueContext = Pick<
   Goal,
   "goalType" | "targetMetricType" | "targetRecordType" | "exercise"
 >;
@@ -61,7 +61,7 @@ export const GOAL_PERIOD_LABELS: Record<GoalPeriod, { label: string }> = {
 export function formatGoalValue(
   goal: GoalValueContext,
   rawValue: number,
-  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+  unitSystem: (typeof UNIT_SYSTEMS)[number]
 ): { value: number; unit: string } {
   switch (goal.goalType) {
     case "session_count":
@@ -94,7 +94,7 @@ export function formatGoalValue(
 export function formatGoalValueText(
   goal: GoalValueContext,
   rawValue: number,
-  unitSystem: (typeof unitSystemEnum.enumValues)[number]
+  unitSystem: (typeof UNIT_SYSTEMS)[number]
 ): string {
   if (goal.goalType === "personal_record") {
     return formatPersonalRecordValueText(

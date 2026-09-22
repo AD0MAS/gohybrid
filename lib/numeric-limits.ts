@@ -6,7 +6,7 @@
 
 export type DigitLimit = { maxIntegerDigits: number; maxDecimals: number };
 
-export type DigitLimitResult =
+type DigitLimitResult =
   | { ok: true; value: number }
   | { ok: false; error: string };
 

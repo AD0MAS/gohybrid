@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { unitSystemEnum } from "@/db/schema";
+import type { UNIT_SYSTEMS } from "@/db/enums";
 import type { DigitLimit } from "@/lib/numeric-limits";
 import {
   convertDistanceInputToMetres,
@@ -17,7 +17,7 @@ import {
   sanitizeLiveNumber,
 } from "./sanitize-live-number";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -221,7 +221,7 @@ type ControlledDistanceInputProps = DistanceInputBaseProps & {
   onChange: (metres: number | null) => void;
 };
 
-export type DistanceInputProps =
+type DistanceInputProps =
   | UncontrolledDistanceInputProps
   | ControlledDistanceInputProps;
 

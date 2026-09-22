@@ -1,6 +1,6 @@
-import type { eventTypeEnum } from "@/db/schema";
+import type { EVENT_TYPES } from "@/db/enums";
 
-type EventType = (typeof eventTypeEnum.enumValues)[number];
+type EventType = (typeof EVENT_TYPES)[number];
 
 /**
  * Display label per event_type enum value — the event-type select and the

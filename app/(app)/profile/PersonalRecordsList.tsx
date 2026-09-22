@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { formatDayMonthShort } from "@/lib/dates";
 import { getExerciseCatalog } from "@/lib/exercises";
 import {
   getDistinctCustomNamesForUser,
@@ -8,11 +9,11 @@ import { groupPersonalRecordsBySubject } from "@/lib/personal-records-grouping";
 import { formatPersonalRecordValueText } from "@/lib/units";
 import { getUserContext } from "@/lib/user-settings";
 import ConfirmModal from "../_components/ConfirmModal";
+import CardMenu, { MENU_ITEM_DANGER_CLASSES } from "../_components/CardMenu";
 import PersonalRecordFields from "./PersonalRecordFields";
 import { deletePersonalRecord } from "./personal-records-actions";
+import { DANGER_ICON_BUTTON_CLASSES_32, PANEL_CLASSES } from "../_components/shared-classes";
 
-const DELETE_ICON_BUTTON_CLASSES =
-  "flex h-8 w-8 items-center justify-center rounded-small border border-hairline bg-surface-2 text-ink-subtle hover:bg-surface-3 hover:text-danger active:bg-surface-3 active:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus";
 
 type PersonalRecordsListProps = {
   userId: string;
@@ -56,6 +57,20 @@ type PersonalRecordsListProps = {
  * and `today`, fetched here, also seed this section's own "Add record"
  * button, a full-width footer. Every delete is confirmed via ConfirmModal.
  *
+ * Below `sm` each row is a single flex row, never wrapping: the exercise
+ * column is the only flexible one (`min-w-0 flex-1`, wrapping via
+ * `break-words`), while the best value, the date and the actions are all
+ * `shrink-0 whitespace-nowrap`, so a long exercise name or note never pushes
+ * the value/date/actions onto their own line. The date itself renders two
+ * spans toggled by breakpoint — `formatDayMonthShort` (e.g. "6 Sep") below
+ * `sm`, where the raw stored date doesn't reliably fit at 320px, and the
+ * unformatted value from `sm` up, where the fixed 110px column already
+ * fits it — rather than reformatting unconditionally, so the desktop
+ * column is unchanged. Edit and Delete collapse into one CardMenu below
+ * `sm` (PersonalRecordFields' `triggerVariant="menu-item"`, same pattern as
+ * GoalsList's card menu) and stay separate icon buttons from `sm` up,
+ * exactly as before.
+ *
  * The one "Add record" PersonalRecordFields is rendered *unconditionally*,
  * in the same spot after the list, whether or not `isEmpty` — never inside
  * an `{isEmpty && …}` or `{!isEmpty && …}` block. It owns its own
@@ -81,9 +96,9 @@ export default async function PersonalRecordsList({
   return (
     <section
       id="records"
-      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+      className={PANEL_CLASSES}
     >
-      <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">Personal records</h2>
+      <h2 className="text-section font-semibold text-ink">Personal records</h2>
 
       {isEmpty && (
         <p className="text-sm text-ink-subtle">
@@ -113,8 +128,8 @@ export default async function PersonalRecordsList({
 
             return (
               <div key={group.subjectKey} className="border-b border-surface-3 py-3 last:border-b-0">
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 sm:grid sm:grid-cols-[1fr_110px_110px_72px] sm:items-center">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-x-4 gap-y-1 sm:grid sm:grid-cols-[1fr_110px_110px_72px] sm:items-center">
+                  <div className="min-w-0 flex-1">
                     <p className="break-words text-sm font-medium text-ink-muted">
                       {group.subjectLabel}
                     </p>
@@ -124,9 +139,14 @@ export default async function PersonalRecordsList({
                       </p>
                     )}
                   </div>
-                  <span className="text-sm font-semibold text-ink">{bestText}</span>
-                  <span className="text-xs text-ink-tertiary">{group.best.achievedAt}</span>
-                  <div className="flex shrink-0 items-center gap-1.5 sm:justify-end">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-ink sm:whitespace-normal">
+                    {bestText}
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap text-xs text-ink-tertiary sm:whitespace-normal">
+                    <span className="sm:hidden">{formatDayMonthShort(group.best.achievedAt)}</span>
+                    <span className="hidden sm:inline">{group.best.achievedAt}</span>
+                  </span>
+                  <div className="hidden shrink-0 items-center gap-1.5 sm:flex sm:justify-end">
                     <PersonalRecordFields
                       catalog={catalog}
                       customNames={customNames}
@@ -137,13 +157,39 @@ export default async function PersonalRecordsList({
                     />
                     <ConfirmModal
                       trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                      triggerClassName={DELETE_ICON_BUTTON_CLASSES}
+                      triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
                       triggerAriaLabel="Delete"
                       title="Delete record"
                       description="This removes this record. If it was the current best for this exercise, the next-best one takes its place. This can't be undone."
                       confirmLabel="Delete"
                       action={deletePersonalRecord.bind(null, group.best.id)}
                     />
+                  </div>
+                  <div className="shrink-0 sm:hidden">
+                    <CardMenu>
+                      <PersonalRecordFields
+                        catalog={catalog}
+                        customNames={customNames}
+                        today={today}
+                        unitSystem={unitSystem}
+                        entry={group.best}
+                        returnTo="/profile#records"
+                        triggerVariant="menu-item"
+                      />
+                      <ConfirmModal
+                        trigger={
+                          <>
+                            <X className="h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </>
+                        }
+                        triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                        title="Delete record"
+                        description="This removes this record. If it was the current best for this exercise, the next-best one takes its place. This can't be undone."
+                        confirmLabel="Delete"
+                        action={deletePersonalRecord.bind(null, group.best.id)}
+                      />
+                    </CardMenu>
                   </div>
                 </div>
 
@@ -164,18 +210,23 @@ export default async function PersonalRecordsList({
                         return (
                           <div
                             key={entry.id}
-                            className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-surface-3 py-2 last:border-b-0 sm:grid sm:grid-cols-[1fr_110px_110px_72px] sm:items-center"
+                            className="flex items-start gap-x-4 gap-y-1 border-b border-surface-3 py-2 last:border-b-0 sm:grid sm:grid-cols-[1fr_110px_110px_72px] sm:items-center"
                           >
-                            <div className="min-w-0 pl-3">
+                            <div className="min-w-0 flex-1 pl-3">
                               {entry.notes && (
                                 <p className="break-words text-xs text-ink-tertiary">
                                   {entry.notes}
                                 </p>
                               )}
                             </div>
-                            <span className="text-sm text-ink-muted">{entryText}</span>
-                            <span className="text-xs text-ink-tertiary">{entry.achievedAt}</span>
-                            <div className="flex shrink-0 items-center gap-1.5 sm:justify-end">
+                            <span className="shrink-0 whitespace-nowrap text-sm text-ink-muted sm:whitespace-normal">
+                              {entryText}
+                            </span>
+                            <span className="shrink-0 whitespace-nowrap text-xs text-ink-tertiary sm:whitespace-normal">
+                              <span className="sm:hidden">{formatDayMonthShort(entry.achievedAt)}</span>
+                              <span className="hidden sm:inline">{entry.achievedAt}</span>
+                            </span>
+                            <div className="hidden shrink-0 items-center gap-1.5 sm:flex sm:justify-end">
                               <PersonalRecordFields
                                 catalog={catalog}
                                 customNames={customNames}
@@ -186,13 +237,39 @@ export default async function PersonalRecordsList({
                               />
                               <ConfirmModal
                                 trigger={<X className="h-4 w-4" aria-hidden="true" />}
-                                triggerClassName={DELETE_ICON_BUTTON_CLASSES}
+                                triggerClassName={DANGER_ICON_BUTTON_CLASSES_32}
                                 triggerAriaLabel="Delete"
                                 title="Delete record"
                                 description="This removes this record. This can't be undone."
                                 confirmLabel="Delete"
                                 action={deletePersonalRecord.bind(null, entry.id)}
                               />
+                            </div>
+                            <div className="shrink-0 sm:hidden">
+                              <CardMenu>
+                                <PersonalRecordFields
+                                  catalog={catalog}
+                                  customNames={customNames}
+                                  today={today}
+                                  unitSystem={unitSystem}
+                                  entry={entry}
+                                  returnTo="/profile#records"
+                                  triggerVariant="menu-item"
+                                />
+                                <ConfirmModal
+                                  trigger={
+                                    <>
+                                      <X className="h-4 w-4" aria-hidden="true" />
+                                      Delete
+                                    </>
+                                  }
+                                  triggerClassName={MENU_ITEM_DANGER_CLASSES}
+                                  title="Delete record"
+                                  description="This removes this record. This can't be undone."
+                                  confirmLabel="Delete"
+                                  action={deletePersonalRecord.bind(null, entry.id)}
+                                />
+                              </CardMenu>
                             </div>
                           </div>
                         );

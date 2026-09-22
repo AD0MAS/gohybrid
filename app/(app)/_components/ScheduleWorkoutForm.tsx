@@ -17,6 +17,7 @@ import {
 import { MENU_ITEM_CLASSES } from "./CardMenu";
 import Modal from "./Modal";
 import WorkoutPicker from "./WorkoutPicker";
+import { FIELD_CLASSES_SURFACE_1 } from "./shared-classes";
 
 type ScheduleEntry = {
   id: string;
@@ -246,7 +247,7 @@ export default function ScheduleWorkoutForm({
               defaultValue={fieldDefault("scheduledDate", entry?.scheduledDate)}
               min={today}
               required
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_1}
             />
           </label>
 
@@ -259,7 +260,7 @@ export default function ScheduleWorkoutForm({
                 "scheduledTime",
                 entry?.scheduledTime?.slice(0, 5)
               )}
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_1}
             />
           </label>
 
@@ -270,7 +271,7 @@ export default function ScheduleWorkoutForm({
               name="notes"
               defaultValue={fieldDefault("notes", entry?.notes ?? "")}
               maxLength={LONG_TEXT_MAX_LENGTH}
-              className="h-11 rounded-control border border-hairline bg-surface-1 px-4 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={FIELD_CLASSES_SURFACE_1}
             />
           </label>
 

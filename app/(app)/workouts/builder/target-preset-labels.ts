@@ -1,6 +1,6 @@
-import type { targetPresetEnum } from "@/db/schema";
+import type { TARGET_PRESETS } from "@/db/enums";
 
-type TargetPreset = (typeof targetPresetEnum.enumValues)[number];
+type TargetPreset = (typeof TARGET_PRESETS)[number];
 
 /**
  * Display label per target_preset enum value — the target preset select and

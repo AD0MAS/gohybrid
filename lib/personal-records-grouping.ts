@@ -2,21 +2,21 @@
 // purpose, same reasoning as lib/numeric-limits.ts and lib/exercise-groups.ts:
 // everything below is pure (subjectKey, isBetterRecord,
 // groupPersonalRecordsBySubject take plain data and return plain data, no
-// query involved), so nothing here needs the `postgres` driver `db/index.ts`
+// query involved), so nothing here needs the `pg` driver `db/index.ts`
 // pulls in. Kept out of lib/personal-records.ts, which does need it (for its
 // CRUD functions), specifically so a client component that only needs the
 // grouping logic can import it without dragging that driver into the
-// browser bundle. The `import type` from db/schema.ts below is erased at
+// browser bundle. The `import type` from db/enums.ts below is erased at
 // compile time, so it doesn't count.
 
-import type { personalRecordTypeEnum } from "@/db/schema";
+import type { PERSONAL_RECORD_TYPES } from "@/db/enums";
 
 export type PersonalRecord = {
   id: string;
   userId: string;
   exerciseId: string | null;
   customName: string | null;
-  recordType: (typeof personalRecordTypeEnum.enumValues)[number];
+  recordType: (typeof PERSONAL_RECORD_TYPES)[number];
   value: number;
   achievedAt: string;
   notes: string | null;
@@ -33,7 +33,7 @@ export type PersonalRecord = {
  * direction logic can be reasoned about and tested on its own.
  */
 export function isBetterRecord(
-  recordType: (typeof personalRecordTypeEnum.enumValues)[number],
+  recordType: (typeof PERSONAL_RECORD_TYPES)[number],
   a: number,
   b: number
 ): boolean {
@@ -53,7 +53,7 @@ export function isBetterRecord(
 export function subjectKey(record: {
   exerciseId: string | null;
   customName: string | null;
-  recordType: (typeof personalRecordTypeEnum.enumValues)[number];
+  recordType: (typeof PERSONAL_RECORD_TYPES)[number];
 }): string {
   const subject = record.exerciseId
     ? `exercise:${record.exerciseId}`
@@ -64,7 +64,7 @@ export function subjectKey(record: {
 export type PersonalRecordGroup = {
   subjectKey: string;
   subjectLabel: string;
-  recordType: (typeof personalRecordTypeEnum.enumValues)[number];
+  recordType: (typeof PERSONAL_RECORD_TYPES)[number];
   best: PersonalRecord;
   history: PersonalRecord[];
 };

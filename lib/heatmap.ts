@@ -16,7 +16,7 @@ import {
  */
 export const HEATMAP_WEEKS = 53;
 
-export type HeatmapCell = {
+type HeatmapCell = {
   /** YYYY-MM-DD. */
   date: string;
   /**

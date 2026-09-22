@@ -14,21 +14,14 @@ import QuickActions from "./QuickActions";
 import RecentActivity from "./RecentActivity";
 import TodayHero from "./TodayHero";
 import WeekStrip from "./WeekStrip";
+import {
+  EYEBROW_CLASSES,
+  SUBMIT_BUTTON_CLASSES_FULL_SELF_START,
+} from "./_components/shared-classes";
 
 export const metadata: Metadata = {
   title: "Home",
 };
-
-const EYEBROW_CLASSES =
-  "text-xs font-medium uppercase tracking-widest text-accent-ink-subtle";
-
-// Exactly /workouts' own empty-state hero button (app/(app)/workouts/page.tsx,
-// "Create your first workout") and /profile's (GoalFields.tsx's own accent
-// button, rendered as "Set your first goal" by GoalsList's hero) — the same
-// h-11/rounded-control/px-5/text-base convention both pages already use for
-// a primary, page-owning action.
-const PRIMARY_BUTTON_CLASSES =
-  "flex h-11 w-full items-center justify-center self-start rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
 
 const HOW_IT_WORKS_STEPS = [
   { n: "1", text: "Create a workout — blocks and items you can reuse." },
@@ -67,6 +60,7 @@ export default async function Home(props: PageProps<"/">) {
     getTotalSessionCountForUser(user.id),
   ]);
   const isNewUser = workoutCount === 0 && sessionCount === 0;
+  const hasWorkouts = workoutCount > 0;
 
   // `?saved=…` is where an edit that moved its own entry out from under its
   // form (an event or a scheduled workout to another day) lands — the form's
@@ -94,7 +88,7 @@ export default async function Home(props: PageProps<"/">) {
         <img src="/logo-lockup.svg" alt="GoHybrid" className="h-7 w-auto" />
       </div>
 
-      <h1 className="truncate text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+      <h1 className="truncate text-2xl font-semibold tracking-tight text-ink sm:text-page-title-compact">
         {formatDayHeadingLong(today)}
       </h1>
 
@@ -104,7 +98,7 @@ export default async function Home(props: PageProps<"/">) {
             {isNewUser ? (
               <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7">
                 <p className={EYEBROW_CLASSES}>Start here</p>
-                <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+                <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-page-title">
                   Build your first workout
                 </h2>
                 <p className="max-w-xl text-sm text-ink-subtle">
@@ -112,7 +106,7 @@ export default async function Home(props: PageProps<"/">) {
                   Schedule it on a day, run it as a checklist, and finishing
                   it writes your first session.
                 </p>
-                <Link href="/workouts/new?from=home" className={PRIMARY_BUTTON_CLASSES}>
+                <Link href="/workouts/new?from=home" className={SUBMIT_BUTTON_CLASSES_FULL_SELF_START}>
                   Create your first workout
                 </Link>
               </section>
@@ -130,7 +124,7 @@ export default async function Home(props: PageProps<"/">) {
           <div className="order-5 lg:order-none">
             {isNewUser ? (
               <section className="flex flex-col gap-1 rounded-panel border border-hairline bg-surface-1 p-5">
-                <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+                <h2 className="text-section font-semibold text-ink">
                   How it works
                 </h2>
                 <ul className="flex flex-col">
@@ -161,7 +155,7 @@ export default async function Home(props: PageProps<"/">) {
             <NextEventCard userId={user.id} today={today} />
           </div>
           <div className="order-6 lg:order-none">
-            <QuickActions userId={user.id} today={today} />
+            <QuickActions userId={user.id} today={today} hasWorkouts={hasWorkouts} />
           </div>
         </div>
       </div>

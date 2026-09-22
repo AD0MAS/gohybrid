@@ -37,13 +37,6 @@ export function groupEntriesByDate(
   return byDate;
 }
 
-/** The two cell shapes: the month calendar's squares, and the week strip's
- * slightly wider cells. Neither is ever taller than wide. */
-const SHAPE_CLASSES = {
-  square: "aspect-square",
-  wide: "aspect-[6/5]",
-} as const;
-
 type DayGridProps = {
   /** Every date to draw, Monday first, in rows of seven — a whole month
    * grid or a single week. */
@@ -51,7 +44,6 @@ type DayGridProps = {
   today: string;
   selectedDate: string;
   entriesByDate: Map<string, DayCellEntry[]>;
-  shape: keyof typeof SHAPE_CLASSES;
   /** A month grid passes its month (YYYY-MM) so days outside it are dimmed;
    * the week strip passes nothing and dims nothing. */
   dimOutsideMonth?: string;
@@ -69,7 +61,6 @@ export default function DayGrid({
   today,
   selectedDate,
   entriesByDate,
-  shape,
   dimOutsideMonth,
 }: DayGridProps) {
   return (
@@ -93,7 +84,6 @@ export default function DayGrid({
               dimOutsideMonth !== undefined &&
               getMonthString(date) !== dimOutsideMonth
             }
-            shapeClass={SHAPE_CLASSES[shape]}
           />
         ))}
       </div>

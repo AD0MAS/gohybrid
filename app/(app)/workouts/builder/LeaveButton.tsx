@@ -47,6 +47,7 @@ export default function LeaveButton({
       title="Discard changes?"
       description="Your unsaved changes to this workout will be lost."
       confirmLabel="Discard"
+      pendingLabel="Discarding…"
       action={async () => {
         router.push(href);
       }}

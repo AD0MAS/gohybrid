@@ -55,6 +55,18 @@ export async function toggleFavorite(id: string) {
 }
 
 /**
+ * useActionState's state shape for scheduleWorkout/scheduleWorkoutFromPicker
+ * (below), shared by both since they share one ScheduleWorkoutForm.
+ * { status: "success" } lets the schedule modal tell "nothing has happened
+ * yet" apart from "saved", closing itself only once a save actually went
+ * through, same pattern as the /profile *Fields components.
+ */
+export type ScheduleFormState =
+  | { status: "idle" }
+  | { status: "error"; error: string; values: Record<string, string> }
+  | { status: "success" };
+
+/**
  * Schedules one of the authenticated user's workouts for a date that is
  * today or later — and, if it's today, a time that is now or later — from
  * the workout detail page's Schedule control, bound with the workout id via
@@ -68,21 +80,6 @@ export async function toggleFavorite(id: string) {
  * page and / (Home) — which renders both the week strip and the TODAY card
  * that can trigger this same action — on success, no redirect, since this
  * is used inline on the detail page.
- */
-export type ScheduleFormState =
-  | { status: "idle" }
-  | { status: "error"; error: string; values: Record<string, string> }
-  | { status: "success" };
-
-/**
- * Schedules a workout for the authenticated user, bound with the workout id
- * via .bind(null, id) from the workout detail page. Passed to useActionState
- * in ScheduleWorkoutForm, so a validation failure is an expected outcome of
- * a form submission — it returns { status: "error", error } for the form to
- * render, rather than throwing (which would hit app/error.tsx). { status:
- * "success" } lets the schedule modal tell "nothing has happened yet" apart
- * from "saved", closing itself only once a save actually went through, same
- * pattern as the /profile *Fields components.
  */
 export async function scheduleWorkout(
   workoutId: string,

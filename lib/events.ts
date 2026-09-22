@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, lt, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { events, eventTypeEnum } from "@/db/schema";
+import { EVENT_TYPES } from "@/db/enums";
+import { events } from "@/db/schema";
 import { diffInDays } from "./dates";
 import type { ValidatedEventInput } from "./events-validation";
 
@@ -19,7 +20,7 @@ export type Event = {
   /** Local wall-clock time as Postgres returns `time` (HH:MM:SS); null is an
    * all-day event. Use formatEventTime (lib/events-format.ts) for display. */
   eventTime: string | null;
-  eventType: (typeof eventTypeEnum.enumValues)[number];
+  eventType: (typeof EVENT_TYPES)[number];
   location: string | null;
   notes: string | null;
   createdAt: Date;

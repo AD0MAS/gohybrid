@@ -20,6 +20,7 @@ import {
 } from "@/lib/workout-summary";
 import { deleteWorkout, toggleFavorite } from "../actions";
 import BackLink from "../../_components/BackLink";
+import { PAGE_MAIN_CLASSES, PANEL_CLASSES_COMPACT, SECONDARY_BUTTON_CLASSES_SURFACE_1 } from "../../_components/shared-classes";
 import {
   resolveBackDestination,
   type BackDestination,
@@ -117,7 +118,7 @@ function resolveBack(
  *
  * `?saved=1` marks a landing from createFullWorkout/updateFullWorkout's
  * redirect (builder/actions.ts) — none of this page's other entry points
- * (`from=home`, `from=home-strip&week=...&day=...`, or no param at all from
+ * (`from=home`, `from=home-strip&day=...`, or no param at all from
  * the library) ever set it, so RedirectSuccessBanner (app/_components/
  * FormStatus.tsx) only shows right after a builder Save, never on a plain
  * visit.
@@ -170,7 +171,7 @@ export default async function WorkoutDetailPage(
     .join(" · ");
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className={PAGE_MAIN_CLASSES}>
       <RedirectSuccessBanner show={saved} label="Saved" paramName="saved" />
 
       <div className="flex flex-col">
@@ -179,7 +180,7 @@ export default async function WorkoutDetailPage(
             <BackLink href={back.href} label={back.label} />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+                <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-page-title-compact">
                   {workout.title}
                 </h1>
                 <FavoriteToggle
@@ -206,13 +207,13 @@ export default async function WorkoutDetailPage(
           <div className="hidden shrink-0 items-center gap-2 sm:flex">
             <Link
               href={`/workouts/${workout.id}/edit`}
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={SECONDARY_BUTTON_CLASSES_SURFACE_1}
             >
               Edit
             </Link>
             <ConfirmModal
               trigger="Delete"
-              triggerClassName="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              triggerClassName={SECONDARY_BUTTON_CLASSES_SURFACE_1}
               title="Delete workout"
               description="Deleting this workout removes its blocks and items with it. Any completed sessions from this workout stay in your training history."
               confirmLabel="Delete"
@@ -278,7 +279,7 @@ export default async function WorkoutDetailPage(
         <div className="flex min-w-0 flex-col gap-6">
           <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5 sm:p-6">
             <div className="flex items-baseline justify-between">
-              <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+              <h2 className="text-section font-semibold text-ink">
                 Structure
               </h2>
               <span className="text-xs text-ink-tertiary">{structureCount}</span>
@@ -375,7 +376,7 @@ export default async function WorkoutDetailPage(
 
         <div className="flex flex-col gap-6">
           <section className="flex flex-col gap-1 rounded-panel border border-hairline bg-surface-1 p-5">
-            <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+            <h2 className="text-section font-semibold text-ink">
               Sessions
             </h2>
 
@@ -415,8 +416,8 @@ export default async function WorkoutDetailPage(
             </Link>
           </section>
 
-          <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
-            <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+          <section className={PANEL_CLASSES_COMPACT}>
+            <h2 className="text-section font-semibold text-ink">
               Scheduled
             </h2>
 

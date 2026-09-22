@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import Modal from "./Modal";
+import { SECONDARY_BUTTON_CLASSES_SURFACE_1, SUBMIT_BUTTON_CLASSES } from "./shared-classes";
 
 type ConfirmModalBaseProps = {
   trigger: ReactNode;
@@ -19,6 +20,12 @@ type ConfirmModalBaseProps = {
   variant?: "danger" | "primary";
   /** Disables the trigger, e.g. while the confirmed action is running. */
   triggerDisabled?: boolean;
+  /** Label for the FormPendingBanner shown while `action` is in flight.
+   * Defaults to "Deleting…", since every action-based caller but Discard
+   * removes something. Meaningless with `onConfirm`, which has no <form>
+   * for useFormStatus to read — StartWorkoutClient shows its own
+   * "Finishing…" banner instead (see its own doc comment). */
+  pendingLabel?: string;
 };
 
 /**
@@ -41,7 +48,7 @@ const CONFIRM_CLASSES: Record<NonNullable<ConfirmModalProps["variant"]>, string>
   danger:
     "flex h-11 items-center justify-center rounded-control bg-danger px-5 text-base text-white hover:bg-danger-hover active:bg-danger-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
   primary:
-    "flex h-11 items-center justify-center rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus",
+    SUBMIT_BUTTON_CLASSES,
 };
 
 /**
@@ -74,6 +81,7 @@ export default function ConfirmModal({
   cancelLabel = "Cancel",
   variant = "danger",
   triggerDisabled = false,
+  pendingLabel = "Deleting…",
 }: ConfirmModalProps) {
   const [open, setOpen] = useState(false);
 
@@ -91,13 +99,13 @@ export default function ConfirmModal({
 
       <Modal open={open} onClose={() => setOpen(false)} title={title}>
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-ink">{description}</p>
+          <p className="break-words text-sm text-ink">{description}</p>
 
           <div className="flex justify-end gap-3">
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex h-11 items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus"
+              className={SECONDARY_BUTTON_CLASSES_SURFACE_1}
             >
               {cancelLabel}
             </button>
@@ -118,6 +126,7 @@ export default function ConfirmModal({
                 <SubmitButton className={CONFIRM_CLASSES[variant]}>
                   {confirmLabel}
                 </SubmitButton>
+                <FormPendingBanner label={pendingLabel} />
               </form>
             )}
           </div>

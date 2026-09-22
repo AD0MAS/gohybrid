@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { signOut } from "@/app/(auth)/actions";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { requireUser } from "@/lib/auth";
 import { getUserSettings } from "@/lib/user-settings";
 import BackLink from "../_components/BackLink";
+import { PAGE_MAIN_CLASSES, PANEL_CLASSES } from "../_components/shared-classes";
 import SettingsFields from "./SettingsFields";
 
 export const metadata: Metadata = {
@@ -27,16 +28,16 @@ export default async function SettingsPage() {
   const timezones = Intl.supportedValuesOf("timeZone");
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className={PAGE_MAIN_CLASSES}>
       <div className="flex items-center gap-2">
         <BackLink href="/profile" label="Profile" />
-        <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+        <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-page-title-compact">
           Settings
         </h1>
       </div>
 
-      <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5">
-        <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+      <section className={PANEL_CLASSES}>
+        <h2 className="text-section font-semibold text-ink">
           Account
         </h2>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
@@ -50,6 +51,7 @@ export default async function SettingsPage() {
             <SubmitButton className="flex h-11 w-full items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto">
               Sign out
             </SubmitButton>
+            <FormPendingBanner label="Signing out…" />
           </form>
         </div>
       </section>

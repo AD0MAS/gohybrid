@@ -1,29 +1,23 @@
 import Link from "next/link";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { getNextScheduledForUserOnDate } from "@/lib/scheduled-workouts";
 import ScheduleWorkoutForm from "./_components/ScheduleWorkoutForm";
 import { markScheduledWorkoutDone } from "./upcoming-actions";
 import { DIFFICULTY_LABELS } from "./workouts/difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "./workouts/primary-type-labels";
+import {
+  EYEBROW_CLASSES,
+  SUBMIT_BUTTON_CLASSES_FULL_SELF_START,
+} from "./_components/shared-classes";
 
-// Exactly /workouts' own empty-state hero button (app/(app)/workouts/page.tsx,
-// "Create your first workout") and /profile's (GoalFields.tsx's own accent
-// button, rendered as "Set your first goal" by GoalsList's hero) — the same
-// h-11/rounded-control/px-5/text-base convention both pages already use for
-// a primary, page-owning action. The bordered secondary below matches that
-// same height/padding/text size, same as /profile's own header, which pairs
-// exactly this (its "Settings" link) beside the accent "Add goal" button.
-// Duplicated here rather than imported: every other trigger-class constant
-// in this codebase (BUTTON_TRIGGER_CLASSES, CTA_CLASSES, ...) is its own
-// per-file copy with a comment pointing at the original, not a shared
-// export.
-const PRIMARY_BUTTON_CLASSES =
-  "flex h-11 w-full items-center justify-center self-start rounded-control bg-accent px-5 text-base text-white hover:bg-accent-hover active:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
+// The bordered secondary below matches the primary button's own height/
+// padding/text size, same as /profile's own header, which pairs exactly
+// this (its "Settings" link) beside the accent "Add goal" button. Not one
+// of shared-classes.ts's constants — /settings' own Sign out is the only
+// other place using this exact w-full/sm:w-auto shape, not enough call
+// sites yet to be worth extracting.
 const SECONDARY_BUTTON_CLASSES =
   "flex h-11 w-full items-center justify-center rounded-control border border-hairline bg-surface-1 px-5 text-base text-ink hover:bg-surface-2 active:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-focus sm:w-auto";
-
-const EYEBROW_CLASSES =
-  "text-xs font-medium uppercase tracking-widest text-accent-ink-subtle";
 
 type TodayHeroProps = {
   userId: string;
@@ -64,14 +58,14 @@ export default async function TodayHero({
     return (
       <section className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7">
         <p className={EYEBROW_CLASSES}>Today</p>
-        <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+        <h2 className="text-2xl font-semibold tracking-tight text-ink sm:text-page-title">
           Nothing planned for today
         </h2>
         <p className="max-w-xl text-sm text-ink-subtle">
           Pick a workout from your library and schedule it, or start one
           straight away — it&apos;ll show up here once it&apos;s on today.
         </p>
-        <Link href="/workouts" className={PRIMARY_BUTTON_CLASSES}>
+        <Link href="/workouts" className={SUBMIT_BUTTON_CLASSES_FULL_SELF_START}>
           Go to My Workouts
         </Link>
       </section>
@@ -91,7 +85,7 @@ export default async function TodayHero({
     <section className="flex flex-col gap-6 rounded-panel border border-hairline bg-surface-1 p-6 sm:p-7">
       <div className="flex min-w-0 flex-col gap-2.5">
         <p className={EYEBROW_CLASSES}>Today</p>
-        <h2 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+        <h2 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-page-title">
           {entry.workout.title}
         </h2>
         <p className="flex flex-wrap items-center gap-2 text-sm text-ink-subtle">
@@ -103,7 +97,7 @@ export default async function TodayHero({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Link href={`/workouts/${entry.workout.id}/start`} className={PRIMARY_BUTTON_CLASSES}>
+        <Link href={`/workouts/${entry.workout.id}/start`} className={SUBMIT_BUTTON_CLASSES_FULL_SELF_START}>
           Start workout
         </Link>
         {/* Below sm: Mark done and Reschedule split this row into equal
@@ -115,6 +109,7 @@ export default async function TodayHero({
             <SubmitButton className={SECONDARY_BUTTON_CLASSES}>
               Mark done
             </SubmitButton>
+            <FormPendingBanner label="Marking done…" />
           </form>
           <ScheduleWorkoutForm
             // Keyed by entry so a reschedule that hands the card to the next

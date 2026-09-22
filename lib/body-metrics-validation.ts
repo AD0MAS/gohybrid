@@ -1,4 +1,4 @@
-import { bodyMetricTypeEnum, unitSystemEnum } from "@/db/schema";
+import { BODY_METRIC_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import { formatWeightKg } from "./units";
 import {
   BODY_FAT_DIGIT_LIMIT,
@@ -10,8 +10,8 @@ import { isOneOf } from "./workouts-validation";
 import { isValidDateString } from "./scheduled-workouts-validation";
 import { LONG_TEXT_MAX_LENGTH, checkTextLength } from "./text-limits";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
-type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
+type BodyMetricType = (typeof BODY_METRIC_TYPES)[number];
 
 export type ValidatedBodyMetricInput = {
   metricType: BodyMetricType;
@@ -20,12 +20,12 @@ export type ValidatedBodyMetricInput = {
   notes: string | null;
 };
 
-export type BodyMetricValidationResult =
+type BodyMetricValidationResult =
   | { success: true; data: ValidatedBodyMetricInput }
   | { success: false; error: string };
 
 /** Raw, untyped body-metric input as received from a FormData submission. */
-export type RawBodyMetricInput = {
+type RawBodyMetricInput = {
   metricType?: unknown;
   value?: unknown;
   measuredAt?: unknown;
@@ -81,7 +81,7 @@ export function validateBodyMetricInput(
   unitSystem: UnitSystem
 ): BodyMetricValidationResult {
   const metricType = input.metricType;
-  if (!isOneOf(metricType, bodyMetricTypeEnum.enumValues)) {
+  if (!isOneOf(metricType, BODY_METRIC_TYPES)) {
     return {
       success: false,
       error: "Choose a valid metric type.",

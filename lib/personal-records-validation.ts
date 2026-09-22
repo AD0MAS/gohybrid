@@ -1,4 +1,4 @@
-import { personalRecordTypeEnum, unitSystemEnum } from "@/db/schema";
+import { PERSONAL_RECORD_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import { formatWeightKg } from "./units";
 import {
   CALORIES_DIGIT_LIMIT,
@@ -16,27 +16,27 @@ import {
   LONG_TEXT_MAX_LENGTH,
 } from "./text-limits";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
 type NonTimeRecordType = Exclude<
-  (typeof personalRecordTypeEnum.enumValues)[number],
+  (typeof PERSONAL_RECORD_TYPES)[number],
   "time"
 >;
 
 export type ValidatedPersonalRecordInput = {
   exerciseId: string | null;
   customName: string | null;
-  recordType: (typeof personalRecordTypeEnum.enumValues)[number];
+  recordType: (typeof PERSONAL_RECORD_TYPES)[number];
   value: number;
   achievedAt: string;
   notes: string | null;
 };
 
-export type PersonalRecordValidationResult =
+type PersonalRecordValidationResult =
   | { success: true; data: ValidatedPersonalRecordInput }
   | { success: false; error: string };
 
 /** Raw, untyped personal-record input as received from a FormData submission. */
-export type RawPersonalRecordInput = {
+type RawPersonalRecordInput = {
   exerciseId?: unknown;
   customName?: unknown;
   recordType?: unknown;
@@ -142,7 +142,7 @@ export function validatePersonalRecordInput(
   }
 
   const recordType = input.recordType;
-  if (!isOneOf(recordType, personalRecordTypeEnum.enumValues)) {
+  if (!isOneOf(recordType, PERSONAL_RECORD_TYPES)) {
     return {
       success: false,
       error: "Choose a valid record type.",

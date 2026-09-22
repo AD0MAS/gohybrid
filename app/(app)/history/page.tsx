@@ -15,6 +15,7 @@ import ConfirmModal from "../_components/ConfirmModal";
 import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
 import { deleteAllSessions, deleteSession } from "./actions";
 import FinishedNotice from "./FinishedNotice";
+import { PAGE_MAIN_CLASSES, PANEL_CLASSES_COMPACT } from "../_components/shared-classes";
 
 export const metadata: Metadata = {
   title: "History",
@@ -71,11 +72,11 @@ export default async function HistoryPage(props: PageProps<"/history">) {
   const newest = sessions[0];
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <main className={PAGE_MAIN_CLASSES}>
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2">
           <BackLink href={back.href} label={back.label} />
-          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">
+          <h1 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-ink sm:text-page-title-compact">
             History
           </h1>
         </div>
@@ -93,6 +94,7 @@ export default async function HistoryPage(props: PageProps<"/history">) {
               } will be deleted and Stats will be empty. Your workouts stay in the library. This cannot be undone.`}
               cancelLabel="Keep my history"
               confirmLabel="Clear history"
+              pendingLabel="Clearing…"
               action={deleteAllSessions}
             />
           </div>
@@ -112,8 +114,8 @@ export default async function HistoryPage(props: PageProps<"/history">) {
           Finishing a workout writes a session here.
         </p>
       ) : (
-        <section className="flex flex-col gap-3 rounded-panel border border-hairline bg-surface-1 p-5">
-          <h2 className="text-[15px] font-semibold leading-[1.2] text-ink">
+        <section className={PANEL_CLASSES_COMPACT}>
+          <h2 className="text-section font-semibold text-ink">
             Sessions
           </h2>
 

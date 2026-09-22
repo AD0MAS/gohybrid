@@ -11,7 +11,7 @@ import CardMenu, {
 import ConfirmModal from "./_components/ConfirmModal";
 import EventCard from "./_components/EventCard";
 import ScheduleWorkoutForm from "./_components/ScheduleWorkoutForm";
-import { SubmitButton } from "@/app/_components/FormStatus";
+import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { addDays, formatDayHeading } from "@/lib/dates";
 import { getEventsForUserInRange } from "@/lib/events";
 import { getScheduledForUserInRange } from "@/lib/scheduled-workouts";
@@ -21,12 +21,13 @@ import { formatWeekHeading, homeHref, type HomeView } from "@/lib/home-view";
 import {
   getScheduledStatus,
   STATUS_LABELS,
-  STATUS_PILL_CLASSES,
+  STATUS_BADGE_CLASSES,
 } from "./entry-status";
 import DayGrid, { groupEntriesByDate } from "./_components/DayGrid";
 import NavHeader from "./_components/NavHeader";
 import { DIFFICULTY_LABELS } from "./workouts/difficulty-labels";
 import { PRIMARY_TYPE_LABELS } from "./workouts/primary-type-labels";
+import { PANEL_CLASSES } from "./_components/shared-classes";
 
 type WeekStripProps = {
   userId: string;
@@ -38,9 +39,9 @@ type WeekStripProps = {
 
 /**
  * Home's week strip: the view anchor's week as seven day cells, Monday
- * first — the same DayCell the month calendar draws, in a slightly wider
- * shape — with prev/next week arrows and, underneath, the *selected* day's
- * scheduled workouts and events under its date heading. Entirely a Server
+ * first — the exact same square DayCell the month calendar draws — with
+ * prev/next week arrows and, underneath, the *selected* day's scheduled
+ * workouts and events under its date heading. Entirely a Server
  * Component: every interaction is a plain `Link` (`scroll={false}`, so the
  * page stays put) to `/?day=<selected>&view=<anchor>`, resolved once by
  * resolveHomeView and shared with the month calendar, so the two always show
@@ -127,7 +128,7 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
   return (
     <section
       id="week-strip"
-      className="flex flex-col gap-4 rounded-panel border border-hairline bg-surface-1 p-5"
+      className={PANEL_CLASSES}
     >
       <NavHeader
         heading={formatWeekHeading(view)}
@@ -142,7 +143,6 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
         today={today}
         selectedDate={view.selectedDate}
         entriesByDate={groupEntriesByDate(scheduled, events)}
-        shape="wide"
       />
 
       <div className="flex flex-col gap-2">
@@ -183,7 +183,7 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
                         {entry.workout.title}
                       </span>
                       <span
-                        className={`shrink-0 rounded-small px-3 py-0.5 text-xs ${STATUS_PILL_CLASSES[status]}`}
+                        className={`shrink-0 rounded-small px-3 py-0.5 text-xs ${STATUS_BADGE_CLASSES[status]}`}
                       >
                         {STATUS_LABELS[status]}
                       </span>
@@ -210,6 +210,7 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
                         <SubmitButton className={MENU_ITEM_CLASSES}>
                           Mark done
                         </SubmitButton>
+                        <FormPendingBanner label="Marking done…" />
                       </form>
                     )}
                     {status === "planned" && (
@@ -223,6 +224,7 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
                         <SubmitButton className={MENU_ITEM_CLASSES}>
                           Mark skipped
                         </SubmitButton>
+                        <FormPendingBanner label="Marking skipped…" />
                       </form>
                     )}
                     {status !== "completed" && (
@@ -261,6 +263,7 @@ export default async function WeekStrip({ userId, view }: WeekStripProps) {
                         <SubmitButton className={MENU_ITEM_DANGER_CLASSES}>
                           Remove
                         </SubmitButton>
+                        <FormPendingBanner label="Removing…" />
                       </form>
                     )}
                   </CardMenu>

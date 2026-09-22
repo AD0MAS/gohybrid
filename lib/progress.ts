@@ -1,8 +1,4 @@
-import type {
-  bodyMetricTypeEnum,
-  personalRecordTypeEnum,
-  unitSystemEnum,
-} from "@/db/schema";
+import type { BODY_METRIC_TYPES, PERSONAL_RECORD_TYPES, UNIT_SYSTEMS } from "@/db/enums";
 import { getPersonalRecordsForUser } from "@/lib/personal-records";
 import { groupPersonalRecordsBySubject } from "@/lib/personal-records-grouping";
 import { getBodyMetricsForUser } from "@/lib/body-metrics";
@@ -14,11 +10,11 @@ import {
   metresToMiles,
 } from "@/lib/units";
 
-type UnitSystem = (typeof unitSystemEnum.enumValues)[number];
-type BodyMetricType = (typeof bodyMetricTypeEnum.enumValues)[number];
-type PersonalRecordType = (typeof personalRecordTypeEnum.enumValues)[number];
+type UnitSystem = (typeof UNIT_SYSTEMS)[number];
+type BodyMetricType = (typeof BODY_METRIC_TYPES)[number];
+type PersonalRecordType = (typeof PERSONAL_RECORD_TYPES)[number];
 
-export type ProgressPoint = {
+type ProgressPoint = {
   date: string;
   value: number;
 };

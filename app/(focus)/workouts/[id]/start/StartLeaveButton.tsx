@@ -57,6 +57,7 @@ export default function StartLeaveButton({
       description="Your progress and time won't be saved."
       cancelLabel="Keep going"
       confirmLabel="Discard"
+      pendingLabel="Discarding…"
       action={async () => {
         onLeave();
         router.push(href);

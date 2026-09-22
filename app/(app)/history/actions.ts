@@ -12,12 +12,12 @@ import { deleteAllSessionsForUser, deleteSessionForUser } from "@/lib/sessions";
  *
  * Deleting a session changes streaks, session counts and goal progress —
  * everywhere those are read from workout_sessions — so every affected
- * route is revalidated: /history itself, / (Home's summary cards, week
- * strip and recent activity, since a completed scheduled workout reverts to
- * Planned via scheduled_workouts.session_id's ON DELETE SET NULL, or — if it
- * was backfilled by finishWorkout — is deleted along with the session, see
- * deleteSessionForUser), /stats (all charts), and /profile (goals that
- * count sessions).
+ * route is revalidated: /history itself, / (Home's week strip and recent
+ * activity, since a completed scheduled workout reverts to Planned via
+ * scheduled_workouts.session_id's ON DELETE SET NULL, or — if it was
+ * backfilled by finishWorkout — is deleted along with the session, see
+ * deleteSessionForUser), /stats (all charts, including its summary cards),
+ * and /profile (goals that count sessions).
  */
 export async function deleteSession(id: string) {
   const user = await requireUser();
