@@ -6,6 +6,7 @@ import {
 } from "@/lib/units";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
+import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
 import type { Goal } from "@/lib/goals";
 
 type GoalType = (typeof GOAL_TYPES)[number];
@@ -117,7 +118,9 @@ export function formatGoalValueText(
 export function getGoalSubjectLabel(goal: Goal): string | null {
   switch (goal.goalType) {
     case "session_count":
-      return goal.targetPrimaryType ? goal.targetPrimaryType : null;
+      return goal.targetPrimaryType
+        ? PRIMARY_TYPE_LABELS[goal.targetPrimaryType].label
+        : null;
     case "streak":
       return null;
     case "body_metric":

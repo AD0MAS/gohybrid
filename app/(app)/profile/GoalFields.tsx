@@ -38,6 +38,7 @@ import NumberField from "../_components/NumberField";
 import { BODY_METRIC_LABELS } from "./body-metric-labels";
 import { MENU_ITEM_CLASSES } from "../_components/CardMenu";
 import { PERSONAL_RECORD_LABELS } from "./personal-record-labels";
+import { PRIMARY_TYPE_LABELS } from "../workouts/primary-type-labels";
 import { formatGoalValue, GOAL_PERIOD_LABELS, GOAL_TYPE_LABELS } from "./goal-labels";
 import { addGoal, updateGoal, type GoalFormState } from "./goals-actions";
 import {
@@ -634,7 +635,7 @@ function GoalFormFields({
             <option value="">Any type</option>
             {WORKOUT_PRIMARY_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {PRIMARY_TYPE_LABELS[type].label}
               </option>
             ))}
           </select>

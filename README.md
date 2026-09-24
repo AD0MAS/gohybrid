@@ -10,17 +10,18 @@ Hybrid athletes train across disciplines that most trackers treat separately: a 
 
 ## Screenshots
 
-| Home | Workout builder |
-|---|---|
-| ![Home](docs/screenshots/home.png) | ![Builder](docs/screenshots/builder.png) |
-
-| Workout detail | Start mode |
-|---|---|
-| ![Workout](docs/screenshots/workout.png) | ![Start](docs/screenshots/start-mobile.png) |
-
-| Stats | Profile |
-|---|---|
-| ![Stats](docs/screenshots/stats.png) | ![Profile](docs/screenshots/profile.png) |
+<p align="center">
+  <img src="docs/screenshots/home.png" alt="Home: today, the week strip and the month calendar" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/builder.png" alt="Workout builder with the live checklist" width="100%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/workout.png" alt="Workout detail" width="24%">
+  <img src="docs/screenshots/start.png" alt="Start mode" width="24%">
+  <img src="docs/screenshots/stats.png" alt="Stats" width="24%">
+  <img src="docs/screenshots/profile.png" alt="Profile" width="24%">
+</p>
 
 ---
 
