@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx db/seed.ts"
+    "db:seed": "tsx db/seed.ts",
+    "db:seed-demo": "tsx db/seed-demo.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

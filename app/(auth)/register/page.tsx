@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isRegistrationEnabled } from "@/lib/registration";
 import { FormPendingBanner, SubmitButton } from "@/app/_components/FormStatus";
 import { signUp } from "../actions";
 import PasswordField from "../PasswordField";
@@ -10,6 +12,12 @@ export const metadata: Metadata = {
 };
 
 export default async function RegisterPage(props: PageProps<"/register">) {
+  // The proxy already sends signed-out visitors away while registration is
+  // closed; this also covers a signed-in one, whom the proxy lets through.
+  if (!isRegistrationEnabled()) {
+    redirect("/login");
+  }
+
   const searchParams = await props.searchParams;
   const { error } = searchParams;
   const sent =

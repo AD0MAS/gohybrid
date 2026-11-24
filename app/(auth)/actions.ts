@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { getDemoCredentials } from "@/lib/demo";
+import { isRegistrationEnabled } from "@/lib/registration";
 import { SITE_URL } from "@/lib/site";
 
 /**
@@ -50,6 +52,30 @@ export async function signIn(formData: FormData) {
 }
 
 /**
+ * Signs in to the shared demo account, so a visitor can explore the app
+ * without registering. The credentials come from server-only environment
+ * variables and never appear in the page: the form posts nothing but the
+ * action itself. Errors reuse signIn's mapping — a wrong password here
+ * means the demo account was changed and needs `npm run db:seed-demo`.
+ */
+export async function signInDemo() {
+  const credentials = getDemoCredentials();
+  if (!credentials) {
+    redirect(`/login?error=${encodeURIComponent("The demo isn't available right now.")}`);
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword(credentials);
+
+  if (error) {
+    redirect(`/login?error=${encodeURIComponent(mapSignInError(error))}`);
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+
+/**
  * Maps a Supabase sign-up error to a message the user can act on.
  * Matched on `error.code`, the way signIn's errors are mapped. With email
  * confirmation enabled, Supabase never returns `email_exists` or
@@ -63,6 +89,8 @@ function mapSignUpError(error: { code?: string; message: string }): string {
       return "Password must be at least 6 characters.";
     case "email_address_invalid":
       return "Enter a valid email address.";
+    case "signup_disabled":
+      return "Registration is closed.";
     default:
       console.error("Unexpected sign-up error:", error);
       return "Something went wrong. Please try again.";
@@ -81,6 +109,10 @@ function mapSignUpError(error: { code?: string; message: string }): string {
  * page shows a persistent "check your inbox" message instead of the form.
  */
 export async function signUp(formData: FormData) {
+  if (!isRegistrationEnabled()) {
+    redirect("/login");
+  }
+
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -107,12 +139,14 @@ export async function signUp(formData: FormData) {
 }
 
 /**
- * Signs out the current user via Supabase Auth, revalidates the root
- * layout, and redirects to /login.
+ * Signs out the current session via Supabase Auth, revalidates the root
+ * layout, and redirects to /login. Scope "local" ends only this browser's
+ * session: the default ("global") revokes every session of the user, which
+ * on the shared demo account would sign out every other visitor too.
  */
 export async function signOut() {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
 
   revalidatePath("/", "layout");
   redirect("/login");

@@ -2,7 +2,7 @@
 
 A training hub for hybrid athletes – build workouts, plan your week, and track progress across running, strength and HYROX.
 
-**Live:** [gohybrid.vercel.app](https://gohybrid.vercel.app)
+**Live:** [gohybrid.vercel.app](https://gohybrid.vercel.app) – press **Try the demo** on the login page to explore a shared account with ten weeks of sample training. Public sign-up is closed on the live site; see [Demo mode](#demo-mode).
 
 Hybrid athletes train across disciplines that most trackers treat separately: a week might hold an interval run, a barbell session, a HYROX simulation and a conditioning circuit. GoHybrid models all four in one structure, then answers the three questions that come up daily – what am I doing today, what did I do, and am I getting better.
 
@@ -146,6 +146,18 @@ Migrations are generated with `drizzle-kit generate`, reviewed by hand and commi
 
 ---
 
+## Demo mode
+
+The live deployment runs with registration closed. Supabase's built-in email service only delivers to the project team's own addresses, so a visitor's confirmation email would never arrive, and an open sign-up form on a portfolio piece mostly collects spam accounts. Visitors use one shared demo account instead.
+
+- **Try the demo** on `/login` signs in through a Server Action. The credentials live in server-only environment variables (`DEMO_EMAIL`, `DEMO_PASSWORD`) and never reach the browser; the button only appears when both are set.
+- `npm run db:seed-demo` wipes the demo account and seeds it again: seven workouts, ten weeks of sessions (planned, skipped and unplanned), today's entry and the next two weeks, goals, personal records, body metrics and events – all dated relative to the day it runs. It also restores the demo password, so the same command repairs an account a visitor has changed. Workouts, sessions and goals go through the app's own validators and `lib/` functions.
+- Sign-out ends only the current session, so one visitor leaving doesn't sign out the others.
+- The sign-up code is still here. To reopen it, set `REGISTRATION_ENABLED=true`, turn on **Allow new users to sign up** in Supabase (Authentication → Sign In / Providers), and configure custom SMTP.
+- A Vercel Cron job calls `/api/cron/keepalive` twice a day (guarded by `CRON_SECRET`); it reads one catalog row so the Supabase Free project isn't paused for inactivity.
+
+---
+
 ## Running locally
 
 **Requirements:** Node 20.9 or newer (Next 16's minimum), and a Supabase project.
@@ -161,7 +173,7 @@ Create `.env.local`:
 ```bash
 # Supabase project settings → API
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key>
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
 
 # Supabase project settings → Database → Connection string → Session pooler (port 5432)
 DATABASE_URL=postgresql://postgres.<project-ref>:<password>@<host>:5432/postgres
@@ -170,6 +182,17 @@ DATABASE_URL=postgresql://postgres.<project-ref>:<password>@<host>:5432/postgres
 # confirmation link points at (${NEXT_PUBLIC_SITE_URL}/login?confirmed=1);
 # localhost is fine for development
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Optional – the demo account (see Demo mode); the user must exist in
+# Supabase Auth before `npm run db:seed-demo`
+DEMO_EMAIL=demo@example.com
+DEMO_PASSWORD=<password>
+
+# Optional – "true" opens /register; leave unset to keep sign-up closed
+REGISTRATION_ENABLED=true
+
+# Production only – Vercel sends it to the keep-alive cron
+CRON_SECRET=<random string>
 ```
 
 Apply the schema and seed the catalogs:
@@ -185,7 +208,7 @@ Then:
 npm run dev
 ```
 
-Enable **Confirm email** (Authentication → Sign In / Providers → Email), and add both `http://localhost:3000/login?confirmed=1` and its production equivalent to the redirect URLs (Authentication → URL Configuration).
+With registration open, enable **Confirm email** (Authentication → Sign In / Providers → Email), and add both `http://localhost:3000/login?confirmed=1` and its production equivalent to the redirect URLs (Authentication → URL Configuration).
 
 ### Scripts
 
@@ -198,6 +221,8 @@ Enable **Confirm email** (Authentication → Sign In / Providers → Email), and
 | `npx tsc --noEmit` | Type check |
 | `npx drizzle-kit generate` | Generate a migration |
 | `npx drizzle-kit migrate` | Apply pending migrations |
+| `npm run db:seed` | Seed the exercise and tag catalogs |
+| `npm run db:seed-demo` | Reset and reseed the demo account |
 
 ---
 

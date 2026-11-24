@@ -1,20 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-const PUBLIC_PATHS = ["/login", "/register"];
+import { isRegistrationEnabled } from "@/lib/registration";
 
 /**
  * Refreshes the Supabase auth session for an incoming request, mirrors any
  * updated cookies onto both the request (so this response cycle sees them)
  * and the response (so the browser stores them), and redirects
- * unauthenticated requests to /register for every route except /login,
- * /register, and API routes. Most first-time visitors have never registered,
- * so /register is the more useful landing page than a login form they'd
- * just bounce off. API routes are exempt from the redirect
+ * unauthenticated requests to /login for every route except the public auth
+ * pages and API routes. /login is the landing page because it carries "Try
+ * the demo", the way into the live deployment while registration is closed;
+ * /register counts as public only while registration is enabled
+ * (lib/registration.ts). API routes are exempt from the redirect
  * because a caller there expects a JSON 401 from the Route Handler, not an
  * HTML redirect — each Route Handler is responsible for its own auth
  * check. Also redirects the other way: a request that already has a
- * session but targets /login or /register is sent to / instead, so a
+ * session but targets a public auth page is sent to / instead, so a
  * logged-in user can't land on an empty auth form. Intended to be called
  * from the root middleware/proxy on every matched request.
  */
@@ -51,12 +51,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublicPath = PUBLIC_PATHS.includes(request.nextUrl.pathname);
+  const publicPaths = isRegistrationEnabled() ? ["/login", "/register"] : ["/login"];
+  const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
   const isApiPath = request.nextUrl.pathname.startsWith("/api/");
 
   if (!user && !isPublicPath && !isApiPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/register";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
