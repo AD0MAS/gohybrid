@@ -2,7 +2,7 @@
 
 A training hub for hybrid athletes – build workouts, plan your week, and track progress across running, strength and HYROX.
 
-**Live:** [gohybrid.vercel.app](https://gohybrid.vercel.app) – press **Try the demo** on the login page to explore a shared account with ten weeks of sample training. Public sign-up is closed on the live site; see [Demo mode](#demo-mode).
+**Live:** [gohybrid.vercel.app](https://gohybrid.vercel.app) – no sign-up needed: on `/login`, press **Try the demo** to open a shared demo account with ten weeks of sample training. Public registration is closed on the live site; see [Demo mode](#demo-mode).
 
 Hybrid athletes train across disciplines that most trackers treat separately: a week might hold an interval run, a barbell session, a HYROX simulation and a conditioning circuit. GoHybrid models all four in one structure, then answers the three questions that come up daily – what am I doing today, what did I do, and am I getting better.
 
@@ -153,7 +153,7 @@ The live deployment runs with registration closed. Supabase's built-in email ser
 - **Try the demo** on `/login` signs in through a Server Action. The credentials live in server-only environment variables (`DEMO_EMAIL`, `DEMO_PASSWORD`) and never reach the browser; the button only appears when both are set.
 - `npm run db:seed-demo` wipes the demo account and seeds it again: seven workouts, ten weeks of sessions (planned, skipped and unplanned), today's entry and the next two weeks, goals, personal records, body metrics and events – all dated relative to the day it runs. It also restores the demo password, so the same command repairs an account a visitor has changed. Workouts, sessions and goals go through the app's own validators and `lib/` functions.
 - Sign-out ends only the current session, so one visitor leaving doesn't sign out the others.
-- The sign-up code is still here. To reopen it, set `REGISTRATION_ENABLED=true`, turn on **Allow new users to sign up** in Supabase (Authentication → Sign In / Providers), and configure custom SMTP.
+- Registration with email confirmation is still in the code and works locally with `REGISTRATION_ENABLED=true` – the default SMTP delivers to your own project team's addresses. To reopen it on a public deployment, also turn on **Allow new users to sign up** in Supabase (Authentication → Sign In / Providers) and configure custom SMTP.
 - A Vercel Cron job calls `/api/cron/keepalive` twice a day (guarded by `CRON_SECRET`); it reads one catalog row so the Supabase Free project isn't paused for inactivity.
 
 ---
@@ -185,8 +185,8 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 # Optional – the demo account (see Demo mode); the user must exist in
 # Supabase Auth before `npm run db:seed-demo`
-DEMO_EMAIL=demo@example.com
-DEMO_PASSWORD=<password>
+DEMO_EMAIL=<demo user's email>
+DEMO_PASSWORD=<demo user's password>
 
 # Optional – "true" opens /register; leave unset to keep sign-up closed
 REGISTRATION_ENABLED=true
@@ -200,6 +200,12 @@ Apply the schema and seed the catalogs:
 ```bash
 npx drizzle-kit migrate
 npm run db:seed
+```
+
+Optionally, create the demo user in Supabase (Authentication → Users → Add user, with **Auto Confirm User**), set `DEMO_EMAIL` and `DEMO_PASSWORD`, and fill it with sample data:
+
+```bash
+npm run db:seed-demo
 ```
 
 Then:
